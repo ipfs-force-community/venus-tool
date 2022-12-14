@@ -1,10 +1,10 @@
 <h1 align="center">Venus Tool</h1>
 
 <p align="center">
- <a href="https://github.com/filecoin-project/venus-market/actions"><img src="https://github.com/filecoin-project/venus-market/actions/workflows/build_upload.yml/badge.svg"/></a>
- <a href="https://codecov.io/gh/filecoin-project/venus-market"><img src="https://codecov.io/gh/filecoin-project/venus-market/branch/master/graph/badge.svg?token=J5QWYWkgHT"/></a>
- <a href="https://goreportcard.com/report/github.com/filecoin-project/venus-market"><img src="https://goreportcard.com/badge/github.com/filecoin-project/venus-market"/></a>
- <a href="https://github.com/filecoin-project/venus-market/tags"><img src="https://img.shields.io/github/v/tag/filecoin-project/venus-market"/></a>
+ <a href="https://github.com/ipfs-force-community/venus-tool/actions"><img src="https://github.com/ipfs-force-community/venus-tool/actions/workflows/build_upload.yml/badge.svg"/></a>
+ <a href="https://codecov.io/gh/ipfs-force-community/venus-tool"><img src="https://codecov.io/gh/ipfs-force-community/venus-tool/branch/master/graph/badge.svg?token=J5QWYWkgHT"/></a>
+ <a href="https://goreportcard.com/report/github.com/ipfs-force-community/venus-tool"><img src="https://goreportcard.com/badge/github.com/ipfs-force-community/venus-tool"/></a>
+ <a href="https://github.com/ipfs-force-community/venus-tool/tags"><img src="https://img.shields.io/github/v/tag/ipfs-force-community/venus-tool"/></a>
   <br>
 </p>
 

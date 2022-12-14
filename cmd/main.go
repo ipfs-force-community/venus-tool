@@ -164,6 +164,9 @@ var runCmd = &cli.Command{
 			builder.Override(builder.NextInvoke(), utils.SetupLogLevels),
 			builder.Override(builder.NextInvoke(), route.RegisterAndStart),
 		)
+		if err != nil {
+			return err
+		}
 		defer func() {
 			log.Warn("received shutdown")
 

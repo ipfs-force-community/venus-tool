@@ -18,7 +18,9 @@ func NewRepo(path string) *Repo {
 		Path: path,
 	}
 	if !repo.IsExist() {
-		repo.Init()
+		if err := repo.Init(); err != nil {
+			panic(err)
+		}
 	}
 	return repo
 }

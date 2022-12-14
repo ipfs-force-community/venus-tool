@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
-	"github.com/ipfs-force-community/venus-tool/client"
 	"github.com/ipfs-force-community/venus-tool/service"
 	"github.com/urfave/cli/v2"
 
@@ -66,11 +65,7 @@ var MsgSendCmd = &cli.Command{
 			return fmt.Errorf("'send' expects two arguments, target and amount")
 		}
 
-		serverAddr := "http://localhost:12580"
-		if ctx.IsSet(FlagServer.Name) {
-			serverAddr = "http://" + ctx.String(FlagServer.Name)
-		}
-		client, err := client.New(serverAddr)
+		client, err := getClient(ctx)
 		if err != nil {
 			return err
 		}

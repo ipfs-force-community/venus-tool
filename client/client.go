@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-resty/resty/v2"
@@ -22,9 +23,9 @@ func New(url string) (*Client, error) {
 	return &Client{Client: client}, nil
 }
 
-func (c *Client) Post(path string, body interface{}, result interface{}) error {
+func (c *Client) Post(ctx context.Context, path string, body interface{}, result interface{}) error {
 	var errResp *route.ErrorResp
-	_, err := c.R().SetBody(body).SetResult(result).SetError(errResp).Post(path)
+	_, err := c.R().SetContext(ctx).SetBody(body).SetResult(result).SetError(errResp).Post(path)
 	if err != nil {
 		return err
 	}

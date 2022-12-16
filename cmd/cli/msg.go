@@ -113,7 +113,7 @@ var MsgSendCmd = &cli.Command{
 		}
 
 		var res string
-		err = client.Post("/api/v0/send", params, &res)
+		err = client.Post(ctx.Context, "/api/v0/send", params, &res)
 		if err != nil {
 			return err
 		}

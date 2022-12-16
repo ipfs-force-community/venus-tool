@@ -6,7 +6,7 @@ require (
 	github.com/BurntSushi/toml v1.2.1
 	github.com/filecoin-project/go-address v1.0.0
 	github.com/filecoin-project/go-state-types v0.9.8
-	github.com/filecoin-project/venus v1.8.0
+	github.com/filecoin-project/venus v1.8.1-0.20221213072628-2c129f3a24a0
 	github.com/filecoin-project/venus-miner v1.8.0
 	github.com/gin-gonic/gin v1.7.0
 	github.com/go-resty/resty/v2 v2.4.0
@@ -79,7 +79,7 @@ require (
 	github.com/ipfs/go-ipld-format v0.4.0 // indirect
 	github.com/ipfs/go-ipld-legacy v0.1.1 // indirect
 	github.com/ipfs/go-log v1.0.5 // indirect
-	github.com/ipfs/go-merkledag v0.8.0 // indirect
+	github.com/ipfs/go-merkledag v0.8.1 // indirect
 	github.com/ipfs/go-metrics-interface v0.0.1 // indirect
 	github.com/ipfs/go-verifcid v0.0.1 // indirect
 	github.com/ipld/go-car v0.4.0 // indirect

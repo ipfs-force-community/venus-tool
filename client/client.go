@@ -24,12 +24,12 @@ func New(url string) (*Client, error) {
 }
 
 func (c *Client) Post(ctx context.Context, path string, body interface{}, result interface{}) error {
-	var errResp *route.ErrorResp
+	errResp := &route.ErrorResp{}
 	_, err := c.R().SetContext(ctx).SetBody(body).SetResult(result).SetError(errResp).Post(path)
 	if err != nil {
 		return err
 	}
-	if errResp != nil {
+	if errResp.Err != "" {
 		return errResp
 	}
 	return nil

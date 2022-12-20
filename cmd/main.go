@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -19,6 +20,7 @@ import (
 	"github.com/ipfs-force-community/venus-tool/repo"
 	"github.com/ipfs-force-community/venus-tool/repo/config"
 	"github.com/ipfs-force-community/venus-tool/route"
+	"github.com/ipfs-force-community/venus-tool/service"
 	"github.com/ipfs-force-community/venus-tool/utils"
 	"github.com/ipfs-force-community/venus-tool/version"
 
@@ -166,7 +168,12 @@ var runCmd = &cli.Command{
 			builder.Override(new(msgApi.IMessager), msgClient),
 			builder.Override(new(marketApi.IMarket), marketClient),
 			builder.Override(new(nodeApi.FullNode), nodeClient),
+			builder.Override(new(context.Context), ctx),
+			builder.Override(new(*service.Service), func(params service.ServiceParams) (*service.Service, error) {
+				return params.NewService(cfg.Wallets, cfg.Miners)
+			}),
 			builder.Override(builder.NextInvoke(), utils.SetupLogLevels),
+			builder.Override(builder.NextInvoke(), utils.LoadBuiltinActors),
 			builder.Override(builder.NextInvoke(), route.RegisterAndStart),
 		)
 		if err != nil {

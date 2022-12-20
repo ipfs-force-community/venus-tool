@@ -2,22 +2,56 @@ package service
 
 import (
 	"bytes"
-	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	nodeV1 "github.com/filecoin-project/venus/venus-shared/api/chain/v1"
-	venusTypes "github.com/filecoin-project/venus/venus-shared/types"
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
-	"github.com/filecoin-project/venus/venus-shared/utils"
+	"github.com/ipfs-force-community/venus-tool/utils"
 	cbg "github.com/whyrusleeping/cbor-gen"
 )
 
-type SendParams struct {
+type MsgResp struct {
+	msgTypes.Message
+	MethodName string
+}
+
+func (mr *MsgResp) getMethodName(node nodeV1.IActor) (string, error) {
+	methodMeta, err := utils.GetMethodMeta(node, mr.To, mr.Method)
+	if err != nil {
+		return "", err
+	}
+	mr.MethodName = methodMeta.Name
+	return methodMeta.Name, nil
+}
+
+func (mr *MsgResp) MarshalJSON() ([]byte, error) {
+	type Msg msgTypes.Message
+	type temp struct {
+		Msg
+		MethodName string
+	}
+	return json.Marshal(temp{
+		Msg:        Msg(mr.Message),
+		MethodName: mr.MethodName,
+	})
+}
+
+type QueryMsgReq struct {
+	msgTypes.MsgQueryParams
+	IsFailed    bool
+	IsBlocked   bool
+	BlockedTime time.Duration
+	ID          string
+	Nonce       uint64
+}
+
+type SendReq struct {
 	From    address.Address
 	To      address.Address
 	Value   abi.TokenAmount
@@ -36,7 +70,7 @@ const (
 	EncJson EncodingType = "json"
 )
 
-func (sp *SendParams) Decode(node nodeV1.IActor) (params []byte, err error) {
+func (sp *SendReq) Decode(node nodeV1.IActor) (params []byte, err error) {
 
 	switch sp.EncType {
 	case EncNull:
@@ -58,8 +92,8 @@ func (sp *SendParams) Decode(node nodeV1.IActor) (params []byte, err error) {
 	return params, nil
 }
 
-func (sp *SendParams) DecodeJSON(node nodeV1.IActor) (out []byte, err error) {
-	methodMeta, err := getMethodMeta(node, sp.To, sp.Method)
+func (sp *SendReq) DecodeJSON(node nodeV1.IActor) (out []byte, err error) {
+	methodMeta, err := utils.GetMethodMeta(node, sp.To, sp.Method)
 	if err != nil {
 		return nil, err
 	}
@@ -76,20 +110,6 @@ func (sp *SendParams) DecodeJSON(node nodeV1.IActor) (out []byte, err error) {
 	return buf.Bytes(), nil
 }
 
-func (sp *SendParams) DecodeHex() (out []byte, err error) {
+func (sp *SendReq) DecodeHex() (out []byte, err error) {
 	return hex.DecodeString(string(sp.Params))
-}
-
-func getMethodMeta(node nodeV1.IActor, to address.Address, method abi.MethodNum) (utils.MethodMeta, error) {
-	ctx := context.Background()
-	act, err := node.StateGetActor(ctx, to, venusTypes.EmptyTSK)
-	if err != nil {
-		return utils.MethodMeta{}, err
-	}
-
-	methodMeta, found := utils.MethodsMap[act.Code][method]
-	if !found {
-		return utils.MethodMeta{}, fmt.Errorf("method %d not found on actor %s", method, act.Code)
-	}
-	return methodMeta, nil
 }

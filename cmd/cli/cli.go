@@ -11,11 +11,18 @@ var FlagServer = &cli.StringFlag{
 	Value: "127.0.0.1:12580",
 }
 
-func getClient(ctx *cli.Context) (*client.Client, error) {
+func getAPI(ctx *cli.Context) (*client.Client, error) {
 
 	serverAddr := "http://localhost:12580"
 	if ctx.IsSet(FlagServer.Name) {
 		serverAddr = "http://" + ctx.String(FlagServer.Name)
 	}
-	return client.New(serverAddr)
+
+	cli, err := client.New(serverAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	cli.SetVersion("/api/v0")
+	return cli, nil
 }

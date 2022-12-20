@@ -9,7 +9,7 @@ import (
 )
 
 func registerRoute(s *service.Service) http.Handler {
-	router := gin.New()
+	router := gin.Default()
 	router.Use(CorsMiddleWare())
 
 	router.GET("/", func(c *gin.Context) {
@@ -21,7 +21,11 @@ func registerRoute(s *service.Service) http.Handler {
 	})
 
 	apiV0Group := router.Group("/api/v0")
-	apiV0Group.POST("send", Wrap(s.Send))
+	msgGroup := apiV0Group.Group("/msg")
+	msgGroup.POST("send", Wrap(s.MsgSend))
+	msgGroup.POST("replace", Wrap(s.MsgReplace))
+	msgGroup.GET("query", Wrap(s.MsgQuery))
+	msgGroup.GET(":ID", Wrap(s.MsgQuery))
 
 	return router
 }

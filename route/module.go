@@ -8,8 +8,8 @@ import (
 	"go.uber.org/fx"
 )
 
-func RegisterAndStart(lc fx.Lifecycle, s service.Service, srv *http.Server) {
-	srv.Handler = registerRoute(&s)
+func RegisterAndStart(lc fx.Lifecycle, s *service.Service, srv *http.Server) {
+	srv.Handler = registerRoute(s)
 
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {

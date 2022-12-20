@@ -6,12 +6,8 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
+	"github.com/filecoin-project/go-address"
 )
-
-type APIInfo struct {
-	Addr  string
-	Token string
-}
 
 type Config struct {
 	Path        string `toml:"-"`
@@ -19,6 +15,13 @@ type Config struct {
 	NodeAPI     *APIInfo
 	MessagerAPI *APIInfo
 	MarketAPI   *APIInfo
+	Wallets     []address.Address
+	Miners      []address.Address
+}
+
+type APIInfo struct {
+	Addr  string
+	Token string
 }
 
 type ServerConfig struct {
@@ -71,5 +74,7 @@ func DefaultConfig() *Config {
 			Addr:  "",
 			Token: "",
 		},
+		Wallets: []address.Address{},
+		Miners:  []address.Address{},
 	}
 }

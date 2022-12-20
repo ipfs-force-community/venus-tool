@@ -79,10 +79,23 @@ func Wrap(fn interface{}) gin.HandlerFunc {
 		if hasParm {
 			pType := fnType.In(1)
 			pValue := reflect.New(pType)
-			if err := ctx.Bind(pValue.Interface()); err != nil {
+			pInt := pValue.Interface()
+
+			err := ctx.ShouldBindJSON(pInt)
+			if err != nil {
+				err = ctx.ShouldBindUri(pInt)
+			}
+			if err != nil {
+				err = ctx.ShouldBindQuery(pInt)
+			}
+			if err != nil {
+				err = ctx.ShouldBind(pInt)
+			}
+			if err != nil {
 				ctx.JSON(http.StatusBadRequest, NewErrResponse(err))
 				return
 			}
+
 			in[1] = pValue.Elem()
 		}
 

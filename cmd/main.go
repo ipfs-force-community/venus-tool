@@ -11,7 +11,6 @@ import (
 	"github.com/urfave/cli/v2"
 	"go.uber.org/fx"
 
-	"github.com/filecoin-project/venus-miner/build"
 	NodeApi "github.com/filecoin-project/venus/venus-shared/api/chain/v1"
 	MarketApi "github.com/filecoin-project/venus/venus-shared/api/market"
 	msgApi "github.com/filecoin-project/venus/venus-shared/api/messager"
@@ -71,7 +70,7 @@ func main() {
 	app := &cli.App{
 		Name:                 "venus-tool",
 		Usage:                "tool for venus user to manage data on chain service , deal service and power service.",
-		Version:              build.UserVersion(),
+		Version:              version.Version,
 		Suggest:              true,
 		EnableBashCompletion: true,
 		Flags: []cli.Flag{
@@ -83,7 +82,6 @@ func main() {
 			vtCli.MsgCmd,
 		},
 	}
-	app.Version = version.Version
 	app.Setup()
 	if err := app.Run(os.Args); err != nil {
 		fmt.Println(err)

@@ -42,7 +42,7 @@ func (mr *MsgResp) MarshalJSON() ([]byte, error) {
 	})
 }
 
-type QueryMsgReq struct {
+type MsgQueryReq struct {
 	msgTypes.MsgQueryParams
 	IsFailed    bool
 	IsBlocked   bool
@@ -51,7 +51,7 @@ type QueryMsgReq struct {
 	Nonce       uint64
 }
 
-type SendReq struct {
+type MsgSendReq struct {
 	From    address.Address
 	To      address.Address
 	Value   abi.TokenAmount
@@ -62,6 +62,8 @@ type SendReq struct {
 	msgTypes.SendSpec
 }
 
+type MsgReplaceReq = msgTypes.ReplacMessageParams
+
 type EncodingType string
 
 const (
@@ -70,7 +72,7 @@ const (
 	EncJson EncodingType = "json"
 )
 
-func (sp *SendReq) Decode(node nodeV1.IActor) (params []byte, err error) {
+func (sp *MsgSendReq) Decode(node nodeV1.IActor) (params []byte, err error) {
 
 	switch sp.EncType {
 	case EncNull:
@@ -92,7 +94,7 @@ func (sp *SendReq) Decode(node nodeV1.IActor) (params []byte, err error) {
 	return params, nil
 }
 
-func (sp *SendReq) DecodeJSON(node nodeV1.IActor) (out []byte, err error) {
+func (sp *MsgSendReq) DecodeJSON(node nodeV1.IActor) (out []byte, err error) {
 	methodMeta, err := utils.GetMethodMeta(node, sp.To, sp.Method)
 	if err != nil {
 		return nil, err
@@ -110,6 +112,24 @@ func (sp *SendReq) DecodeJSON(node nodeV1.IActor) (out []byte, err error) {
 	return buf.Bytes(), nil
 }
 
-func (sp *SendReq) DecodeHex() (out []byte, err error) {
+func (sp *MsgSendReq) DecodeHex() (out []byte, err error) {
 	return hex.DecodeString(string(sp.Params))
+}
+
+type AddrOperateType string
+
+var (
+	DeleteAddress    AddrOperateType = "delete"
+	ActiveAddress    AddrOperateType = "active"
+	ForbiddenAddress AddrOperateType = "forbidden"
+	SetAddress       AddrOperateType = "set"
+)
+
+type AddrsResp msgTypes.Address
+
+type AddrsOperateReq struct {
+	msgTypes.AddressSpec
+	Operate      AddrOperateType
+	SelectMsgNum uint64
+	IsSetSpec    bool
 }

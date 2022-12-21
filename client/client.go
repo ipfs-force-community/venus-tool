@@ -41,7 +41,15 @@ func (c *Client) Post(ctx context.Context, path string, body, result interface{}
 	path = c.apiVersion + path
 
 	errResp := &route.ErrorResp{}
-	resp, err := c.R().SetContext(ctx).SetBody(body).SetResult(result).SetError(errResp).Post(path)
+	req := c.R().SetContext(ctx).SetError(errResp)
+	if body != nil {
+		req = req.SetBody(body)
+	}
+	if result != nil {
+		req = req.SetResult(result)
+	}
+
+	resp, err := req.Post(path)
 	if err != nil {
 		return err
 	}
@@ -58,7 +66,10 @@ func (c *Client) Get(ctx context.Context, path string, params, result interface{
 	path = c.apiVersion + path
 
 	errResp := &route.ErrorResp{}
-	req := c.R().SetContext(ctx).SetResult(result).SetError(errResp)
+	req := c.R().SetContext(ctx).SetError(errResp)
+	if result != nil {
+		req = req.SetResult(result)
+	}
 	if params != nil {
 		if m, ok := params.(map[string]string); ok {
 			req.SetQueryParams(m)

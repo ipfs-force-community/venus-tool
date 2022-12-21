@@ -1,8 +1,6 @@
-package cil
+package cli
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -15,9 +13,6 @@ import (
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/big"
-	"github.com/filecoin-project/go-state-types/crypto"
-	"github.com/filecoin-project/go-state-types/exitcode"
-	"github.com/filecoin-project/venus-messager/cli/tablewriter"
 	venusTypes "github.com/filecoin-project/venus/venus-shared/types"
 	"github.com/filecoin-project/venus/venus-shared/types/messager"
 	types "github.com/filecoin-project/venus/venus-shared/types/messager"
@@ -43,13 +38,13 @@ var MsgCmd = &cli.Command{
 	Name:  "msg",
 	Usage: "Message related commands",
 	Subcommands: []*cli.Command{
-		sendCmd,
-		listCmd,
-		replaceCmd,
+		msgDendCmd,
+		msgListCmd,
+		msgReplaceCmd,
 	},
 }
 
-var sendCmd = &cli.Command{
+var msgDendCmd = &cli.Command{
 	Name:      "send",
 	Usage:     "Send a message",
 	ArgsUsage: "[targetAddress] [amount]",
@@ -96,7 +91,7 @@ var sendCmd = &cli.Command{
 			return err
 		}
 
-		var params service.SendReq
+		var params service.MsgSendReq
 		params.To, err = address.NewFromString(ctx.Args().Get(0))
 		if err != nil {
 			return fmt.Errorf("failed to parse target address: %w", err)
@@ -162,7 +157,7 @@ var sendCmd = &cli.Command{
 	},
 }
 
-var listCmd = &cli.Command{
+var msgListCmd = &cli.Command{
 	Name:  "list",
 	Usage: "list messages",
 	Flags: []cli.Flag{
@@ -224,10 +219,10 @@ if [--failed] or [--blocked] is set, [--state] will be ignored
 			return err
 		}
 
-		parseParams := func() (service.QueryMsgReq, error) {
+		parseParams := func() (service.MsgQueryReq, error) {
 
-			params := service.QueryMsgReq{}
-			nilParams := service.QueryMsgReq{}
+			params := service.MsgQueryReq{}
+			nilParams := service.MsgQueryReq{}
 
 			if ctx.IsSet("failed") {
 				params.IsFailed = true
@@ -287,7 +282,7 @@ if [--failed] or [--blocked] is set, [--state] will be ignored
 	},
 }
 
-var replaceCmd = &cli.Command{
+var msgReplaceCmd = &cli.Command{
 	Name:  "replace",
 	Usage: "replace a message",
 	Flags: []cli.Flag{
@@ -405,163 +400,4 @@ var replaceCmd = &cli.Command{
 		fmt.Println("new message cid: ", cid)
 		return nil
 	},
-}
-
-func outputWithJson(msgs []*service.MsgResp) error {
-	bytes, err := json.MarshalIndent(msgs, " ", "\t")
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(bytes))
-	return nil
-}
-
-func outputWithTable(msgs []*service.MsgResp, verbose bool) error {
-	var tw = tablewriter.New(
-		tablewriter.Col("ID"),
-		tablewriter.Col("To"),
-		tablewriter.Col("From"),
-		tablewriter.Col("Nonce"),
-		tablewriter.Col("Value"),
-		tablewriter.Col("GasLimit"),
-		tablewriter.Col("GasFeeCap"),
-		tablewriter.Col("GasPremium"),
-		tablewriter.Col("Method"),
-		tablewriter.Col("State"),
-		tablewriter.Col("ExitCode"),
-		tablewriter.Col("CreateAt"),
-	)
-
-	for _, msgT := range msgs {
-		msg := transformMessage(msgT)
-		val := venusTypes.MustParseFIL(msg.Msg.Value.String() + "attofil").String()
-		row := map[string]interface{}{
-			"ID":         msg.ID,
-			"To":         msg.Msg.To,
-			"From":       msg.Msg.From,
-			"Nonce":      msg.Msg.Nonce,
-			"Value":      val,
-			"GasLimit":   msg.Msg.GasLimit,
-			"GasFeeCap":  msg.Msg.GasFeeCap,
-			"GasPremium": msg.Msg.GasPremium,
-			"Method":     msg.Msg.Method,
-			"State":      msg.State,
-			"ErrorMsg":   msgT.ErrorMsg,
-			"CreateAt":   msg.CreatedAt.Format("2006-01-02 15:04:05"),
-		}
-		if !verbose {
-			if from := msg.Msg.From.String(); len(from) > 9 {
-				row["From"] = from[:9] + "..."
-			}
-			if to := msg.Msg.To.String(); len(to) > 9 {
-				row["To"] = to[:9] + "..."
-			}
-			if len(msg.ID) > 36 {
-				row["ID"] = msg.ID[:36] + "..."
-			}
-			if len(val) > 6 {
-				row["Value"] = val[:6] + "..."
-			}
-		}
-		if msg.Receipt != nil {
-			row["ExitCode"] = msg.Receipt.ExitCode
-		}
-		tw.Write(row)
-	}
-
-	buf := new(bytes.Buffer)
-	if err := tw.Flush(buf); err != nil {
-		return err
-	}
-	fmt.Println(buf)
-	return nil
-}
-
-type msgTmp struct {
-	Version    uint64
-	To         address.Address
-	From       address.Address
-	Nonce      uint64
-	Value      abi.TokenAmount
-	GasLimit   int64
-	GasFeeCap  abi.TokenAmount
-	GasPremium abi.TokenAmount
-	Method     string
-	Params     []byte
-}
-
-type receipt struct {
-	ExitCode exitcode.ExitCode
-	Return   string
-	GasUsed  int64
-}
-
-type message struct {
-	ID string
-
-	UnsignedCid *cid.Cid
-	SignedCid   *cid.Cid
-	Msg         msgTmp
-	Signature   *crypto.Signature
-
-	Height     int64
-	Confidence int64
-	Receipt    *receipt
-	TipSetKey  venusTypes.TipSetKey
-
-	Meta *types.SendSpec
-
-	WalletName string
-
-	State string
-
-	UpdatedAt time.Time
-	CreatedAt time.Time
-}
-
-func transformMessage(msg *service.MsgResp) *message {
-	if msg == nil {
-		return nil
-	}
-
-	m := &message{
-		ID:          msg.ID,
-		UnsignedCid: msg.UnsignedCid,
-		SignedCid:   msg.SignedCid,
-		Signature:   msg.Signature,
-		Height:      msg.Height,
-		Confidence:  msg.Confidence,
-		TipSetKey:   msg.TipSetKey,
-		Meta:        msg.Meta,
-		WalletName:  msg.WalletName,
-		State:       msg.State.String(),
-
-		UpdatedAt: msg.UpdatedAt,
-		CreatedAt: msg.CreatedAt,
-	}
-	if msg.Receipt != nil {
-		m.Receipt = &receipt{
-			ExitCode: msg.Receipt.ExitCode,
-			Return:   string(msg.Receipt.Return),
-			GasUsed:  msg.Receipt.GasUsed,
-		}
-	}
-
-	m.Msg = msgTmp{
-		Version:    msg.Version,
-		To:         msg.To,
-		From:       msg.From,
-		Nonce:      msg.Nonce,
-		Value:      msg.Value,
-		GasLimit:   msg.GasLimit,
-		GasFeeCap:  msg.GasFeeCap,
-		GasPremium: msg.GasPremium,
-		Method:     fmt.Sprint(msg.Message.Method),
-		Params:     msg.Params,
-	}
-	if msg.MethodName != "" {
-		m.Msg.Method = msg.MethodName
-	}
-
-	return m
 }

@@ -24,7 +24,7 @@ type Service struct {
 	Miners   []address.Address
 }
 
-func (s *Service) MsgSend(ctx context.Context, params *SendReq) (string, error) {
+func (s *Service) MsgSend(ctx context.Context, params *MsgSendReq) (string, error) {
 
 	decParams, err := params.Decode(s.Node)
 	if err != nil {
@@ -43,7 +43,7 @@ func (s *Service) MsgSend(ctx context.Context, params *SendReq) (string, error) 
 	return s.Messager.PushMessage(ctx, msg, &params.SendSpec)
 }
 
-func (s *Service) MsgQuery(ctx context.Context, params *QueryMsgReq) ([]*MsgResp, error) {
+func (s *Service) MsgQuery(ctx context.Context, params *MsgQueryReq) ([]*MsgResp, error) {
 	var msgs []*msgTypes.Message
 	var err error
 	if params.ID != "" {
@@ -108,9 +108,52 @@ func (s *Service) MsgQuery(ctx context.Context, params *QueryMsgReq) ([]*MsgResp
 	return ret, nil
 }
 
-func (s *Service) MsgReplace(ctx context.Context, params *msgTypes.ReplacMessageParams) (cid.Cid, error) {
+func (s *Service) MsgReplace(ctx context.Context, params *MsgReplaceReq) (cid.Cid, error) {
 	cid, err := s.Messager.ReplaceMessage(ctx, params)
 	return cid, err
+}
+
+func (s *Service) AddrOperate(ctx context.Context, params *AddrsOperateReq) error {
+	has, err := s.Messager.HasAddress(ctx, params.Address)
+	if err != nil {
+		return err
+	}
+	if !has {
+		return fmt.Errorf("address not exist")
+	}
+	switch params.Operate {
+	case DeleteAddress:
+		return s.Messager.DeleteAddress(ctx, params.Address)
+	case ActiveAddress:
+		return s.Messager.ActiveAddress(ctx, params.Address)
+	case ForbiddenAddress:
+		return s.Messager.ForbiddenAddress(ctx, params.Address)
+	case SetAddress:
+		if params.IsSetSpec {
+			err := s.Messager.SetFeeParams(ctx, &params.AddressSpec)
+			if err != nil {
+				return err
+			}
+		}
+		if params.SelectMsgNum != 0 {
+			return s.Messager.SetSelectMsgNum(ctx, params.Address, params.SelectMsgNum)
+		}
+		return nil
+	default:
+		return fmt.Errorf("unknown operate type")
+	}
+}
+
+func (s *Service) AddrList(ctx context.Context) ([]*AddrsResp, error) {
+	addrs, err := s.Messager.ListAddress(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ret := make([]*AddrsResp, 0, len(addrs))
+	for _, addr := range addrs {
+		ret = append(ret, (*AddrsResp)(addr))
+	}
+	return ret, err
 }
 
 func (s *Service) GetDefaultWallet(ctx context.Context) (address.Address, error) {

@@ -21,11 +21,16 @@ func registerRoute(s *service.Service) http.Handler {
 	})
 
 	apiV0Group := router.Group("/api/v0")
+
 	msgGroup := apiV0Group.Group("/msg")
-	msgGroup.POST("send", Wrap(s.MsgSend))
-	msgGroup.POST("replace", Wrap(s.MsgReplace))
 	msgGroup.GET("query", Wrap(s.MsgQuery))
 	msgGroup.GET(":ID", Wrap(s.MsgQuery))
+	msgGroup.POST("send", Wrap(s.MsgSend))
+	msgGroup.POST("replace", Wrap(s.MsgReplace))
+
+	addrGroup := apiV0Group.Group("/addr")
+	addrGroup.GET("list", Wrap(s.AddrList))
+	addrGroup.POST("operate", Wrap(s.AddrOperate))
 
 	return router
 }

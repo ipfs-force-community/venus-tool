@@ -116,7 +116,10 @@ var runCmd = &cli.Command{
 			updateFlag(cfg, cctx)
 		} else {
 			updateFlag(cfg, cctx)
-			repo.Init(cfg)
+			err := repo.Init(cfg)
+			if err != nil {
+				return err
+			}
 		}
 
 		// todo replace it with stub

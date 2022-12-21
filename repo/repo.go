@@ -17,15 +17,10 @@ func NewRepo(path string) *Repo {
 	repo := &Repo{
 		Path: path,
 	}
-	if !repo.IsExist() {
-		if err := repo.Init(); err != nil {
-			panic(err)
-		}
-	}
 	return repo
 }
 
-func (r *Repo) IsExist() bool {
+func (r *Repo) Exists() bool {
 	// check if repo path exists
 	if _, err := os.Stat(r.Path); os.IsNotExist(err) {
 		return false
@@ -33,14 +28,13 @@ func (r *Repo) IsExist() bool {
 	return true
 }
 
-func (r *Repo) Init() error {
+func (r *Repo) Init(cfg *config.Config) error {
 	// create repo path
 	if err := os.MkdirAll(r.Path, os.ModePerm); err != nil {
 		return err
 	}
 	// create config file
 	cfgPath := filepath.Join(r.Path, ConfigPath+".toml")
-	cfg := config.DefaultConfig()
 	cfg.Path = cfgPath
 	return cfg.Save()
 }

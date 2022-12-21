@@ -107,12 +107,16 @@ var runCmd = &cli.Command{
 			return err
 		}
 		repo := repo.NewRepo(repoPath)
-		cfg, err := repo.GetConfig()
-		if err != nil {
-			return err
-		}
-		if err = updateFlag(cfg, cctx); err != nil {
-			return err
+		cfg := config.DefaultConfig()
+		if repo.Exists() {
+			cfg, err = repo.GetConfig()
+			if err != nil {
+				return err
+			}
+			updateFlag(cfg, cctx)
+		} else {
+			updateFlag(cfg, cctx)
+			repo.Init(cfg)
 		}
 
 		// todo replace it with stub
@@ -180,7 +184,7 @@ var runCmd = &cli.Command{
 	},
 }
 
-func updateFlag(cfg *config.Config, ctx *cli.Context) error {
+func updateFlag(cfg *config.Config, ctx *cli.Context) {
 
 	commonToken := ctx.String(flagComToken.Name)
 
@@ -218,6 +222,4 @@ func updateFlag(cfg *config.Config, ctx *cli.Context) error {
 	if cfg.MarketAPI.Token == "" && commonToken != "" {
 		cfg.MarketAPI.Token = commonToken
 	}
-
-	return cfg.Save()
 }

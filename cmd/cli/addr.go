@@ -10,7 +10,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-var AddrCmds = &cli.Command{
+var AddrCmd = &cli.Command{
 	Name:      "addr",
 	Usage:     "operate the address which is used to send message",
 	ArgsUsage: "[address]",

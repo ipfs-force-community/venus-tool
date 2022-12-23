@@ -82,7 +82,8 @@ func main() {
 		Commands: []*cli.Command{
 			runCmd,
 			vtCli.MsgCmd,
-			vtCli.AddrCmds,
+			vtCli.AddrCmd,
+			vtCli.MinerCmd,
 		},
 	}
 	app.Setup()

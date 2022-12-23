@@ -5,6 +5,9 @@ import (
 	"fmt"
 
 	"github.com/filecoin-project/go-address"
+	"github.com/filecoin-project/go-fil-markets/retrievalmarket"
+	"github.com/filecoin-project/go-fil-markets/storagemarket"
+	"github.com/filecoin-project/go-state-types/abi"
 	nodeV1 "github.com/filecoin-project/venus/venus-shared/api/chain/v1"
 	"github.com/filecoin-project/venus/venus-shared/api/market"
 	"github.com/filecoin-project/venus/venus-shared/api/messager"
@@ -154,6 +157,44 @@ func (s *Service) AddrList(ctx context.Context) ([]*AddrsResp, error) {
 		ret = append(ret, (*AddrsResp)(addr))
 	}
 	return ret, err
+}
+
+func (s *Service) MinerGetStorageAsk(ctx context.Context, mAddr address.Address) (*storagemarket.StorageAsk, error) {
+	sAsk, err := s.Market.MarketGetAsk(ctx, mAddr)
+	if err != nil {
+		return nil, err
+	}
+	return sAsk.Ask, nil
+}
+
+func (s *Service) MinerGetRetrievalAsk(ctx context.Context, mAddr address.Address) (*retrievalmarket.Ask, error) {
+	return s.Market.MarketGetRetrievalAsk(ctx, mAddr)
+}
+
+func (s *Service) MinerSetStorageAsk(ctx context.Context, p *MinerSetAskReq) error {
+	info, err := s.Node.StateMinerInfo(ctx, p.Miner, venusTypes.EmptyTSK)
+	if err != nil {
+		return fmt.Errorf("get miner sector size failed: %s", err)
+	}
+
+	smax := abi.PaddedPieceSize(info.SectorSize)
+
+	if p.MaxPieceSize == 0 {
+		p.MaxPieceSize = smax
+	}
+
+	if p.MaxPieceSize > smax {
+		return fmt.Errorf("max piece size (w/bit-padding) %s cannot exceed miner sector size %s", venusTypes.SizeStr(venusTypes.NewInt(uint64(p.MaxPieceSize))), venusTypes.SizeStr(venusTypes.NewInt(uint64(smax))))
+	}
+	return s.Market.MarketSetAsk(ctx, p.Miner, p.Price, p.VerifiedPrice, p.Duration, p.MinPieceSize, p.MaxPieceSize)
+}
+
+func (s *Service) MinerSetRetrievalAsk(ctx context.Context, p *MinerSetRetrievalAskReq) error {
+	return s.Market.MarketSetRetrievalAsk(ctx, p.Miner, &p.Ask)
+}
+
+func (s *Service) ChainHead(ctx context.Context) (*venusTypes.TipSet, error) {
+	return s.Node.ChainHead(ctx)
 }
 
 func (s *Service) GetDefaultWallet(ctx context.Context) (address.Address, error) {

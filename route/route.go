@@ -22,6 +22,9 @@ func registerRoute(s *service.Service) http.Handler {
 
 	apiV0Group := router.Group("/api/v0")
 
+	chainGroup := apiV0Group.Group("/chain")
+	chainGroup.GET("/head/", Wrap(s.ChainHead))
+
 	msgGroup := apiV0Group.Group("/msg")
 	msgGroup.GET("query", Wrap(s.MsgQuery))
 	msgGroup.GET(":ID", Wrap(s.MsgQuery))
@@ -31,6 +34,14 @@ func registerRoute(s *service.Service) http.Handler {
 	addrGroup := apiV0Group.Group("/addr")
 	addrGroup.GET("list", Wrap(s.AddrList))
 	addrGroup.POST("operate", Wrap(s.AddrOperate))
+
+	minerGroup := apiV0Group.Group("/miner")
+	storageAskGroup := minerGroup.Group("/ask/storage")
+	storageAskGroup.GET("", Wrap(s.MinerGetStorageAsk))
+	storageAskGroup.POST("", Wrap(s.MinerSetStorageAsk))
+	retrievalAskGroup := minerGroup.Group("/ask/retrieval")
+	retrievalAskGroup.GET("", Wrap(s.MinerGetRetrievalAsk))
+	retrievalAskGroup.POST("", Wrap(s.MinerSetRetrievalAsk))
 
 	return router
 }

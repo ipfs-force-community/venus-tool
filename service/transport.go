@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/filecoin-project/go-address"
+	"github.com/filecoin-project/go-fil-markets/retrievalmarket"
 	"github.com/filecoin-project/go-state-types/abi"
 	nodeV1 "github.com/filecoin-project/venus/venus-shared/api/chain/v1"
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
@@ -132,4 +133,18 @@ type AddrsOperateReq struct {
 	Operate      AddrOperateType
 	SelectMsgNum uint64
 	IsSetSpec    bool
+}
+
+type MinerSetAskReq struct {
+	Miner         address.Address
+	Price         abi.TokenAmount
+	VerifiedPrice abi.TokenAmount
+	Duration      abi.ChainEpoch
+	MinPieceSize  abi.PaddedPieceSize
+	MaxPieceSize  abi.PaddedPieceSize
+}
+
+type MinerSetRetrievalAskReq struct {
+	retrievalmarket.Ask
+	Miner address.Address
 }

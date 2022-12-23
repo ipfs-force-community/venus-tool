@@ -12,6 +12,7 @@ import (
 	"github.com/filecoin-project/venus/venus-shared/api/market"
 	"github.com/filecoin-project/venus/venus-shared/api/messager"
 	venusTypes "github.com/filecoin-project/venus/venus-shared/types"
+	marketTypes "github.com/filecoin-project/venus/venus-shared/types/market"
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
 	"github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log"
@@ -191,6 +192,22 @@ func (s *Service) MinerSetStorageAsk(ctx context.Context, p *MinerSetAskReq) err
 
 func (s *Service) MinerSetRetrievalAsk(ctx context.Context, p *MinerSetRetrievalAskReq) error {
 	return s.Market.MarketSetRetrievalAsk(ctx, p.Miner, &p.Ask)
+}
+
+func (s *Service) DealStorageList(ctx context.Context, miner address.Address) ([]marketTypes.MinerDeal, error) {
+	deals, err := s.Market.MarketListIncompleteDeals(ctx, miner)
+	if err != nil {
+		return nil, err
+	}
+	return deals, nil
+}
+
+func (s *Service) DealStorageUpdateState(ctx context.Context, req StorageDealUpdateStateReq) error {
+	return s.Market.UpdateStorageDealStatus(ctx, req.ProposalCid, req.State, req.PieceStatus)
+}
+
+func (s *Service) DealRetrievalList(ctx context.Context) ([]marketTypes.ProviderDealState, error) {
+	return s.Market.MarketListRetrievalDeals(ctx)
 }
 
 func (s *Service) ChainHead(ctx context.Context) (*venusTypes.TipSet, error) {

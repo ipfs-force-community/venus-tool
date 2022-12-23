@@ -10,10 +10,13 @@ import (
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-fil-markets/retrievalmarket"
+	"github.com/filecoin-project/go-fil-markets/storagemarket"
 	"github.com/filecoin-project/go-state-types/abi"
 	nodeV1 "github.com/filecoin-project/venus/venus-shared/api/chain/v1"
+	marketTypes "github.com/filecoin-project/venus/venus-shared/types/market"
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
 	"github.com/ipfs-force-community/venus-tool/utils"
+	"github.com/ipfs/go-cid"
 	cbg "github.com/whyrusleeping/cbor-gen"
 )
 
@@ -147,4 +150,10 @@ type MinerSetAskReq struct {
 type MinerSetRetrievalAskReq struct {
 	retrievalmarket.Ask
 	Miner address.Address
+}
+
+type StorageDealUpdateStateReq struct {
+	ProposalCid cid.Cid
+	State       storagemarket.StorageDealStatus
+	PieceStatus marketTypes.PieceStatus
 }

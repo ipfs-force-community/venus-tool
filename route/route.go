@@ -43,6 +43,10 @@ func registerRoute(s *service.Service) http.Handler {
 	retrievalAskGroup.GET("", Wrap(s.MinerGetRetrievalAsk))
 	retrievalAskGroup.POST("", Wrap(s.MinerSetRetrievalAsk))
 
+	dealGroup := apiV0Group.Group("/deal")
+	dealGroup.GET("storage", Wrap(s.DealStorageList))
+	dealGroup.GET("retrieval", Wrap(s.DealRetrievalList))
+	dealGroup.POST("storage/state", Wrap(s.DealStorageUpdateState))
 	return router
 }
 

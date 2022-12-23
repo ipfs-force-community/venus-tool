@@ -278,7 +278,7 @@ if [--failed] or [--blocked] is set, [--state] will be ignored
 			return outputWithJson(res)
 		}
 
-		return outputWithTable(res, ctx.Bool("verbose"))
+		return outputMsgWithTable(res, ctx.Bool("verbose"))
 	},
 }
 

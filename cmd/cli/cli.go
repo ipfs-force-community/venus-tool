@@ -4,9 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"sort"
+	"text/tabwriter"
 	"time"
 
+	"github.com/docker/go-units"
 	"github.com/filecoin-project/go-address"
+	"github.com/filecoin-project/go-fil-markets/storagemarket"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/crypto"
 	"github.com/filecoin-project/go-state-types/exitcode"
@@ -17,8 +22,17 @@ import (
 
 	"github.com/filecoin-project/venus-messager/cli/tablewriter"
 	venusTypes "github.com/filecoin-project/venus/venus-shared/types"
+	"github.com/filecoin-project/venus/venus-shared/types/market"
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
 )
+
+var StringToStorageState = map[string]storagemarket.StorageDealStatus{}
+
+func init() {
+	for state, stateStr := range storagemarket.DealStates {
+		StringToStorageState[stateStr] = state
+	}
+}
 
 var FlagServer = &cli.StringFlag{
 	Name:  "server-addr",
@@ -46,7 +60,7 @@ func outputWithJson(msgs []*service.MsgResp) error {
 	return printJSON(msgs)
 }
 
-func outputWithTable(msgs []*service.MsgResp, verbose bool) error {
+func outputMsgWithTable(msgs []*service.MsgResp, verbose bool) error {
 	var tw = tablewriter.New(
 		tablewriter.Col("ID"),
 		tablewriter.Col("To"),
@@ -203,4 +217,59 @@ func printJSON(v interface{}) error {
 	}
 	fmt.Println(string(bytes))
 	return nil
+}
+
+func outputStorageDeals(out io.Writer, deals []market.MinerDeal, verbose bool) error {
+	sort.Slice(deals, func(i, j int) bool {
+		return deals[i].CreationTime.Time().Before(deals[j].CreationTime.Time())
+	})
+
+	w := tabwriter.NewWriter(out, 2, 4, 2, ' ', 0)
+
+	if verbose {
+		_, _ = fmt.Fprintf(w, "Creation\tVerified\tProposalCid\tDealId\tState\tPieceState\tClient\tProvider\tSize\tPrice\tDuration\tTransferChannelID\tAddFundCid\tPublishCid\tMessage\n")
+	} else {
+		_, _ = fmt.Fprintf(w, "ProposalCid\tDealId\tState\tPieceState\tClient\tProvider\tSize\tPrice\tDuration\n")
+	}
+
+	for _, deal := range deals {
+		propcid := deal.ProposalCid.String()
+		if !verbose {
+			propcid = "..." + propcid[len(propcid)-8:]
+		}
+
+		fil := venusTypes.FIL(venusTypes.BigMul(deal.Proposal.StoragePricePerEpoch, venusTypes.NewInt(uint64(deal.Proposal.Duration()))))
+
+		if verbose {
+			_, _ = fmt.Fprintf(w, "%s\t%t\t", deal.CreationTime.Time().Format(time.Stamp), deal.Proposal.VerifiedDeal)
+		}
+
+		_, _ = fmt.Fprintf(w, "%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s", propcid, deal.DealID, storagemarket.DealStates[deal.State], deal.PieceStatus,
+			deal.Proposal.Client, deal.Proposal.Provider, units.BytesSize(float64(deal.Proposal.PieceSize)), fil, deal.Proposal.Duration())
+		if verbose {
+			tchid := ""
+			if deal.TransferChannelID != nil {
+				tchid = deal.TransferChannelID.String()
+			}
+
+			addFundcid := ""
+			if deal.AddFundsCid != nil {
+				addFundcid = deal.AddFundsCid.String()
+			}
+
+			pubcid := ""
+			if deal.PublishCid != nil {
+				pubcid = deal.PublishCid.String()
+			}
+
+			_, _ = fmt.Fprintf(w, "\t%s", tchid)
+			_, _ = fmt.Fprintf(w, "\t%s", addFundcid)
+			_, _ = fmt.Fprintf(w, "\t%s", pubcid)
+			_, _ = fmt.Fprintf(w, "\t%s", deal.Message)
+		}
+
+		_, _ = fmt.Fprintln(w)
+	}
+
+	return w.Flush()
 }

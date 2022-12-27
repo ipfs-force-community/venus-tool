@@ -28,10 +28,10 @@ func NewErrResponse(err error) ErrorResp {
 func Wrap(fn interface{}) gin.HandlerFunc {
 	fnType := reflect.TypeOf(fn)
 	fnValue := reflect.ValueOf(fn)
-	numIn, numOut := fnType.NumIn(), fnType.NumOut()
 	if fnType.Kind() != reflect.Func {
 		panic("fn must be a function")
 	}
+	numIn, numOut := fnType.NumIn(), fnType.NumOut()
 	hasCtx, hasParm, hasRet, hasErr := false, false, false, false
 
 	// check input
@@ -46,7 +46,7 @@ func Wrap(fn interface{}) gin.HandlerFunc {
 			hasCtx = true
 			hasParm = true
 		} else {
-			panic("if fn has two param ,the first one must be context.Context")
+			panic("if fn has two param, the first one must be context.Context")
 		}
 	default:
 		panic("fn must has at most two params")
@@ -64,7 +64,7 @@ func Wrap(fn interface{}) gin.HandlerFunc {
 			hasErr = true
 			hasRet = true
 		} else {
-			panic("if fn has two output ,the second one must be error")
+			panic("if fn has two output, the second one must be error")
 		}
 	default:
 		panic("fn must has at most two output")

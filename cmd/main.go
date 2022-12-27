@@ -45,19 +45,19 @@ var flagListen = &cli.StringFlag{
 var flagNodeAPI = &cli.StringFlag{
 	Name:    "node-api",
 	Aliases: []string{"node"},
-	Usage:   "specify venus node token and api address",
+	Usage:   "specify venus node token and api address. ex: --node-api=token:addr , if token was ignored, will use common token",
 }
 
 var flagMsgAPI = &cli.StringFlag{
 	Name:    "msg-api",
 	Aliases: []string{"msg"},
-	Usage:   "specify venus-messager token and api address",
+	Usage:   "specify venus-messager token and api address. ex: --msg-api=token:addr , if token was ignored, will use common token",
 }
 
 var flagMarketAPI = &cli.StringFlag{
 	Name:    "market-api",
 	Aliases: []string{"market"},
-	Usage:   "specify venus-market token and api address",
+	Usage:   "specify venus-market token and api address. ex: --market-api=token:addr , if token was ignored, will use common token",
 }
 
 var flagComToken = &cli.StringFlag{

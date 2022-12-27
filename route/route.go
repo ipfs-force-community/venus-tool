@@ -36,6 +36,7 @@ func registerRoute(s *service.Service) http.Handler {
 	addrGroup.POST("operate", Wrap(s.AddrOperate))
 
 	minerGroup := apiV0Group.Group("/miner")
+	minerGroup.POST("create", Wrap(s.MinerCreate))
 	storageAskGroup := minerGroup.Group("/ask/storage")
 	storageAskGroup.GET("", Wrap(s.MinerGetStorageAsk))
 	storageAskGroup.POST("", Wrap(s.MinerSetStorageAsk))

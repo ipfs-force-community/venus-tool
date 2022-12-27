@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 
@@ -8,12 +9,19 @@ import (
 	"github.com/filecoin-project/go-fil-markets/retrievalmarket"
 	"github.com/filecoin-project/go-fil-markets/storagemarket"
 	"github.com/filecoin-project/go-state-types/abi"
+	"github.com/filecoin-project/go-state-types/big"
+	power2 "github.com/filecoin-project/specs-actors/v2/actors/builtin/power"
+	"github.com/filecoin-project/venus/pkg/constants"
+	"github.com/filecoin-project/venus/venus-shared/actors"
+	"github.com/filecoin-project/venus/venus-shared/actors/builtin/miner"
+	"github.com/filecoin-project/venus/venus-shared/actors/builtin/power"
 	nodeV1 "github.com/filecoin-project/venus/venus-shared/api/chain/v1"
 	"github.com/filecoin-project/venus/venus-shared/api/market"
 	"github.com/filecoin-project/venus/venus-shared/api/messager"
 	venusTypes "github.com/filecoin-project/venus/venus-shared/types"
 	marketTypes "github.com/filecoin-project/venus/venus-shared/types/market"
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
+	"github.com/google/uuid"
 	"github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log"
 )
@@ -158,6 +166,91 @@ func (s *Service) AddrList(ctx context.Context) ([]*AddrsResp, error) {
 		ret = append(ret, (*AddrsResp)(addr))
 	}
 	return ret, err
+}
+
+func (s *Service) MinerCreate(ctx context.Context, params *MinerCreateReq) (address.Address, error) {
+	// if target msg no exist, send it
+	has := false
+	var err error
+	if params.MsgId != "" {
+		has, err = s.Messager.HasMessageByUid(ctx, params.MsgId)
+		if err != nil {
+			return address.Undef, err
+		}
+	} else {
+		params.MsgId = uuid.New().String()
+	}
+
+	if !has {
+		sealProof, err := miner.SealProofTypeFromSectorSize(params.SectorSize, constants.TestNetworkVersion)
+		if err != nil {
+			return address.Undef, err
+		}
+
+		params.SealProofType = sealProof
+
+		if params.Owner == address.Undef {
+			actor, err := s.Node.StateLookupID(ctx, params.From, venusTypes.EmptyTSK)
+			if err != nil {
+				return address.Undef, err
+			}
+			params.Owner = actor
+		}
+
+		if params.Worker == address.Undef {
+			params.Worker = params.Owner
+		}
+
+		p, err := actors.SerializeParams(&params.CreateMinerParams)
+		if err != nil {
+			return address.Undef, err
+		}
+		msg := &venusTypes.Message{
+			From:   params.From,
+			To:     power.Address,
+			Method: power.Methods.CreateMiner,
+			Params: p,
+			Value:  big.Zero(),
+		}
+
+		_, err = s.Messager.PushMessageWithId(ctx, params.MsgId, msg, &msgTypes.SendSpec{})
+		if err != nil {
+			return address.Undef, err
+		}
+	}
+
+	ret, err := s.Messager.GetMessageByUid(ctx, params.MsgId)
+	if err != nil {
+		return address.Undef, err
+	}
+
+	switch ret.State {
+	case msgTypes.OnChainMsg, msgTypes.ReplacedMsg:
+		if ret.Receipt.ExitCode != 0 {
+			log.Warnf("message exec failed: %s(%d)", ret.Receipt.ExitCode, ret.Receipt.ExitCode)
+			return address.Undef, fmt.Errorf("message exec failed: %s(%d)", ret.Receipt.ExitCode, ret.Receipt.ExitCode)
+		}
+
+		var cRes power2.CreateMinerReturn
+		err = cRes.UnmarshalCBOR(bytes.NewReader(ret.Receipt.Return))
+		if err != nil {
+			return address.Undef, err
+		}
+
+		return cRes.IDAddress, nil
+
+	case msgTypes.NoWalletMsg:
+		log.Warnf("no wallet available for the sender %s, please check", params.From)
+		return address.Undef, fmt.Errorf("no wallet available for the sender %s, please check", params.From)
+
+	case msgTypes.FailedMsg:
+		log.Warnf("message failed: %s", ret.ErrorMsg)
+		return address.Undef, fmt.Errorf("message failed: %s", ret.ErrorMsg)
+
+	default:
+		log.Infof("msg state: %s", msgTypes.MessageStateToString(ret.State))
+		return address.Undef, fmt.Errorf("temp error: waiting msg (%s) with state(%s) to be on chain", ret.ID, msgTypes.MessageStateToString(ret.State))
+	}
 }
 
 func (s *Service) MinerGetStorageAsk(ctx context.Context, mAddr address.Address) (*storagemarket.StorageAsk, error) {

@@ -12,6 +12,7 @@ import (
 	"github.com/filecoin-project/go-fil-markets/retrievalmarket"
 	"github.com/filecoin-project/go-fil-markets/storagemarket"
 	"github.com/filecoin-project/go-state-types/abi"
+	power2 "github.com/filecoin-project/specs-actors/v2/actors/builtin/power"
 	nodeV1 "github.com/filecoin-project/venus/venus-shared/api/chain/v1"
 	marketTypes "github.com/filecoin-project/venus/venus-shared/types/market"
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
@@ -156,4 +157,11 @@ type StorageDealUpdateStateReq struct {
 	ProposalCid cid.Cid
 	State       storagemarket.StorageDealStatus
 	PieceStatus marketTypes.PieceStatus
+}
+
+type MinerCreateReq struct {
+	power2.CreateMinerParams
+	From       address.Address
+	SectorSize abi.SectorSize
+	MsgId      string
 }

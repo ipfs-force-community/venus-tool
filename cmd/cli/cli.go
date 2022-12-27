@@ -18,6 +18,7 @@ import (
 	"github.com/ipfs-force-community/venus-tool/client"
 	"github.com/ipfs-force-community/venus-tool/service"
 	"github.com/ipfs/go-cid"
+	logging "github.com/ipfs/go-log"
 	"github.com/urfave/cli/v2"
 
 	"github.com/filecoin-project/venus-messager/cli/tablewriter"
@@ -25,6 +26,8 @@ import (
 	"github.com/filecoin-project/venus/venus-shared/types/market"
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
 )
+
+var log = logging.Logger("cmd")
 
 var StringToStorageState = map[string]storagemarket.StorageDealStatus{}
 

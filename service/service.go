@@ -6,14 +6,17 @@ import (
 	"fmt"
 
 	"github.com/filecoin-project/go-address"
+	"github.com/filecoin-project/go-bitfield"
 	"github.com/filecoin-project/go-fil-markets/retrievalmarket"
 	"github.com/filecoin-project/go-fil-markets/storagemarket"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/big"
+	"github.com/filecoin-project/go-state-types/builtin"
 	power2 "github.com/filecoin-project/specs-actors/v2/actors/builtin/power"
 	"github.com/filecoin-project/venus/pkg/constants"
 	"github.com/filecoin-project/venus/venus-shared/actors"
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin/miner"
+	lminer "github.com/filecoin-project/venus/venus-shared/actors/builtin/miner"
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin/power"
 	nodeV1 "github.com/filecoin-project/venus/venus-shared/api/chain/v1"
 	"github.com/filecoin-project/venus/venus-shared/api/market"
@@ -34,6 +37,17 @@ type Service struct {
 	Node     nodeV1.FullNode
 	Wallets  []address.Address
 	Miners   []address.Address
+}
+
+func (s *Service) ChainHead(ctx context.Context) (*venusTypes.TipSet, error) {
+	return s.Node.ChainHead(ctx)
+}
+
+func (s *Service) GetDefaultWallet(ctx context.Context) (address.Address, error) {
+	if len(s.Wallets) == 0 {
+		return address.Undef, fmt.Errorf("no wallet configured")
+	}
+	return s.Wallets[0], nil
 }
 
 func (s *Service) MsgSend(ctx context.Context, params *MsgSendReq) (string, error) {
@@ -303,13 +317,57 @@ func (s *Service) DealRetrievalList(ctx context.Context) ([]marketTypes.Provider
 	return s.Market.MarketListRetrievalDeals(ctx)
 }
 
-func (s *Service) ChainHead(ctx context.Context) (*venusTypes.TipSet, error) {
-	return s.Node.ChainHead(ctx)
-}
+func (s *Service) SectorExtend(ctx context.Context, req SectorExtendReq) error {
+	var err error
+	rawParams := &venusTypes.ExtendSectorExpirationParams{}
 
-func (s *Service) GetDefaultWallet(ctx context.Context) (address.Address, error) {
-	if len(s.Wallets) == 0 {
-		return address.Undef, fmt.Errorf("no wallet configured")
+	sectors := map[lminer.SectorLocation][]abi.SectorNumber{}
+	for _, num := range req.SectorNumbers {
+		p, err := s.Node.StateSectorPartition(ctx, req.Miner, num, venusTypes.EmptyTSK)
+		if err != nil {
+			return fmt.Errorf("get sector partition failed: %s", err)
+		}
+
+		if p == nil {
+			return fmt.Errorf("sector %d not found", num)
+		}
+
+		sectors[*p] = append(sectors[*p], num)
 	}
-	return s.Wallets[0], nil
+
+	for p, numbers := range sectors {
+		nums := make([]uint64, len(numbers))
+		for i, n := range numbers {
+			nums[i] = uint64(n)
+		}
+		rawParams.Extensions = append(rawParams.Extensions, venusTypes.ExpirationExtension{
+			Deadline:      p.Deadline,
+			Partition:     p.Partition,
+			Sectors:       bitfield.NewFromSet(nums),
+			NewExpiration: req.Expiration,
+		})
+	}
+
+	params, err := actors.SerializeParams(rawParams)
+	if err != nil {
+		return err
+	}
+
+	mi, err := s.Node.StateMinerInfo(ctx, req.Miner, venusTypes.EmptyTSK)
+	if err != nil {
+		return fmt.Errorf("get miner info failed: %s", err)
+	}
+
+	_, err = s.Messager.PushMessage(ctx, &venusTypes.Message{
+		From:   mi.Worker,
+		To:     req.Miner,
+		Method: builtin.MethodsMiner.ExtendSectorExpiration,
+		Params: params,
+		Value:  big.Zero(),
+	}, &msgTypes.SendSpec{})
+	if err != nil {
+		return fmt.Errorf("push message failed: %s", err)
+	}
+
+	return nil
 }

@@ -85,6 +85,7 @@ func main() {
 			vtCli.AddrCmd,
 			vtCli.MinerCmd,
 			vtCli.DealCmd,
+			vtCli.SectorCmd,
 		},
 	}
 	app.Setup()

@@ -165,3 +165,9 @@ type MinerCreateReq struct {
 	SectorSize abi.SectorSize
 	MsgId      string
 }
+
+type SectorExtendReq struct {
+	Miner         address.Address
+	SectorNumbers []abi.SectorNumber
+	Expiration    abi.ChainEpoch
+}

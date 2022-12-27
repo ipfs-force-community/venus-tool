@@ -48,6 +48,9 @@ func registerRoute(s *service.Service) http.Handler {
 	dealGroup.GET("storage", Wrap(s.DealStorageList))
 	dealGroup.GET("retrieval", Wrap(s.DealRetrievalList))
 	dealGroup.POST("storage/state", Wrap(s.DealStorageUpdateState))
+
+	sectorGroup := apiV0Group.Group("/sector")
+	sectorGroup.POST("extend", Wrap(s.SectorExtend))
 	return router
 }
 

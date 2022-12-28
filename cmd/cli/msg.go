@@ -161,17 +161,19 @@ var msgListCmd = &cli.Command{
 	Name:  "list",
 	Usage: "list messages",
 	Flags: []cli.Flag{
-		&cli.IntFlag{
-			Name:    "page-index",
-			Usage:   "pagination index, start from 1",
-			Aliases: []string{"i", "index"},
-			Value:   1,
+		&cli.StringSliceFlag{
+			Name:    "from",
+			Usage:   "Specify the sender address",
+			Aliases: []string{"f"},
 		},
-		&cli.IntFlag{
-			Name:    "page-size",
-			Usage:   "pagination size, default tob 100",
+		&cli.StringFlag{
+			Name:  "id",
+			Usage: "Specify the message id",
+		},
+		&cli.Uint64Flag{
+			Name:    "nonce",
+			Usage:   "Specify the message nonce",
 			Aliases: []string{"n"},
-			Value:   100,
 		},
 		&cli.BoolFlag{
 			Name:  "blocked",
@@ -187,14 +189,20 @@ var msgListCmd = &cli.Command{
 			Aliases: []string{"t"},
 			Value:   "3h",
 		},
-		&cli.StringSliceFlag{
-			Name:    "from",
-			Usage:   "Specify the sender address",
-			Aliases: []string{"f"},
-		},
 		&cli.BoolFlag{
 			Name:  "json",
 			Usage: "output in json format",
+		},
+		&cli.IntFlag{
+			Name:    "page-index",
+			Usage:   "pagination index, start from 1",
+			Aliases: []string{"i", "index"},
+			Value:   1,
+		},
+		&cli.IntFlag{
+			Name:  "page-size",
+			Usage: "pagination size, default tob 100",
+			Value: 100,
 		},
 		&cli.IntFlag{
 			Name:  "state",
@@ -224,6 +232,11 @@ if [--failed] or [--blocked] is set, [--state] will be ignored
 			params := service.MsgQueryReq{}
 			nilParams := service.MsgQueryReq{}
 
+			if ctx.IsSet("id") {
+				params.ID = ctx.String("id")
+				return params, nil
+			}
+
 			if ctx.IsSet("failed") {
 				params.IsFailed = true
 				return params, nil
@@ -241,6 +254,14 @@ if [--failed] or [--blocked] is set, [--state] will be ignored
 				}
 			}
 
+			if ctx.IsSet("nonce") {
+				params.Nonce = ctx.Uint64("nonce")
+				if len(params.From) == 0 {
+					return nilParams, fmt.Errorf("nonce is set, but from is not set")
+				}
+				return params, nil
+			}
+
 			if ctx.IsSet("blocked") {
 				if !ctx.IsSet("time") {
 					return nilParams, fmt.Errorf("please set [--time] when [--blocked] is set")
@@ -256,8 +277,11 @@ if [--failed] or [--blocked] is set, [--state] will be ignored
 			}
 
 			params.State = []types.MessageState{types.MessageState(ctx.Int("state"))}
-			params.PageIndex = ctx.Int("page-index")
-			params.PageSize = ctx.Int("page-size")
+
+			if ctx.IsSet("page-index") || ctx.IsSet("page-size") {
+				params.PageIndex = ctx.Int("page-index")
+				params.PageSize = ctx.Int("page-size")
+			}
 
 			return params, nil
 		}

@@ -37,6 +37,8 @@ func registerRoute(s *service.Service) http.Handler {
 
 	minerGroup := apiV0Group.Group("/miner")
 	minerGroup.POST("create", Wrap(s.MinerCreate))
+	minerGroup.GET("deadline", Wrap(s.MinerGetDeadlines))
+
 	storageAskGroup := minerGroup.Group("/ask/storage")
 	storageAskGroup.GET("", Wrap(s.MinerGetStorageAsk))
 	storageAskGroup.POST("", Wrap(s.MinerSetStorageAsk))
@@ -50,6 +52,7 @@ func registerRoute(s *service.Service) http.Handler {
 	dealGroup.POST("storage/state", Wrap(s.DealStorageUpdateState))
 
 	sectorGroup := apiV0Group.Group("/sector")
+	sectorGroup.GET("", Wrap(s.SectorGet))
 	sectorGroup.POST("extend", Wrap(s.SectorExtend))
 	return router
 }

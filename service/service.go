@@ -12,6 +12,7 @@ import (
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/big"
 	"github.com/filecoin-project/go-state-types/builtin"
+	"github.com/filecoin-project/go-state-types/dline"
 	power2 "github.com/filecoin-project/specs-actors/v2/actors/builtin/power"
 	"github.com/filecoin-project/venus/pkg/constants"
 	"github.com/filecoin-project/venus/venus-shared/actors"
@@ -301,6 +302,10 @@ func (s *Service) MinerSetRetrievalAsk(ctx context.Context, p *MinerSetRetrieval
 	return s.Market.MarketSetRetrievalAsk(ctx, p.Miner, &p.Ask)
 }
 
+func (s *Service) MinerGetDeadlines(ctx context.Context, mAddr address.Address) (*dline.Info, error) {
+	return s.Node.StateMinerProvingDeadline(ctx, mAddr, venusTypes.EmptyTSK)
+}
+
 func (s *Service) DealStorageList(ctx context.Context, miner address.Address) ([]marketTypes.MinerDeal, error) {
 	deals, err := s.Market.MarketListIncompleteDeals(ctx, miner)
 	if err != nil {
@@ -370,4 +375,26 @@ func (s *Service) SectorExtend(ctx context.Context, req SectorExtendReq) error {
 	}
 
 	return nil
+}
+
+func (s *Service) SectorGet(ctx context.Context, req SectorGetReq) ([]*SectorResp, error) {
+	ret := make([]*SectorResp, 0)
+	for _, num := range req.SectorNumbers {
+		sector, err := s.Node.StateSectorGetInfo(ctx, req.Miner, num, venusTypes.EmptyTSK)
+		if err != nil {
+			return nil, fmt.Errorf("get sector(%s) info failed: %s", num, err)
+		}
+
+		p, err := s.Node.StateSectorPartition(ctx, req.Miner, num, venusTypes.EmptyTSK)
+		if err != nil {
+			return nil, fmt.Errorf("get sector(%s) partition failed: %s", num, err)
+		}
+
+		ret = append(ret, &SectorResp{
+			SectorOnChainInfo: *sector,
+			SectorLocation:    *p,
+		})
+	}
+
+	return ret, nil
 }

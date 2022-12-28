@@ -13,7 +13,9 @@ import (
 	"github.com/filecoin-project/go-fil-markets/storagemarket"
 	"github.com/filecoin-project/go-state-types/abi"
 	power2 "github.com/filecoin-project/specs-actors/v2/actors/builtin/power"
+	lminer "github.com/filecoin-project/venus/venus-shared/actors/builtin/miner"
 	nodeV1 "github.com/filecoin-project/venus/venus-shared/api/chain/v1"
+	venusTypes "github.com/filecoin-project/venus/venus-shared/types"
 	marketTypes "github.com/filecoin-project/venus/venus-shared/types/market"
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
 	"github.com/ipfs-force-community/venus-tool/utils"
@@ -170,4 +172,14 @@ type SectorExtendReq struct {
 	Miner         address.Address
 	SectorNumbers []abi.SectorNumber
 	Expiration    abi.ChainEpoch
+}
+
+type SectorGetReq struct {
+	Miner         address.Address
+	SectorNumbers []abi.SectorNumber
+}
+
+type SectorResp struct {
+	venusTypes.SectorOnChainInfo
+	SectorLocation lminer.SectorLocation
 }

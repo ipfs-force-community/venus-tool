@@ -14,6 +14,7 @@ var SectorCmd = &cli.Command{
 	Name:  "sector",
 	Usage: "Interact with sectors",
 	Subcommands: []*cli.Command{
+		sectorGetCmd,
 		sectorExtendCmd,
 	},
 }
@@ -21,7 +22,7 @@ var SectorCmd = &cli.Command{
 var sectorExtendCmd = &cli.Command{
 	Name:      "extend",
 	Usage:     "Extend a sector's lifetime",
-	ArgsUsage: "[sectorNumber ...]",
+	ArgsUsage: "[sectorNumber]...",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:     "miner",
@@ -66,5 +67,53 @@ var sectorExtendCmd = &cli.Command{
 		}
 
 		return client.Post(ctx, "/sector/extend", req, nil)
+	},
+}
+
+var sectorGetCmd = &cli.Command{
+	Name:      "get",
+	Usage:     "Get sectors info",
+	ArgsUsage: "[miner] [sectorNumber]...",
+	Action: func(cctx *cli.Context) error {
+		if cctx.Args().Len() < 2 {
+			return fmt.Errorf("must pass miner address and sector number")
+		}
+
+		ctx := cctx.Context
+		client, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
+
+		miner, err := address.NewFromString(cctx.Args().Get(0))
+		if err != nil {
+			return err
+		}
+
+		sectors := make([]abi.SectorNumber, 0)
+		for i, s := range cctx.Args().Slice()[1:] {
+			id, err := strconv.ParseUint(s, 10, 64)
+			if err != nil {
+				return fmt.Errorf("could not parse sector %d: %w", i, err)
+			}
+			sectors = append(sectors, abi.SectorNumber(id))
+		}
+
+		req := service.SectorGetReq{
+			Miner:         miner,
+			SectorNumbers: sectors,
+		}
+
+		var resp []service.SectorResp
+		if err := client.Get(ctx, "/sector", req, &resp); err != nil {
+			return err
+		}
+
+		err = printJSON(resp)
+		if err != nil {
+			return fmt.Errorf("failed to print json: %w", err)
+		}
+
+		return nil
 	},
 }

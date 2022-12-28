@@ -13,6 +13,7 @@ import (
 	"github.com/filecoin-project/go-fil-markets/retrievalmarket"
 	"github.com/filecoin-project/go-fil-markets/storagemarket"
 	"github.com/filecoin-project/go-state-types/abi"
+	"github.com/filecoin-project/go-state-types/dline"
 	"github.com/filecoin-project/venus/pkg/constants"
 	"github.com/filecoin-project/venus/venus-shared/types"
 	"github.com/google/uuid"
@@ -29,6 +30,7 @@ var MinerCmd = &cli.Command{
 	Subcommands: []*cli.Command{
 		minerCreate,
 		minerAskCmd,
+		minerDeadlineCmd,
 	},
 }
 
@@ -406,5 +408,42 @@ var minerCreate = &cli.Command{
 		fmt.Println(miner)
 
 		return nil
+	},
+}
+
+var minerDeadlineCmd = &cli.Command{
+	Name:      "deadline",
+	Usage:     "query miner proving deadline info",
+	ArgsUsage: "[minerAddress]",
+	Action: func(cctx *cli.Context) error {
+		ctx := cctx.Context
+		client, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
+
+		if cctx.NArg() != 1 {
+			return fmt.Errorf("must pass miner address as first and only argument")
+		}
+
+		mAddr, err := address.NewFromString(cctx.Args().First())
+		if err != nil {
+			return err
+		}
+
+		var dlInfo *dline.Info
+		if err := client.Get(ctx, "/miner/deadline", mAddr, &dlInfo); err != nil {
+			return err
+		}
+
+		fmt.Printf("Period Start:\t%s\n", dlInfo.PeriodStart)
+		fmt.Printf("Index:\t\t%d\n", dlInfo.Index)
+		fmt.Printf("Open:\t\t%s\n", dlInfo.Open)
+		fmt.Printf("Close:\t\t%s\n", dlInfo.Close)
+		fmt.Printf("Challenge:\t%s\n", dlInfo.Challenge)
+		fmt.Printf("FaultCutoff:\t%s\n", dlInfo.FaultCutoff)
+
+		return nil
+
 	},
 }

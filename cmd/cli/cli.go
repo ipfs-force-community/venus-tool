@@ -6,7 +6,7 @@ import (
 )
 
 var FlagServer = &cli.StringFlag{
-	Name:  "server",
+	Name:  "server-addr",
 	Usage: "Specify the server address to connect when using cli",
 	Value: "127.0.0.1:12580",
 }

@@ -11,8 +11,8 @@ import (
 	"github.com/urfave/cli/v2"
 	"go.uber.org/fx"
 
-	NodeApi "github.com/filecoin-project/venus/venus-shared/api/chain/v1"
-	MarketApi "github.com/filecoin-project/venus/venus-shared/api/market"
+	nodeApi "github.com/filecoin-project/venus/venus-shared/api/chain/v1"
+	marketApi "github.com/filecoin-project/venus/venus-shared/api/market"
 	msgApi "github.com/filecoin-project/venus/venus-shared/api/messager"
 
 	vtCli "github.com/ipfs-force-community/venus-tool/cmd/cli"
@@ -31,9 +31,9 @@ var log = logging.Logger("main")
 var flagRepo = &cli.StringFlag{
 	Name:    "repo",
 	EnvVars: []string{"VENUS_TOOL_PATH"},
-	Aliases: []string{"tool-repo", "r"},
+	Aliases: []string{"r"},
 	Value:   "~/.venustool",
-	Usage:   "Specify miner repo path, env VENUS_MINER_PATH",
+	Usage:   "Specify miner repo path, env VENUS_TOOL_PATH",
 }
 
 var flagListen = &cli.StringFlag{
@@ -139,13 +139,13 @@ var runCmd = &cli.Command{
 		}
 		defer msgCloser()
 
-		marketClient, marketCloser, err := MarketApi.DialIMarketRPC(ctx, cfg.MarketAPI.Addr, cfg.MarketAPI.Token, nil)
+		marketClient, marketCloser, err := marketApi.DialIMarketRPC(ctx, cfg.MarketAPI.Addr, cfg.MarketAPI.Token, nil)
 		if err != nil {
 			return err
 		}
 		defer marketCloser()
 
-		NodeClient, nodeCloser, err := NodeApi.DialFullNodeRPC(ctx, cfg.NodeAPI.Addr, cfg.NodeAPI.Token, nil)
+		nodeClient, nodeCloser, err := nodeApi.DialFullNodeRPC(ctx, cfg.NodeAPI.Addr, cfg.NodeAPI.Token, nil)
 		if err != nil {
 			return err
 		}
@@ -164,8 +164,8 @@ var runCmd = &cli.Command{
 			ctx,
 			builder.Override(new(*http.Server), server),
 			builder.Override(new(msgApi.IMessager), msgClient),
-			builder.Override(new(MarketApi.IMarket), marketClient),
-			builder.Override(new(NodeApi.FullNode), NodeClient),
+			builder.Override(new(marketApi.IMarket), marketClient),
+			builder.Override(new(nodeApi.FullNode), nodeClient),
 			builder.Override(builder.NextInvoke(), utils.SetupLogLevels),
 			builder.Override(builder.NextInvoke(), route.RegisterAndStart),
 		)

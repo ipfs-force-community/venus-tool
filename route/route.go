@@ -8,7 +8,7 @@ import (
 	"github.com/ipfs-force-community/venus-tool/version"
 )
 
-func RegisterRoute(s *service.Service) http.Handler {
+func registerRoute(s *service.Service) http.Handler {
 	router := gin.New()
 	router.Use(CorsMiddleWare())
 

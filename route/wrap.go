@@ -40,6 +40,8 @@ func Wrap(fn interface{}) gin.HandlerFunc {
 	case 1:
 		if fnType.In(0) == contextType {
 			hasCtx = true
+		} else {
+			hasParm = true
 		}
 	case 2:
 		if fnType.In(0) == contextType {
@@ -58,6 +60,8 @@ func Wrap(fn interface{}) gin.HandlerFunc {
 	case 1:
 		if fnType.Out(0) == errorType {
 			hasErr = true
+		} else {
+			hasRet = true
 		}
 	case 2:
 		if fnType.Out(1) == errorType {
@@ -77,26 +81,31 @@ func Wrap(fn interface{}) gin.HandlerFunc {
 			in[0] = reflect.ValueOf(ctx)
 		}
 		if hasParm {
-			pType := fnType.In(1)
+			pType := fnType.In(numIn - 1)
 			pValue := reflect.New(pType)
 			pInt := pValue.Interface()
 
-			err := ctx.ShouldBindJSON(pInt)
-			if err != nil {
-				err = ctx.ShouldBindUri(pInt)
-			}
-			if err != nil {
+			var err error
+
+			if ctx.Request.ContentLength > 0 {
+				err = ctx.ShouldBindJSON(pInt)
+			} else if ctx.Request.URL.RawQuery != "" {
 				err = ctx.ShouldBindQuery(pInt)
 			}
-			if err != nil {
-				err = ctx.ShouldBind(pInt)
+
+			if len(ctx.Params) > 0 {
+				terr := ctx.ShouldBindUri(pInt)
+				if terr != nil {
+					err = terr
+				}
 			}
+
 			if err != nil {
 				ctx.JSON(http.StatusBadRequest, NewErrResponse(err))
 				return
 			}
 
-			in[1] = pValue.Elem()
+			in[numIn-1] = pValue.Elem()
 		}
 
 		out := fnValue.Call(in)

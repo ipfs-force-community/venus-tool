@@ -121,6 +121,10 @@ func toMap(params interface{}, allowStruct bool) (map[string]string, error) {
 			value = value.Elem()
 		}
 
+		if !value.CanSet() {
+			return nil, fmt.Errorf("unexported field %s", field.Name)
+		}
+
 		// convert to string
 		var str string
 		switch field.Type.Kind() {

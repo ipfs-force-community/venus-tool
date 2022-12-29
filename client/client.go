@@ -23,10 +23,10 @@ func New(url string) (*Client, error) {
 		SetHostURL(url).
 		SetHeader("Accept", "application/json")
 
-	// _, err := client.R().Get("/version")
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to connect to %s: %w", url, err)
-	// }
+	_, err := client.R().Get("/version")
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to %s: %w", url, err)
+	}
 
 	client.SetAllowGetMethodPayload(true)
 

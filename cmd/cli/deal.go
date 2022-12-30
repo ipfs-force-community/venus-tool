@@ -49,11 +49,16 @@ var dealListCmd = &cli.Command{
 
 		verbose := cctx.Bool("verbose")
 		mAddr := address.Undef
-		if cctx.Args().Len() >= 1 {
+
+		switch cctx.NArg() {
+		case 0:
+		case 1:
 			mAddr, err = address.NewFromString(cctx.Args().First())
 			if err != nil {
 				return err
 			}
+		default:
+			return fmt.Errorf("too many arguments")
 		}
 
 		if cctx.Bool("retrieval") {
@@ -69,11 +74,15 @@ var dealListCmd = &cli.Command{
 			for _, deal := range deals {
 				payloadCid := deal.PayloadCID.String()
 
+				if !verbose {
+					payloadCid = "..." + payloadCid[len(payloadCid)-8:]
+				}
+
 				_, _ = fmt.Fprintf(w,
 					"%s\t%d\t%s\t%s\t%s\t%d\t%d\t%d\t%s\n",
 					deal.Receiver.String(),
 					deal.ID,
-					"..."+payloadCid[len(payloadCid)-8:],
+					payloadCid,
 					retrievalmarket.DealStatuses[deal.Status],
 					deal.PricePerByte.String(),
 					deal.TotalSent,
@@ -155,11 +164,18 @@ var dealUpdateCmd = &cli.Command{
 			return nil
 		}
 
-		return client.Post(cctx.Context, "/deal/storage/state", &service.StorageDealUpdateStateReq{
+		err = client.Post(cctx.Context, "/deal/storage/state", &service.StorageDealUpdateStateReq{
 			ProposalCid: proposalCid,
 			State:       state,
 			PieceStatus: pieceStatus,
 		}, nil)
+
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("Deal updated")
+		return nil
 	},
 }
 

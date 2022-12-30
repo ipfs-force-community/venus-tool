@@ -27,7 +27,7 @@ import (
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
 )
 
-var log = logging.Logger("cmd")
+var log = logging.Logger("cli")
 
 var StringToStorageState = map[string]storagemarket.StorageDealStatus{}
 

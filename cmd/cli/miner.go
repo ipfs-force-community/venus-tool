@@ -214,7 +214,13 @@ var minerSetAskCmd = &cli.Command{
 				Miner: mAddr,
 			}
 
-			return client.Post(ctx, "/miner/ask/retrieval", &req, nil)
+			err = client.Post(ctx, "/miner/ask/retrieval", &req, nil)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println("retrieval ask updated")
+			return nil
 		}
 
 		ask := storagemarket.StorageAsk{}
@@ -280,7 +286,13 @@ var minerSetAskCmd = &cli.Command{
 			Duration:      dur,
 		}
 
-		return client.Post(cctx.Context, "/miner/ask/storage", req, nil)
+		err = client.Post(cctx.Context, "/miner/ask/storage", req, nil)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("storage ask updated")
+		return nil
 	},
 }
 
@@ -414,7 +426,8 @@ var minerCreate = &cli.Command{
 var minerDeadlineCmd = &cli.Command{
 	Name:      "deadline",
 	Usage:     "query miner proving deadline info",
-	ArgsUsage: "[minerAddress]",
+	ArgsUsage: "<Miner Address>",
+	Description: `Query miner proving deadline info.`,
 	Action: func(cctx *cli.Context) error {
 		ctx := cctx.Context
 		client, err := getAPI(cctx)

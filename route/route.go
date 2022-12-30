@@ -23,7 +23,7 @@ func registerRoute(s *service.Service) http.Handler {
 	apiV0Group := router.Group("/api/v0")
 
 	chainGroup := apiV0Group.Group("/chain")
-	chainGroup.GET("/head/", Wrap(s.ChainHead))
+	chainGroup.GET("head", Wrap(s.ChainHead))
 
 	msgGroup := apiV0Group.Group("/msg")
 	msgGroup.GET("query", Wrap(s.MsgQuery))

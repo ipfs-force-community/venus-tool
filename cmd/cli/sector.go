@@ -66,7 +66,14 @@ var sectorExtendCmd = &cli.Command{
 			req.SectorNumbers = append(req.SectorNumbers, abi.SectorNumber(id))
 		}
 
-		return client.Post(ctx, "/sector/extend", req, nil)
+		err = client.Post(ctx, "/sector/extend", req, nil)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("sector extended")
+
+		return nil
 	},
 }
 

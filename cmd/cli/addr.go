@@ -93,6 +93,7 @@ var addrDeleteCmd = &cli.Command{
 			return err
 		}
 
+		fmt.Println("delete address success!")
 		return nil
 	},
 }
@@ -201,6 +202,9 @@ var addrSetCmd = &cli.Command{
 		}
 
 		addr, err := address.NewFromString(ctx.Args().First())
+		if err != nil {
+			return err
+		}
 
 		params := map[string]interface{}{
 			"Operate": service.SetAddress,
@@ -230,12 +234,18 @@ var addrSetCmd = &cli.Command{
 
 		if ctx.IsSet("num") {
 			params["SelectMsgNum"] = ctx.Uint64("num")
+		} else {
+			if !isSetSpec {
+				return fmt.Errorf("must indicate something to set")
+			}
 		}
 
+		err = client.Post(ctx.Context, "/addr/operate", params, nil)
 		if err != nil {
 			return err
 		}
 
-		return client.Post(ctx.Context, "/addr/operate", params, nil)
+		fmt.Println("set address success!")
+		return nil
 	},
 }

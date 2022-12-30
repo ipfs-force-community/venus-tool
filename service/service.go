@@ -307,11 +307,24 @@ func (s *Service) MinerGetDeadlines(ctx context.Context, mAddr address.Address) 
 }
 
 func (s *Service) DealStorageList(ctx context.Context, miner address.Address) ([]marketTypes.MinerDeal, error) {
-	deals, err := s.Market.MarketListIncompleteDeals(ctx, miner)
-	if err != nil {
-		return nil, err
+	if miner != address.Undef {
+
+		deals, err := s.Market.MarketListIncompleteDeals(ctx, miner)
+		if err != nil {
+			return nil, err
+		}
+		return deals, nil
 	}
-	return deals, nil
+
+	ret := make([]marketTypes.MinerDeal, 0)
+	for _, m := range s.Miners {
+		deals, err := s.Market.MarketListIncompleteDeals(ctx, m)
+		if err != nil {
+			return nil, err
+		}
+		ret = append(ret, deals...)
+	}
+	return ret, nil
 }
 
 func (s *Service) DealStorageUpdateState(ctx context.Context, req StorageDealUpdateStateReq) error {

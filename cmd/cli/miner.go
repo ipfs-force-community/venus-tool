@@ -416,6 +416,9 @@ var minerCreate = &cli.Command{
 			time.Sleep(5 * time.Second)
 			err = client.Post(ctx, "/miner/create", map[string]string{"MsgId": params.MsgId}, &miner)
 		}
+		if err != nil {
+			return err
+		}
 
 		fmt.Println(miner)
 
@@ -424,9 +427,9 @@ var minerCreate = &cli.Command{
 }
 
 var minerDeadlineCmd = &cli.Command{
-	Name:      "deadline",
-	Usage:     "query miner proving deadline info",
-	ArgsUsage: "<Miner Address>",
+	Name:        "deadline",
+	Usage:       "query miner proving deadline info",
+	ArgsUsage:   "<Miner Address>",
 	Description: `Query miner proving deadline info.`,
 	Action: func(cctx *cli.Context) error {
 		ctx := cctx.Context

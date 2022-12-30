@@ -33,6 +33,18 @@ var addrListCmd = &cli.Command{
 			return err
 		}
 
+		addr := address.Undef
+		switch ctx.NArg() {
+		case 0:
+		case 1:
+			addr, err = address.NewFromString(ctx.Args().First())
+			if err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("too many arguments")
+		}
+
 		addrs := []msgTypes.Address{}
 		err = client.Get(ctx.Context, "/addr/list", nil, &addrs)
 		if err != nil {
@@ -43,11 +55,7 @@ var addrListCmd = &cli.Command{
 			return nil
 		}
 
-		if ctx.Args().Len() > 0 {
-			addr, err := address.NewFromString(ctx.Args().First())
-			if err != nil {
-				return err
-			}
+		if addr != address.Undef {
 			for _, a := range addrs {
 				if a.Addr == addr {
 					return printJSON(a)

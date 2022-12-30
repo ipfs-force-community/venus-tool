@@ -1,0 +1,12 @@
+.idea
+.vscode
+
+/venus-tool
+
+*.log
+*.toml
+*.toml.*
+./*.log
+*.db
+
+__debug_bin

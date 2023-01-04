@@ -158,10 +158,7 @@ var runCmd = &cli.Command{
 		defer nodeCloser()
 
 		server := &http.Server{
-			Addr:         cfg.Server.ListenAddr,
-			ReadTimeout:  cfg.Server.ReadTimeout,
-			WriteTimeout: cfg.Server.WriteTimeout,
-			IdleTimeout:  cfg.Server.IdleTimeout,
+			Addr: cfg.Server.ListenAddr,
 		}
 		fx.Supply(server)
 

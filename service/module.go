@@ -15,8 +15,8 @@ type ServiceParams struct {
 	Node     nodeV1.FullNode
 }
 
-func (params ServiceParams) NewService(wallets, miners []address.Address) (*Service, error) {
-	return &Service{
+func (params ServiceParams) NewService(wallets, miners []address.Address) (*ServiceImpl, error) {
+	return &ServiceImpl{
 		Messager: params.Messager,
 		Market:   params.Market,
 		Node:     params.Node,

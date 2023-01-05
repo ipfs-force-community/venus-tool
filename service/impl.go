@@ -40,6 +40,8 @@ type ServiceImpl struct {
 	Miners   []address.Address
 }
 
+var _ IService = &ServiceImpl{}
+
 func (s *ServiceImpl) ChainHead(ctx context.Context) (*venusTypes.TipSet, error) {
 	return s.Node.ChainHead(ctx)
 }

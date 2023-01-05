@@ -53,7 +53,10 @@ var minerGetAskCmd = &cli.Command{
 	Action: func(cctx *cli.Context) error {
 		ctx := cctx.Context
 
-		api := getAPI(cctx)
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
 
 		if cctx.Args().Len() != 1 {
 			return errors.New("must specify miner address")
@@ -148,7 +151,10 @@ var minerSetAskCmd = &cli.Command{
 	},
 	Action: func(cctx *cli.Context) error {
 		ctx := cctx.Context
-		api := getAPI(cctx)
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
 
 		if cctx.Args().Len() != 1 {
 			return errors.New("must specify miner address")
@@ -318,7 +324,10 @@ var minerCreate = &cli.Command{
 	},
 	Action: func(cctx *cli.Context) error {
 		ctx := cctx.Context
-		api := getAPI(cctx)
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
 
 		params := &service.MinerCreateReq{}
 
@@ -414,7 +423,10 @@ var minerDeadlineCmd = &cli.Command{
 	Description: `Query miner proving deadline info.`,
 	Action: func(cctx *cli.Context) error {
 		ctx := cctx.Context
-		api := getAPI(cctx)
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
 
 		if cctx.NArg() != 1 {
 			return fmt.Errorf("must pass miner address as first and only argument")

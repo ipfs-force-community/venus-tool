@@ -46,7 +46,7 @@ var FlagServer = &cli.StringFlag{
 	Value: "127.0.0.1:12580",
 }
 
-func getAPI(ctx *cli.Context) service.IService {
+func getAPI(ctx *cli.Context) (service.IService, error) {
 	ret := &service.IServiceStruct{}
 
 	serverAddr := DefaultServerAddr
@@ -56,13 +56,13 @@ func getAPI(ctx *cli.Context) service.IService {
 
 	cli, err := client.New(serverAddr)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	cli.SetVersion("/api/v0")
 
 	route.Provide(cli, &ret.Internal)
-	return ret
+	return ret, nil
 }
 
 func outputWithJson(msgs []*service.MsgResp) error {

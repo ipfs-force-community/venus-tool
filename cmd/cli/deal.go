@@ -43,7 +43,10 @@ var dealListCmd = &cli.Command{
 	Action: func(cctx *cli.Context) error {
 		ctx := cctx.Context
 		var err error
-		api := getAPI(cctx)
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
 
 		verbose := cctx.Bool("verbose")
 		mAddr := address.Undef
@@ -124,7 +127,10 @@ var dealUpdateCmd = &cli.Command{
 		},
 	},
 	Action: func(cctx *cli.Context) error {
-		api := getAPI(cctx)
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
 
 		if cctx.Bool("retrieval") {
 			return fmt.Errorf("retrieval deals cannot be updated")

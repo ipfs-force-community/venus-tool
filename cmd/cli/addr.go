@@ -27,15 +27,17 @@ var addrListCmd = &cli.Command{
 	Name:      "list",
 	Usage:     "list address",
 	ArgsUsage: "[address]",
-	Action: func(ctx *cli.Context) error {
-		api := getAPI(ctx)
+	Action: func(cctx *cli.Context) error {
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
 
 		addr := address.Undef
-		var err error
-		switch ctx.NArg() {
+		switch cctx.NArg() {
 		case 0:
 		case 1:
-			addr, err = address.NewFromString(ctx.Args().First())
+			addr, err = address.NewFromString(cctx.Args().First())
 			if err != nil {
 				return err
 			}
@@ -43,7 +45,7 @@ var addrListCmd = &cli.Command{
 			return fmt.Errorf("too many arguments")
 		}
 
-		addrs, err := api.AddrList(ctx.Context)
+		addrs, err := api.AddrList(cctx.Context)
 		if err != nil {
 			return err
 		}
@@ -73,14 +75,17 @@ var addrDeleteCmd = &cli.Command{
 	Name:      "del",
 	Usage:     "delete address",
 	ArgsUsage: "<address>",
-	Action: func(ctx *cli.Context) error {
-		api := getAPI(ctx)
+	Action: func(cctx *cli.Context) error {
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
 
-		if !ctx.Args().Present() {
+		if !cctx.Args().Present() {
 			return fmt.Errorf("must pass address")
 		}
 
-		addr, err := address.NewFromString(ctx.Args().First())
+		addr, err := address.NewFromString(cctx.Args().First())
 		if err != nil {
 			return err
 		}
@@ -92,7 +97,7 @@ var addrDeleteCmd = &cli.Command{
 			Operate: service.DeleteAddress,
 		}
 
-		err = api.AddrOperate(ctx.Context, params)
+		err = api.AddrOperate(cctx.Context, params)
 		if err != nil {
 			return err
 		}
@@ -106,14 +111,17 @@ var addrForbiddenCmd = &cli.Command{
 	Name:      "forbidden",
 	Usage:     "forbidden address",
 	ArgsUsage: "<address>",
-	Action: func(ctx *cli.Context) error {
-		api := getAPI(ctx)
+	Action: func(cctx *cli.Context) error {
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
 
-		if !ctx.Args().Present() {
+		if !cctx.Args().Present() {
 			return fmt.Errorf("must pass address")
 		}
 
-		addr, err := address.NewFromString(ctx.Args().First())
+		addr, err := address.NewFromString(cctx.Args().First())
 		if err != nil {
 			return err
 		}
@@ -125,7 +133,7 @@ var addrForbiddenCmd = &cli.Command{
 			Operate: service.ForbiddenAddress,
 		}
 
-		err = api.AddrOperate(ctx.Context, params)
+		err = api.AddrOperate(cctx.Context, params)
 		if err != nil {
 			return err
 		}
@@ -139,14 +147,17 @@ var addrActiveCmd = &cli.Command{
 	Name:      "active",
 	Usage:     "activate a frozen address",
 	ArgsUsage: "<address>",
-	Action: func(ctx *cli.Context) error {
-		api := getAPI(ctx)
+	Action: func(cctx *cli.Context) error {
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
 
-		if !ctx.Args().Present() {
+		if !cctx.Args().Present() {
 			return fmt.Errorf("must pass address")
 		}
 
-		addr, err := address.NewFromString(ctx.Args().First())
+		addr, err := address.NewFromString(cctx.Args().First())
 		if err != nil {
 			return err
 		}
@@ -158,7 +169,7 @@ var addrActiveCmd = &cli.Command{
 			Operate: service.ActiveAddress,
 		}
 
-		err = api.AddrOperate(ctx.Context, params)
+		err = api.AddrOperate(cctx.Context, params)
 		if err != nil {
 			return err
 		}
@@ -195,14 +206,17 @@ var addrSetCmd = &cli.Command{
 		},
 		flagGasOverPremium,
 	},
-	Action: func(ctx *cli.Context) error {
-		api := getAPI(ctx)
+	Action: func(cctx *cli.Context) error {
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
 
-		if !ctx.Args().Present() {
+		if !cctx.Args().Present() {
 			return fmt.Errorf("must pass address")
 		}
 
-		addr, err := address.NewFromString(ctx.Args().First())
+		addr, err := address.NewFromString(cctx.Args().First())
 		if err != nil {
 			return err
 		}
@@ -214,36 +228,36 @@ var addrSetCmd = &cli.Command{
 			Operate: service.SetAddress,
 		}
 
-		isSetSpec := ctx.IsSet("gas-overestimation") || ctx.IsSet("gas-feecap") || ctx.IsSet("max-fee") || ctx.IsSet("base-fee") || ctx.IsSet("gas-over-premium")
+		isSetSpec := cctx.IsSet("gas-overestimation") || cctx.IsSet("gas-feecap") || cctx.IsSet("max-fee") || cctx.IsSet("base-fee") || cctx.IsSet("gas-over-premium")
 
 		if isSetSpec {
 			params.IsSetSpec = isSetSpec
-			if ctx.IsSet(flagGasOverPremium.Name) {
-				params.GasOverPremium = ctx.Float64(flagGasOverPremium.Name)
+			if cctx.IsSet(flagGasOverPremium.Name) {
+				params.GasOverPremium = cctx.Float64(flagGasOverPremium.Name)
 			}
-			if ctx.IsSet("gas-overestimation") {
-				params.GasOverEstimation = ctx.Float64("gas-overestimation")
+			if cctx.IsSet("gas-overestimation") {
+				params.GasOverEstimation = cctx.Float64("gas-overestimation")
 			}
-			if ctx.IsSet("gas-feecap") {
-				params.GasFeeCapStr = ctx.String("gas-feecap")
+			if cctx.IsSet("gas-feecap") {
+				params.GasFeeCapStr = cctx.String("gas-feecap")
 			}
-			if ctx.IsSet("max-fee") {
-				params.MaxFeeStr = ctx.String("max-fee")
+			if cctx.IsSet("max-fee") {
+				params.MaxFeeStr = cctx.String("max-fee")
 			}
-			if ctx.IsSet("base-fee") {
-				params.BaseFeeStr = ctx.String("base-fee")
+			if cctx.IsSet("base-fee") {
+				params.BaseFeeStr = cctx.String("base-fee")
 			}
 		}
 
-		if ctx.IsSet("num") {
-			params.SelectMsgNum = ctx.Uint64("num")
+		if cctx.IsSet("num") {
+			params.SelectMsgNum = cctx.Uint64("num")
 		} else {
 			if !isSetSpec {
 				return fmt.Errorf("must indicate something to set")
 			}
 		}
 
-		err = api.AddrOperate(ctx.Context, params)
+		err = api.AddrOperate(cctx.Context, params)
 		if err != nil {
 			return err
 		}

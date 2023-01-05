@@ -80,65 +80,67 @@ var msgDendCmd = &cli.Command{
 		},
 		flagVerbose,
 	},
-	Action: func(ctx *cli.Context) error {
-		if ctx.Args().Len() != 2 {
+	Action: func(cctx *cli.Context) error {
+		if cctx.Args().Len() != 2 {
 			return fmt.Errorf("'send' expects two arguments, target and amount")
 		}
 
-		api := getAPI(ctx)
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
 
-		var err error
 		var params service.MsgSendReq
-		params.To, err = address.NewFromString(ctx.Args().Get(0))
+		params.To, err = address.NewFromString(cctx.Args().Get(0))
 		if err != nil {
 			return fmt.Errorf("failed to parse target address: %w", err)
 		}
 
-		val, err := venusTypes.ParseFIL(ctx.Args().Get(1))
+		val, err := venusTypes.ParseFIL(cctx.Args().Get(1))
 		if err != nil {
 			return fmt.Errorf("failed to parse amount: %w", err)
 		}
 		params.Value = abi.TokenAmount(val)
 
-		addr, err := address.NewFromString(ctx.String("from"))
+		addr, err := address.NewFromString(cctx.String("from"))
 		if err != nil {
 			return fmt.Errorf("failed to parse from address: %w", err)
 		}
 		params.From = addr
 
-		params.Method = abi.MethodNum(ctx.Uint64("method"))
+		params.Method = abi.MethodNum(cctx.Uint64("method"))
 
-		gfc, err := venusTypes.BigFromString(ctx.String("max-fee"))
+		gfc, err := venusTypes.BigFromString(cctx.String("max-fee"))
 		if err != nil {
 			return err
 		}
 		params.MaxFee = gfc
 
-		params.GasOverPremium = ctx.Float64("gas-over-premium")
+		params.GasOverPremium = cctx.Float64("gas-over-premium")
 
-		params.GasOverEstimation = ctx.Float64("gas-over-estimation")
+		params.GasOverEstimation = cctx.Float64("gas-over-estimation")
 
-		if ctx.IsSet("params-json") {
-			params.Params = []byte(ctx.String("params-json"))
+		if cctx.IsSet("params-json") {
+			params.Params = []byte(cctx.String("params-json"))
 			params.EncType = service.EncJson
 		}
-		if ctx.IsSet("params-hex") {
+		if cctx.IsSet("params-hex") {
 			if len(params.Params) != 0 {
 				return fmt.Errorf("can only specify one of 'params-json' and 'params-hex'")
 			}
-			params.Params = []byte(ctx.String("params-hex"))
+			params.Params = []byte(cctx.String("params-hex"))
 			params.EncType = service.EncHex
 		}
 
-		id, err := api.MsgSend(ctx.Context, &params)
+		id, err := api.MsgSend(cctx.Context, &params)
 		if err != nil {
 			return err
 		}
 
 		// feedback
 		fmt.Printf("send message (id: %s ) success\n", id)
-		if ctx.Bool("verbose") {
-			res, err := api.MsgQuery(ctx.Context, &service.MsgQueryReq{ID: id})
+		if cctx.Bool("verbose") {
+			res, err := api.MsgQuery(cctx.Context, &service.MsgQueryReq{ID: id})
 			if err != nil {
 				return err
 			}
@@ -216,29 +218,28 @@ if [--failed] or [--blocked] is set, [--state] will be ignored
 		},
 		flagVerbose,
 	},
-	Action: func(ctx *cli.Context) error {
-		api := getAPI(ctx)
-		// client, err := getClient(ctx)
-		// if err != nil {
-		// 	return err
-		// }
+	Action: func(cctx *cli.Context) error {
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
 
 		parseParams := func() (service.MsgQueryReq, error) {
 
 			params := service.MsgQueryReq{}
 			nilParams := service.MsgQueryReq{}
 
-			if ctx.IsSet("id") {
-				params.ID = ctx.String("id")
+			if cctx.IsSet("id") {
+				params.ID = cctx.String("id")
 				return params, nil
 			}
 
-			if ctx.IsSet("failed") {
+			if cctx.IsSet("failed") {
 				params.IsFailed = true
 				return params, nil
 			}
 
-			froms := ctx.StringSlice("from")
+			froms := cctx.StringSlice("from")
 			if len(froms) > 0 {
 				params.From = make([]address.Address, 0, len(froms))
 				for _, from := range froms {
@@ -250,19 +251,19 @@ if [--failed] or [--blocked] is set, [--state] will be ignored
 				}
 			}
 
-			if ctx.IsSet("nonce") {
-				params.Nonce = ctx.Uint64("nonce")
+			if cctx.IsSet("nonce") {
+				params.Nonce = cctx.Uint64("nonce")
 				if len(params.From) == 0 {
 					return nilParams, fmt.Errorf("nonce is set, but from is not set")
 				}
 				return params, nil
 			}
 
-			if ctx.IsSet("blocked") {
-				if !ctx.IsSet("time") {
+			if cctx.IsSet("blocked") {
+				if !cctx.IsSet("time") {
 					return nilParams, fmt.Errorf("please set [--time] when [--blocked] is set")
 				}
-				dur, err := time.ParseDuration(ctx.String("time"))
+				dur, err := time.ParseDuration(cctx.String("time"))
 				if err != nil {
 					return nilParams, err
 				}
@@ -272,11 +273,11 @@ if [--failed] or [--blocked] is set, [--state] will be ignored
 				return params, nil
 			}
 
-			params.State = []types.MessageState{types.MessageState(ctx.Int("state"))}
+			params.State = []types.MessageState{types.MessageState(cctx.Int("state"))}
 
-			if ctx.IsSet("page-index") || ctx.IsSet("page-size") {
-				params.PageIndex = ctx.Int("page-index")
-				params.PageSize = ctx.Int("page-size")
+			if cctx.IsSet("page-index") || cctx.IsSet("page-size") {
+				params.PageIndex = cctx.Int("page-index")
+				params.PageSize = cctx.Int("page-size")
 			}
 
 			return params, nil
@@ -287,17 +288,17 @@ if [--failed] or [--blocked] is set, [--state] will be ignored
 			return err
 		}
 
-		res, err := api.MsgQuery(ctx.Context, &params)
+		res, err := api.MsgQuery(cctx.Context, &params)
 
 		if err != nil {
 			return err
 		}
 
-		if ctx.Bool("json") {
+		if cctx.Bool("json") {
 			return outputWithJson(res)
 		}
 
-		return outputMsgWithTable(res, ctx.Bool("verbose"))
+		return outputMsgWithTable(res, cctx.Bool("verbose"))
 	},
 }
 
@@ -335,7 +336,10 @@ var msgReplaceCmd = &cli.Command{
 	},
 	ArgsUsage: "<from nonce> | <id>",
 	Action: func(cctx *cli.Context) error {
-		api := getAPI(cctx)
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
 
 		if cctx.NArg() != 1 {
 			return fmt.Errorf("must specify message id or from nonce")

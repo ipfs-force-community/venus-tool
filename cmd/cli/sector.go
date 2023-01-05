@@ -41,7 +41,10 @@ var sectorExtendCmd = &cli.Command{
 		}
 
 		ctx := cctx.Context
-		api := getAPI(cctx)
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
 
 		miner, err := address.NewFromString(cctx.String("miner"))
 		if err != nil {
@@ -84,7 +87,10 @@ var sectorGetCmd = &cli.Command{
 		}
 
 		ctx := cctx.Context
-		api := getAPI(cctx)
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
 
 		miner, err := address.NewFromString(cctx.Args().Get(0))
 		if err != nil {

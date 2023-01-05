@@ -170,7 +170,7 @@ var runCmd = &cli.Command{
 			builder.Override(new(marketApi.IMarket), marketClient),
 			builder.Override(new(nodeApi.FullNode), nodeClient),
 			builder.Override(new(context.Context), ctx),
-			builder.Override(new(*service.Service), func(params service.ServiceParams) (*service.Service, error) {
+			builder.Override(new(*service.ServiceImpl), func(params service.ServiceParams) (*service.ServiceImpl, error) {
 				return params.NewService(cfg.Wallets, cfg.Miners)
 			}),
 			builder.Override(builder.NextInvoke(), utils.SetupLogLevels),

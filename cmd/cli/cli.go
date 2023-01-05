@@ -16,6 +16,7 @@ import (
 	"github.com/filecoin-project/go-state-types/crypto"
 	"github.com/filecoin-project/go-state-types/exitcode"
 	"github.com/ipfs-force-community/venus-tool/client"
+	"github.com/ipfs-force-community/venus-tool/route"
 	"github.com/ipfs-force-community/venus-tool/service"
 	"github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log"
@@ -31,6 +32,8 @@ var log = logging.Logger("cli")
 
 var StringToStorageState = map[string]storagemarket.StorageDealStatus{}
 
+var DefaultServerAddr = "http://localhost:12580"
+
 func init() {
 	for state, stateStr := range storagemarket.DealStates {
 		StringToStorageState[stateStr] = state
@@ -43,20 +46,23 @@ var FlagServer = &cli.StringFlag{
 	Value: "127.0.0.1:12580",
 }
 
-func getAPI(ctx *cli.Context) (*client.Client, error) {
+func getAPI(ctx *cli.Context) service.IService {
+	ret := &service.IServiceStruct{}
 
-	serverAddr := "http://localhost:12580"
+	serverAddr := DefaultServerAddr
 	if ctx.IsSet(FlagServer.Name) {
 		serverAddr = "http://" + ctx.String(FlagServer.Name)
 	}
 
 	cli, err := client.New(serverAddr)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	cli.SetVersion("/api/v0")
-	return cli, nil
+
+	route.Provide(cli, &ret.Internal)
+	return ret
 }
 
 func outputWithJson(msgs []*service.MsgResp) error {

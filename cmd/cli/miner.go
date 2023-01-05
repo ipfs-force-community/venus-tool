@@ -10,10 +10,7 @@ import (
 
 	"github.com/docker/go-units"
 	"github.com/filecoin-project/go-address"
-	"github.com/filecoin-project/go-fil-markets/retrievalmarket"
-	"github.com/filecoin-project/go-fil-markets/storagemarket"
 	"github.com/filecoin-project/go-state-types/abi"
-	"github.com/filecoin-project/go-state-types/dline"
 	"github.com/filecoin-project/venus/pkg/constants"
 	"github.com/filecoin-project/venus/venus-shared/types"
 	"github.com/google/uuid"
@@ -56,10 +53,7 @@ var minerGetAskCmd = &cli.Command{
 	Action: func(cctx *cli.Context) error {
 		ctx := cctx.Context
 
-		client, err := getAPI(cctx)
-		if err != nil {
-			return err
-		}
+		api := getAPI(cctx)
 
 		if cctx.Args().Len() != 1 {
 			return errors.New("must specify miner address")
@@ -72,8 +66,7 @@ var minerGetAskCmd = &cli.Command{
 		w := tabwriter.NewWriter(os.Stdout, 2, 4, 2, ' ', 0)
 
 		if cctx.Bool("retrieval") {
-			ask := retrievalmarket.Ask{}
-			err := client.Get(ctx, "/miner/ask/retrieval", mAddr, &ask)
+			ask, err := api.MinerGetRetrievalAsk(ctx, mAddr)
 			if err != nil {
 				return err
 			}
@@ -88,16 +81,14 @@ var minerGetAskCmd = &cli.Command{
 			)
 		} else {
 
-			ask := storagemarket.StorageAsk{}
-			err = client.Get(ctx, "/miner/ask/storage", mAddr, &ask)
+			ask, err := api.MinerGetStorageAsk(ctx, mAddr)
 			if err != nil {
 				return err
 			}
 
 			fmt.Fprintf(w, "Price per GiB/Epoch\tVerified\tMin. Piece Size (padded)\tMax. Piece Size (padded)\tExpiry (Epoch)\tExpiry (Appx. Rem. Time)\tSeq. No.\n")
 
-			head := types.TipSet{}
-			err = client.Get(ctx, "/chain/head", nil, &head)
+			head, err := api.ChainHead(ctx)
 			if err != nil {
 				return err
 			}
@@ -157,10 +148,7 @@ var minerSetAskCmd = &cli.Command{
 	},
 	Action: func(cctx *cli.Context) error {
 		ctx := cctx.Context
-		client, err := getAPI(cctx)
-		if err != nil {
-			return err
-		}
+		api := getAPI(cctx)
 
 		if cctx.Args().Len() != 1 {
 			return errors.New("must specify miner address")
@@ -171,8 +159,7 @@ var minerSetAskCmd = &cli.Command{
 		}
 
 		if cctx.IsSet("retrieval") {
-			ask := retrievalmarket.Ask{}
-			err := client.Get(ctx, "/miner/ask/retrieval", mAddr, &ask)
+			ask, err := api.MinerGetRetrievalAsk(ctx, mAddr)
 			if err != nil {
 				fmt.Println("error getting retrieval ask: ", err)
 			}
@@ -209,12 +196,12 @@ var minerSetAskCmd = &cli.Command{
 				ask.PaymentIntervalIncrease = uint64(v)
 			}
 
-			req := service.MinerSetRetrievalAskReq{
-				Ask:   ask,
+			req := &service.MinerSetRetrievalAskReq{
+				Ask:   *ask,
 				Miner: mAddr,
 			}
 
-			err = client.Post(ctx, "/miner/ask/retrieval", &req, nil)
+			err = api.MinerSetRetrievalAsk(ctx, req)
 			if err != nil {
 				return err
 			}
@@ -223,8 +210,7 @@ var minerSetAskCmd = &cli.Command{
 			return nil
 		}
 
-		ask := storagemarket.StorageAsk{}
-		err = client.Get(ctx, "/miner/ask/storage", mAddr, &ask)
+		ask, err := api.MinerGetStorageAsk(ctx, mAddr)
 		if err != nil {
 			fmt.Println("error getting storage ask: ", err)
 		}
@@ -286,7 +272,7 @@ var minerSetAskCmd = &cli.Command{
 			Duration:      dur,
 		}
 
-		err = client.Post(cctx.Context, "/miner/ask/storage", req, nil)
+		err = api.MinerSetStorageAsk(ctx, &req)
 		if err != nil {
 			return err
 		}
@@ -332,10 +318,7 @@ var minerCreate = &cli.Command{
 	},
 	Action: func(cctx *cli.Context) error {
 		ctx := cctx.Context
-		client, err := getAPI(cctx)
-		if err != nil {
-			return err
-		}
+		api := getAPI(cctx)
 
 		params := &service.MinerCreateReq{}
 
@@ -408,13 +391,11 @@ var minerCreate = &cli.Command{
 			params.MsgId = uuid.New().String()
 		}
 
-		miner := address.Address{}
-		err = client.Post(ctx, "/miner/create", params, &miner)
-
+		miner, err := api.MinerCreate(ctx, params)
 		for err != nil && strings.Contains(err.Error(), "temp error") {
 			log.Debugf("on waiting: %s", err)
 			time.Sleep(5 * time.Second)
-			err = client.Post(ctx, "/miner/create", map[string]string{"MsgId": params.MsgId}, &miner)
+			miner, err = api.MinerCreate(ctx, params)
 		}
 		if err != nil {
 			return err
@@ -433,10 +414,7 @@ var minerDeadlineCmd = &cli.Command{
 	Description: `Query miner proving deadline info.`,
 	Action: func(cctx *cli.Context) error {
 		ctx := cctx.Context
-		client, err := getAPI(cctx)
-		if err != nil {
-			return err
-		}
+		api := getAPI(cctx)
 
 		if cctx.NArg() != 1 {
 			return fmt.Errorf("must pass miner address as first and only argument")
@@ -447,8 +425,8 @@ var minerDeadlineCmd = &cli.Command{
 			return err
 		}
 
-		var dlInfo *dline.Info
-		if err := client.Get(ctx, "/miner/deadline", mAddr, &dlInfo); err != nil {
+		dlInfo, err := api.MinerGetDeadlines(ctx, mAddr)
+		if err != nil {
 			return err
 		}
 

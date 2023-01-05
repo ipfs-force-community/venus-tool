@@ -7,7 +7,6 @@ import (
 
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
 	"github.com/ipfs-force-community/venus-tool/service"
-	"github.com/ipfs/go-cid"
 	"github.com/urfave/cli/v2"
 
 	"github.com/filecoin-project/go-address"
@@ -86,11 +85,9 @@ var msgDendCmd = &cli.Command{
 			return fmt.Errorf("'send' expects two arguments, target and amount")
 		}
 
-		client, err := getAPI(ctx)
-		if err != nil {
-			return err
-		}
+		api := getAPI(ctx)
 
+		var err error
 		var params service.MsgSendReq
 		params.To, err = address.NewFromString(ctx.Args().Get(0))
 		if err != nil {
@@ -133,8 +130,7 @@ var msgDendCmd = &cli.Command{
 			params.EncType = service.EncHex
 		}
 
-		var id string
-		err = client.Post(ctx.Context, "/msg/send", params, &id)
+		id, err := api.MsgSend(ctx.Context, &params)
 		if err != nil {
 			return err
 		}
@@ -142,8 +138,7 @@ var msgDendCmd = &cli.Command{
 		// feedback
 		fmt.Printf("send message (id: %s ) success\n", id)
 		if ctx.Bool("verbose") {
-			res := []*service.MsgResp{}
-			err := client.Get(ctx.Context, "/msg/"+id, nil, &res)
+			res, err := api.MsgQuery(ctx.Context, &service.MsgQueryReq{ID: id})
 			if err != nil {
 				return err
 			}
@@ -222,10 +217,11 @@ if [--failed] or [--blocked] is set, [--state] will be ignored
 		flagVerbose,
 	},
 	Action: func(ctx *cli.Context) error {
-		client, err := getAPI(ctx)
-		if err != nil {
-			return err
-		}
+		api := getAPI(ctx)
+		// client, err := getClient(ctx)
+		// if err != nil {
+		// 	return err
+		// }
 
 		parseParams := func() (service.MsgQueryReq, error) {
 
@@ -291,9 +287,8 @@ if [--failed] or [--blocked] is set, [--state] will be ignored
 			return err
 		}
 
-		var res []*service.MsgResp
+		res, err := api.MsgQuery(ctx.Context, &params)
 
-		err = client.Get(ctx.Context, "/msg/query", params, &res)
 		if err != nil {
 			return err
 		}
@@ -340,10 +335,8 @@ var msgReplaceCmd = &cli.Command{
 	},
 	ArgsUsage: "<from nonce> | <id>",
 	Action: func(cctx *cli.Context) error {
-		client, err := getAPI(cctx)
-		if err != nil {
-			return err
-		}
+		api := getAPI(cctx)
+
 		if cctx.NArg() != 1 {
 			return fmt.Errorf("must specify message id or from nonce")
 		}
@@ -355,9 +348,9 @@ var msgReplaceCmd = &cli.Command{
 			if err != nil {
 				return err
 			}
-			msgs := []service.MsgResp{}
-			params := map[string]interface{}{
-				"Nonce": n,
+
+			params := service.MsgQueryReq{
+				Nonce: n,
 			}
 
 			if cctx.IsSet(flagFrom.Name) {
@@ -365,10 +358,9 @@ var msgReplaceCmd = &cli.Command{
 				if err != nil {
 					return err
 				}
-				params["From"] = []address.Address{f}
+				params.From = []address.Address{f}
 			}
-
-			err = client.Get(cctx.Context, "/msg/query", params, &msgs)
+			msgs, err := api.MsgQuery(cctx.Context, &params)
 			if err != nil {
 				return fmt.Errorf("could not find referenced message: %w", err)
 			}
@@ -415,8 +407,7 @@ var msgReplaceCmd = &cli.Command{
 			return err
 		}
 		params.ID = id
-		var cid cid.Cid
-		err = client.Post(cctx.Context, "/msg/replace", params, &cid)
+		cid, err := api.MsgReplace(cctx.Context, params)
 		if err != nil {
 			return err
 		}

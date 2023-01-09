@@ -32,7 +32,7 @@ import (
 
 var log = logging.Logger("service")
 
-type Service struct {
+type ServiceImpl struct {
 	Messager messager.IMessager
 	Market   market.IMarket
 	Node     nodeV1.FullNode
@@ -40,18 +40,20 @@ type Service struct {
 	Miners   []address.Address
 }
 
-func (s *Service) ChainHead(ctx context.Context) (*venusTypes.TipSet, error) {
+var _ IService = &ServiceImpl{}
+
+func (s *ServiceImpl) ChainHead(ctx context.Context) (*venusTypes.TipSet, error) {
 	return s.Node.ChainHead(ctx)
 }
 
-func (s *Service) GetDefaultWallet(ctx context.Context) (address.Address, error) {
+func (s *ServiceImpl) GetDefaultWallet(ctx context.Context) (address.Address, error) {
 	if len(s.Wallets) == 0 {
 		return address.Undef, fmt.Errorf("no wallet configured")
 	}
 	return s.Wallets[0], nil
 }
 
-func (s *Service) MsgSend(ctx context.Context, params *MsgSendReq) (string, error) {
+func (s *ServiceImpl) MsgSend(ctx context.Context, params *MsgSendReq) (string, error) {
 
 	decParams, err := params.Decode(s.Node)
 	if err != nil {
@@ -70,7 +72,7 @@ func (s *Service) MsgSend(ctx context.Context, params *MsgSendReq) (string, erro
 	return s.Messager.PushMessage(ctx, msg, &params.SendSpec)
 }
 
-func (s *Service) MsgQuery(ctx context.Context, params *MsgQueryReq) ([]*MsgResp, error) {
+func (s *ServiceImpl) MsgQuery(ctx context.Context, params *MsgQueryReq) ([]*MsgResp, error) {
 	var msgs []*msgTypes.Message
 	var err error
 	if params.ID != "" {
@@ -135,12 +137,12 @@ func (s *Service) MsgQuery(ctx context.Context, params *MsgQueryReq) ([]*MsgResp
 	return ret, nil
 }
 
-func (s *Service) MsgReplace(ctx context.Context, params *MsgReplaceReq) (cid.Cid, error) {
+func (s *ServiceImpl) MsgReplace(ctx context.Context, params *MsgReplaceReq) (cid.Cid, error) {
 	cid, err := s.Messager.ReplaceMessage(ctx, params)
 	return cid, err
 }
 
-func (s *Service) AddrOperate(ctx context.Context, params *AddrsOperateReq) error {
+func (s *ServiceImpl) AddrOperate(ctx context.Context, params *AddrsOperateReq) error {
 	has, err := s.Messager.HasAddress(ctx, params.Address)
 	if err != nil {
 		return err
@@ -171,7 +173,7 @@ func (s *Service) AddrOperate(ctx context.Context, params *AddrsOperateReq) erro
 	}
 }
 
-func (s *Service) AddrList(ctx context.Context) ([]*AddrsResp, error) {
+func (s *ServiceImpl) AddrList(ctx context.Context) ([]*AddrsResp, error) {
 	addrs, err := s.Messager.ListAddress(ctx)
 	if err != nil {
 		return nil, err
@@ -183,7 +185,7 @@ func (s *Service) AddrList(ctx context.Context) ([]*AddrsResp, error) {
 	return ret, err
 }
 
-func (s *Service) MinerCreate(ctx context.Context, params *MinerCreateReq) (address.Address, error) {
+func (s *ServiceImpl) MinerCreate(ctx context.Context, params *MinerCreateReq) (address.Address, error) {
 	// if target msg no exist, send it
 	has := false
 	var err error
@@ -268,7 +270,7 @@ func (s *Service) MinerCreate(ctx context.Context, params *MinerCreateReq) (addr
 	}
 }
 
-func (s *Service) MinerGetStorageAsk(ctx context.Context, mAddr address.Address) (*storagemarket.StorageAsk, error) {
+func (s *ServiceImpl) MinerGetStorageAsk(ctx context.Context, mAddr address.Address) (*storagemarket.StorageAsk, error) {
 	sAsk, err := s.Market.MarketGetAsk(ctx, mAddr)
 	if err != nil {
 		return nil, err
@@ -276,11 +278,11 @@ func (s *Service) MinerGetStorageAsk(ctx context.Context, mAddr address.Address)
 	return sAsk.Ask, nil
 }
 
-func (s *Service) MinerGetRetrievalAsk(ctx context.Context, mAddr address.Address) (*retrievalmarket.Ask, error) {
+func (s *ServiceImpl) MinerGetRetrievalAsk(ctx context.Context, mAddr address.Address) (*retrievalmarket.Ask, error) {
 	return s.Market.MarketGetRetrievalAsk(ctx, mAddr)
 }
 
-func (s *Service) MinerSetStorageAsk(ctx context.Context, p *MinerSetAskReq) error {
+func (s *ServiceImpl) MinerSetStorageAsk(ctx context.Context, p *MinerSetAskReq) error {
 	info, err := s.Node.StateMinerInfo(ctx, p.Miner, venusTypes.EmptyTSK)
 	if err != nil {
 		return fmt.Errorf("get miner sector size failed: %s", err)
@@ -298,15 +300,15 @@ func (s *Service) MinerSetStorageAsk(ctx context.Context, p *MinerSetAskReq) err
 	return s.Market.MarketSetAsk(ctx, p.Miner, p.Price, p.VerifiedPrice, p.Duration, p.MinPieceSize, p.MaxPieceSize)
 }
 
-func (s *Service) MinerSetRetrievalAsk(ctx context.Context, p *MinerSetRetrievalAskReq) error {
+func (s *ServiceImpl) MinerSetRetrievalAsk(ctx context.Context, p *MinerSetRetrievalAskReq) error {
 	return s.Market.MarketSetRetrievalAsk(ctx, p.Miner, &p.Ask)
 }
 
-func (s *Service) MinerGetDeadlines(ctx context.Context, mAddr address.Address) (*dline.Info, error) {
+func (s *ServiceImpl) MinerGetDeadlines(ctx context.Context, mAddr address.Address) (*dline.Info, error) {
 	return s.Node.StateMinerProvingDeadline(ctx, mAddr, venusTypes.EmptyTSK)
 }
 
-func (s *Service) DealStorageList(ctx context.Context, miner address.Address) ([]marketTypes.MinerDeal, error) {
+func (s *ServiceImpl) StorageDealList(ctx context.Context, miner address.Address) ([]marketTypes.MinerDeal, error) {
 	if miner != address.Undef {
 
 		deals, err := s.Market.MarketListIncompleteDeals(ctx, miner)
@@ -327,15 +329,15 @@ func (s *Service) DealStorageList(ctx context.Context, miner address.Address) ([
 	return ret, nil
 }
 
-func (s *Service) DealStorageUpdateState(ctx context.Context, req StorageDealUpdateStateReq) error {
+func (s *ServiceImpl) StorageDealUpdateState(ctx context.Context, req StorageDealUpdateStateReq) error {
 	return s.Market.UpdateStorageDealStatus(ctx, req.ProposalCid, req.State, req.PieceStatus)
 }
 
-func (s *Service) DealRetrievalList(ctx context.Context) ([]marketTypes.ProviderDealState, error) {
+func (s *ServiceImpl) RetrievalDealList(ctx context.Context) ([]marketTypes.ProviderDealState, error) {
 	return s.Market.MarketListRetrievalDeals(ctx)
 }
 
-func (s *Service) SectorExtend(ctx context.Context, req SectorExtendReq) error {
+func (s *ServiceImpl) SectorExtend(ctx context.Context, req SectorExtendReq) error {
 	var err error
 	rawParams := &venusTypes.ExtendSectorExpirationParams{}
 
@@ -390,7 +392,7 @@ func (s *Service) SectorExtend(ctx context.Context, req SectorExtendReq) error {
 	return nil
 }
 
-func (s *Service) SectorGet(ctx context.Context, req SectorGetReq) ([]*SectorResp, error) {
+func (s *ServiceImpl) SectorGet(ctx context.Context, req SectorGetReq) ([]*SectorResp, error) {
 	ret := make([]*SectorResp, 0)
 	for _, num := range req.SectorNumbers {
 		sector, err := s.Node.StateSectorGetInfo(ctx, req.Miner, num, venusTypes.EmptyTSK)

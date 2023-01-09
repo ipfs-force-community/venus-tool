@@ -41,7 +41,7 @@ var sectorExtendCmd = &cli.Command{
 		}
 
 		ctx := cctx.Context
-		client, err := getAPI(cctx)
+		api, err := getAPI(cctx)
 		if err != nil {
 			return err
 		}
@@ -66,7 +66,7 @@ var sectorExtendCmd = &cli.Command{
 			req.SectorNumbers = append(req.SectorNumbers, abi.SectorNumber(id))
 		}
 
-		err = client.Post(ctx, "/sector/extend", req, nil)
+		err = api.SectorExtend(ctx, req)
 		if err != nil {
 			return err
 		}
@@ -87,7 +87,7 @@ var sectorGetCmd = &cli.Command{
 		}
 
 		ctx := cctx.Context
-		client, err := getAPI(cctx)
+		api, err := getAPI(cctx)
 		if err != nil {
 			return err
 		}
@@ -111,8 +111,8 @@ var sectorGetCmd = &cli.Command{
 			SectorNumbers: sectors,
 		}
 
-		var resp []service.SectorResp
-		if err := client.Get(ctx, "/sector", req, &resp); err != nil {
+		resp, err := api.SectorGet(ctx, req)
+		if err != nil {
 			return err
 		}
 

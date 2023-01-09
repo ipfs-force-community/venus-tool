@@ -3,7 +3,6 @@ package config
 import (
 	"bytes"
 	"io/ioutil"
-	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/filecoin-project/go-address"
@@ -25,10 +24,7 @@ type APIInfo struct {
 }
 
 type ServerConfig struct {
-	ListenAddr   string
-	ReadTimeout  time.Duration
-	WriteTimeout time.Duration
-	IdleTimeout  time.Duration
+	ListenAddr string
 }
 
 func LoadConfig(path string) (*Config, error) {
@@ -57,10 +53,7 @@ func (c *Config) Save() error {
 func DefaultConfig() *Config {
 	return &Config{
 		Server: &ServerConfig{
-			ListenAddr:   "127.0.0.1:12580",
-			ReadTimeout:  10 * time.Second,
-			WriteTimeout: 10 * time.Second,
-			IdleTimeout:  10 * time.Second,
+			ListenAddr: "127.0.0.1:12580",
 		},
 		MarketAPI: &APIInfo{
 			Addr:  "",

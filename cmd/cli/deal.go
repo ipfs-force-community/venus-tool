@@ -42,7 +42,8 @@ var dealListCmd = &cli.Command{
 	},
 	Action: func(cctx *cli.Context) error {
 		ctx := cctx.Context
-		client, err := getAPI(cctx)
+		var err error
+		api, err := getAPI(cctx)
 		if err != nil {
 			return err
 		}
@@ -62,8 +63,7 @@ var dealListCmd = &cli.Command{
 		}
 
 		if cctx.Bool("retrieval") {
-			deals := []market.ProviderDealState{}
-			err := client.Get(ctx, "/deal/retrieval", nil, &deals)
+			deals, err := api.RetrievalDealList(ctx)
 			if err != nil {
 				return err
 			}
@@ -95,8 +95,7 @@ var dealListCmd = &cli.Command{
 			return w.Flush()
 		}
 
-		deals := []market.MinerDeal{}
-		err = client.Get(ctx, "/deal/storage", mAddr, &deals)
+		deals, err := api.StorageDealList(ctx, mAddr)
 		if err != nil {
 			return err
 		}
@@ -128,7 +127,7 @@ var dealUpdateCmd = &cli.Command{
 		},
 	},
 	Action: func(cctx *cli.Context) error {
-		client, err := getAPI(cctx)
+		api, err := getAPI(cctx)
 		if err != nil {
 			return err
 		}
@@ -164,11 +163,11 @@ var dealUpdateCmd = &cli.Command{
 			return nil
 		}
 
-		err = client.Post(cctx.Context, "/deal/storage/state", &service.StorageDealUpdateStateReq{
+		err = api.StorageDealUpdateState(cctx.Context, service.StorageDealUpdateStateReq{
 			ProposalCid: proposalCid,
 			State:       state,
 			PieceStatus: pieceStatus,
-		}, nil)
+		})
 
 		if err != nil {
 			return err

@@ -4,14 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"reflect"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/ipfs-force-community/venus-tool/route"
-	logging "github.com/ipfs/go-log"
 )
-
-var log = logging.Logger("client")
 
 type Client struct {
 	*resty.Client
@@ -37,65 +35,52 @@ func (c *Client) SetVersion(version string) {
 	c.apiVersion = version
 }
 
-func (c *Client) Post(ctx context.Context, path string, body, result interface{}) error {
+func (c *Client) Do(ctx context.Context, method, path string, params, result interface{}) error {
 	path = c.apiVersion + path
 
 	errResp := &route.ErrorResp{}
 	req := c.R().SetContext(ctx).SetError(errResp)
-	if body != nil {
-		req = req.SetBody(body)
-	}
-	if result != nil {
-		req = req.SetResult(result)
-	}
-
-	resp, err := req.Post(path)
-	if err != nil {
-		return err
-	}
-	if errResp.Err != "" {
-		return errResp
-	}
-	if resp.IsError() {
-		return fmt.Errorf("http error: %s", resp.Status())
-	}
-	return nil
-}
-
-func (c *Client) Get(ctx context.Context, path string, params, result interface{}) error {
-	path = c.apiVersion + path
-
-	errResp := &route.ErrorResp{}
-	req := c.R().SetContext(ctx).SetError(errResp)
-	if result != nil {
-		req = req.SetResult(result)
-	}
 	if params != nil {
-		if m, ok := params.(map[string]string); ok {
-			req.SetQueryParams(m)
-		} else if m, err := toMap(params, false); err == nil {
-			req.SetQueryParams(m)
-		} else {
+		switch method {
+		case http.MethodGet:
+			if m, ok := params.(map[string]string); ok {
+				req.SetQueryParams(m)
+			} else if m, err := toParamsMap(params, false); err == nil {
+				req.SetQueryParams(m)
+			} else {
+				req.SetBody(params)
+			}
+		case http.MethodDelete:
+			if m, ok := params.(map[string]string); ok {
+				req.SetQueryParams(m)
+			} else if m, err := toParamsMap(params, true); err == nil {
+				req.SetQueryParams(m)
+			} else {
+				return fmt.Errorf("parse params failed")
+			}
+		default:
 			req.SetBody(params)
 		}
 	}
-	resp, err := req.Get(path)
-	log.Debug("get", "path", path, "params", params, "result", result, "resp", resp, "err", err)
+	if result != nil {
+		req = req.SetResult(result)
+	}
+
+	resp, err := req.Execute(method, path)
 	if err != nil {
 		return err
 	}
 	if errResp.Err != "" {
 		return errResp
 	}
-
 	if resp.IsError() {
 		return fmt.Errorf("http error: %s", resp.Status())
 	}
 	return nil
 }
 
-// toMap converts a simple struct to a map[string]string
-func toMap(params interface{}, allowStruct bool) (map[string]string, error) {
+// toParamsMap converts a simple struct to a map[string]string
+func toParamsMap(params interface{}, allowStruct bool) (map[string]string, error) {
 	ret := make(map[string]string)
 
 	rtype := reflect.TypeOf(params)

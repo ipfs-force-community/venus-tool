@@ -158,10 +158,7 @@ var runCmd = &cli.Command{
 		defer nodeCloser()
 
 		server := &http.Server{
-			Addr:         cfg.Server.ListenAddr,
-			ReadTimeout:  cfg.Server.ReadTimeout,
-			WriteTimeout: cfg.Server.WriteTimeout,
-			IdleTimeout:  cfg.Server.IdleTimeout,
+			Addr: cfg.Server.ListenAddr,
 		}
 		fx.Supply(server)
 
@@ -173,7 +170,7 @@ var runCmd = &cli.Command{
 			builder.Override(new(marketApi.IMarket), marketClient),
 			builder.Override(new(nodeApi.FullNode), nodeClient),
 			builder.Override(new(context.Context), ctx),
-			builder.Override(new(*service.Service), func(params service.ServiceParams) (*service.Service, error) {
+			builder.Override(new(*service.ServiceImpl), func(params service.ServiceParams) (*service.ServiceImpl, error) {
 				return params.NewService(cfg.Wallets, cfg.Miners)
 			}),
 			builder.Override(builder.NextInvoke(), utils.SetupLogLevels),

@@ -45,7 +45,7 @@ func (c *Client) Do(ctx context.Context, method, path string, params, result int
 		case http.MethodGet:
 			if m, ok := params.(map[string]string); ok {
 				req.SetQueryParams(m)
-			} else if m, err := toMap(params, false); err == nil {
+			} else if m, err := toParamsMap(params, false); err == nil {
 				req.SetQueryParams(m)
 			} else {
 				req.SetBody(params)
@@ -53,10 +53,10 @@ func (c *Client) Do(ctx context.Context, method, path string, params, result int
 		case http.MethodDelete:
 			if m, ok := params.(map[string]string); ok {
 				req.SetQueryParams(m)
-			} else if m, err := toMap(params, true); err == nil {
+			} else if m, err := toParamsMap(params, true); err == nil {
 				req.SetQueryParams(m)
 			} else {
-				panic("parse params failed")
+				return fmt.Errorf("parse params failed")
 			}
 		default:
 			req.SetBody(params)
@@ -79,8 +79,8 @@ func (c *Client) Do(ctx context.Context, method, path string, params, result int
 	return nil
 }
 
-// toMap converts a simple struct to a map[string]string
-func toMap(params interface{}, allowStruct bool) (map[string]string, error) {
+// toParamsMap converts a simple struct to a map[string]string
+func toParamsMap(params interface{}, allowStruct bool) (map[string]string, error) {
 	ret := make(map[string]string)
 
 	rtype := reflect.TypeOf(params)

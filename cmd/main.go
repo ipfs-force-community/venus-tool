@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -19,6 +20,7 @@ import (
 	"github.com/ipfs-force-community/venus-tool/repo"
 	"github.com/ipfs-force-community/venus-tool/repo/config"
 	"github.com/ipfs-force-community/venus-tool/route"
+	"github.com/ipfs-force-community/venus-tool/service"
 	"github.com/ipfs-force-community/venus-tool/utils"
 	"github.com/ipfs-force-community/venus-tool/version"
 
@@ -80,6 +82,10 @@ func main() {
 		Commands: []*cli.Command{
 			runCmd,
 			vtCli.MsgCmd,
+			vtCli.AddrCmd,
+			vtCli.MinerCmd,
+			vtCli.DealCmd,
+			vtCli.SectorCmd,
 		},
 	}
 	app.Setup()
@@ -152,10 +158,7 @@ var runCmd = &cli.Command{
 		defer nodeCloser()
 
 		server := &http.Server{
-			Addr:         cfg.Server.ListenAddr,
-			ReadTimeout:  cfg.Server.ReadTimeout,
-			WriteTimeout: cfg.Server.WriteTimeout,
-			IdleTimeout:  cfg.Server.IdleTimeout,
+			Addr: cfg.Server.ListenAddr,
 		}
 		fx.Supply(server)
 
@@ -166,7 +169,12 @@ var runCmd = &cli.Command{
 			builder.Override(new(msgApi.IMessager), msgClient),
 			builder.Override(new(marketApi.IMarket), marketClient),
 			builder.Override(new(nodeApi.FullNode), nodeClient),
+			builder.Override(new(context.Context), ctx),
+			builder.Override(new(*service.ServiceImpl), func(params service.ServiceParams) (*service.ServiceImpl, error) {
+				return params.NewService(cfg.Wallets, cfg.Miners)
+			}),
 			builder.Override(builder.NextInvoke(), utils.SetupLogLevels),
+			builder.Override(builder.NextInvoke(), utils.LoadBuiltinActors),
 			builder.Override(builder.NextInvoke(), route.RegisterAndStart),
 		)
 		if err != nil {

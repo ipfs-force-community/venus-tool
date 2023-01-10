@@ -156,6 +156,17 @@ type MinerSetRetrievalAskReq struct {
 	Miner address.Address
 }
 
+type MinerSetBeneficiaryReq struct {
+	Miner address.Address
+	venusTypes.ChangeBeneficiaryParams
+}
+
+type MinerConfirmBeneficiaryReq struct {
+	Miner          address.Address
+	NewBeneficiary address.Address
+	ByNominee      bool
+}
+
 type StorageDealUpdateStateReq struct {
 	ProposalCid cid.Cid
 	State       storagemarket.StorageDealStatus

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -32,6 +33,7 @@ var MinerCmd = &cli.Command{
 		minerSetOwnerCmd,
 		minerSetWorkerCmd,
 		minerSetControllersCmd,
+		minerSetBeneficiaryCmd,
 	},
 }
 
@@ -490,8 +492,14 @@ var minerInfoCmd = &cli.Command{
 
 var minerSetOwnerCmd = &cli.Command{
 	Name:      "set-owner",
-	Usage:     "set the owner address of a miner",
+	Usage:     "set the owner address of a miner (this command should be invoked by old owner firstly, then new owner invoke with '--confirm' flag to confirm the change)",
 	ArgsUsage: "<minerAddress> <newOwnerAddress>",
+	Flags: []cli.Flag{
+		&cli.BoolFlag{
+			Name:  "confirm",
+			Usage: "confirm to change by the new owner",
+		},
+	},
 	Action: func(cctx *cli.Context) error {
 		ctx := cctx.Context
 		api, err := getAPI(cctx)
@@ -520,12 +528,20 @@ var minerSetOwnerCmd = &cli.Command{
 
 		fmt.Println("This will take some time (maybe 10 epoch), to ensure message is chained...")
 
-		err = api.MinerSetOwner(ctx, req)
-		if err != nil {
-			return err
+		if cctx.Bool("confirm") {
+			oldOwner, err := api.MinerConfirmOwner(ctx, req)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("Miner owner changed to %s from %s \n", newOwner, oldOwner)
+		} else {
+			err = api.MinerSetOwner(ctx, req)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("Miner owner proposed , it should be confirm by new owner(%s), who shall invoke 'set-owner' command with with '--confirm' flag \n", newOwner)
 		}
 
-		fmt.Printf("Owner address changed to %s \n", newOwner)
 		return nil
 	},
 }
@@ -567,7 +583,7 @@ var minerSetWorkerCmd = &cli.Command{
 			NewWorker: newWorker,
 		}
 
-		fmt.Println("This will take some time (maybe 10 epoch), to ensure message is chained...")
+		fmt.Println("This will take some time (maybe 5 epoch), to ensure message is chained...")
 
 		if cctx.Bool("confirm") {
 			err := api.MinerConfirmWorker(ctx, req)
@@ -657,6 +673,99 @@ var minerSetControllersCmd = &cli.Command{
 				fmt.Println(a)
 			}
 		}
+		return nil
+	},
+}
+
+var minerSetBeneficiaryCmd = &cli.Command{
+	Name:      "set-beneficiary",
+	Usage:     "set the beneficiary address of a miner (the change should be proposed by owner, and confirmed by old beneficiary and nominee)",
+	ArgsUsage: "<minerAddress> <newBeneficiaryAddress> <quota> <expiration>",
+	Flags: []cli.Flag{
+		&cli.BoolFlag{
+			Name:  "confirm-by-beneficiary",
+			Usage: "confirm the change by the old beneficiary",
+		},
+		&cli.BoolFlag{
+			Name:  "confirm-by-nominee",
+			Usage: "confirm the change by the nominee",
+		},
+	},
+	Action: func(cctx *cli.Context) error {
+		ctx := cctx.Context
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
+
+		if cctx.Bool("confirm-by-beneficiary") && cctx.Bool("confirm-by-nominee") {
+			return fmt.Errorf("can't confirm by beneficiary and nominee at the same time")
+		}
+
+		if cctx.NArg() < 2 {
+			return fmt.Errorf("must pass miner address and new beneficiary address as first and second arguments")
+		}
+
+		mAddr, err := address.NewFromString(cctx.Args().First())
+		if err != nil {
+			return err
+		}
+
+		newBeneficiary, err := address.NewFromString(cctx.Args().Get(1))
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("This will take some time (maybe 5 epoch), to ensure message is chained...")
+		if cctx.Bool("confirm-by-beneficiary") || cctx.Bool("confirm-by-nominee") {
+			req := &service.MinerConfirmBeneficiaryReq{
+				Miner:          mAddr,
+				NewBeneficiary: newBeneficiary,
+				ByNominee:      cctx.Bool("confirm-by-nominee"),
+			}
+
+			confirmor, err := api.MinerConfirmBeneficiary(ctx, req)
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("Beneficiary address changed to %s has been confirm by %s \n", newBeneficiary, confirmor)
+
+		} else {
+			if cctx.NArg() != 4 {
+				return fmt.Errorf("must pass miner address, new beneficiary address, quota and expiration as arguments")
+			}
+
+			quota, err := types.ParseFIL(cctx.Args().Get(2))
+			if err != nil {
+				return err
+			}
+
+			expiration, err := strconv.ParseInt(cctx.Args().Get(3), 10, 64)
+			if err != nil {
+				return err
+			}
+
+			req := &service.MinerSetBeneficiaryReq{
+				Miner: mAddr,
+				ChangeBeneficiaryParams: types.ChangeBeneficiaryParams{
+					NewBeneficiary: newBeneficiary,
+					NewQuota:       abi.TokenAmount(quota),
+					NewExpiration:  abi.ChainEpoch(expiration),
+				},
+			}
+
+			pendingChange, err := api.MinerSetBeneficiary(ctx, req)
+			if err != nil {
+				return err
+			}
+			fmt.Println("Beneficiary changed proposed:")
+			err = printJSON(pendingChange)
+			if err != nil {
+				return err
+			}
+		}
+
 		return nil
 	},
 }

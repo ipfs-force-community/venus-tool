@@ -23,7 +23,7 @@ import (
 	nodeV1 "github.com/filecoin-project/venus/venus-shared/api/chain/v1"
 	"github.com/filecoin-project/venus/venus-shared/api/market"
 	"github.com/filecoin-project/venus/venus-shared/api/messager"
-	venusTypes "github.com/filecoin-project/venus/venus-shared/types"
+	"github.com/filecoin-project/venus/venus-shared/types"
 	marketTypes "github.com/filecoin-project/venus/venus-shared/types/market"
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
 	"github.com/google/uuid"
@@ -43,7 +43,7 @@ type ServiceImpl struct {
 
 var _ IService = &ServiceImpl{}
 
-func (s *ServiceImpl) ChainHead(ctx context.Context) (*venusTypes.TipSet, error) {
+func (s *ServiceImpl) ChainHead(ctx context.Context) (*types.TipSet, error) {
 	return s.Node.ChainHead(ctx)
 }
 
@@ -61,7 +61,7 @@ func (s *ServiceImpl) MsgSend(ctx context.Context, params *MsgSendReq) (string, 
 		return "", err
 	}
 
-	msg := &venusTypes.Message{
+	msg := &types.Message{
 		From:  params.From,
 		To:    params.To,
 		Value: params.Value,
@@ -217,7 +217,7 @@ func (s *ServiceImpl) MinerCreate(ctx context.Context, params *MinerCreateReq) (
 		params.SealProofType = sealProof
 
 		if params.Owner == address.Undef {
-			actor, err := s.Node.StateLookupID(ctx, params.From, venusTypes.EmptyTSK)
+			actor, err := s.Node.StateLookupID(ctx, params.From, types.EmptyTSK)
 			if err != nil {
 				return address.Undef, err
 			}
@@ -232,7 +232,7 @@ func (s *ServiceImpl) MinerCreate(ctx context.Context, params *MinerCreateReq) (
 		if err != nil {
 			return address.Undef, err
 		}
-		msg := &venusTypes.Message{
+		msg := &types.Message{
 			From:   params.From,
 			To:     power.Address,
 			Method: power.Methods.CreateMiner,
@@ -293,7 +293,7 @@ func (s *ServiceImpl) MinerGetRetrievalAsk(ctx context.Context, mAddr address.Ad
 }
 
 func (s *ServiceImpl) MinerSetStorageAsk(ctx context.Context, p *MinerSetAskReq) error {
-	info, err := s.Node.StateMinerInfo(ctx, p.Miner, venusTypes.EmptyTSK)
+	info, err := s.Node.StateMinerInfo(ctx, p.Miner, types.EmptyTSK)
 	if err != nil {
 		return fmt.Errorf("get miner sector size failed: %s", err)
 	}
@@ -305,7 +305,7 @@ func (s *ServiceImpl) MinerSetStorageAsk(ctx context.Context, p *MinerSetAskReq)
 	}
 
 	if p.MaxPieceSize > smax {
-		return fmt.Errorf("max piece size (w/bit-padding) %s cannot exceed miner sector size %s", venusTypes.SizeStr(venusTypes.NewInt(uint64(p.MaxPieceSize))), venusTypes.SizeStr(venusTypes.NewInt(uint64(smax))))
+		return fmt.Errorf("max piece size (w/bit-padding) %s cannot exceed miner sector size %s", types.SizeStr(types.NewInt(uint64(p.MaxPieceSize))), types.SizeStr(types.NewInt(uint64(smax))))
 	}
 	return s.Market.MarketSetAsk(ctx, p.Miner, p.Price, p.VerifiedPrice, p.Duration, p.MinPieceSize, p.MaxPieceSize)
 }
@@ -315,21 +315,21 @@ func (s *ServiceImpl) MinerSetRetrievalAsk(ctx context.Context, p *MinerSetRetri
 }
 
 func (s *ServiceImpl) MinerInfo(ctx context.Context, mAddr address.Address) (*MinerInfoResp, error) {
-	mi, err := s.Node.StateMinerInfo(ctx, mAddr, venusTypes.EmptyTSK)
+	mi, err := s.Node.StateMinerInfo(ctx, mAddr, types.EmptyTSK)
 	if err != nil {
 		return nil, fmt.Errorf("get miner(%s) info failed: %s", mAddr, err)
 	}
-	availBalance, err := s.Node.StateMinerAvailableBalance(ctx, mAddr, venusTypes.EmptyTSK)
+	availBalance, err := s.Node.StateMinerAvailableBalance(ctx, mAddr, types.EmptyTSK)
 	if err != nil {
 		return nil, fmt.Errorf("get miner(%s) available balance failed: %s", mAddr, err)
 	}
 
-	power, err := s.Node.StateMinerPower(ctx, mAddr, venusTypes.EmptyTSK)
+	power, err := s.Node.StateMinerPower(ctx, mAddr, types.EmptyTSK)
 	if err != nil {
 		return nil, fmt.Errorf("get miner(%s) power failed: %s", mAddr, err)
 	}
 
-	deadline, err := s.Node.StateMinerProvingDeadline(ctx, mAddr, venusTypes.EmptyTSK)
+	deadline, err := s.Node.StateMinerProvingDeadline(ctx, mAddr, types.EmptyTSK)
 	if err != nil {
 		return nil, fmt.Errorf("get miner(%s) deadline failed: %s", mAddr, err)
 	}
@@ -343,12 +343,12 @@ func (s *ServiceImpl) MinerInfo(ctx context.Context, mAddr address.Address) (*Mi
 }
 
 func (s *ServiceImpl) MinerSetOwner(ctx context.Context, p *MinerSetOwnerReq) error {
-	minerInfo, err := s.Node.StateMinerInfo(ctx, p.Miner, venusTypes.EmptyTSK)
+	minerInfo, err := s.Node.StateMinerInfo(ctx, p.Miner, types.EmptyTSK)
 	if err != nil {
 		return fmt.Errorf("get miner(%s) info failed: %s", p.Miner, err)
 	}
 
-	newOwnerId, err := s.Node.StateLookupID(ctx, p.NewOwner, venusTypes.EmptyTSK)
+	newOwnerId, err := s.Node.StateLookupID(ctx, p.NewOwner, types.EmptyTSK)
 	if err != nil {
 		return fmt.Errorf("get new owner(%s) id failed: %s", p.NewOwner, err)
 	}
@@ -362,19 +362,8 @@ func (s *ServiceImpl) MinerSetOwner(ctx context.Context, p *MinerSetOwnerReq) er
 		return fmt.Errorf("serialize params failed: %s", err)
 	}
 
-	msg, err := s.PushMessageAndWait(ctx, &venusTypes.Message{
+	msg, err := s.PushMessageAndWait(ctx, &types.Message{
 		From:   minerInfo.Owner,
-		To:     p.Miner,
-		Method: builtin.MethodsMiner.ChangeOwnerAddress,
-		Params: param,
-		Value:  big.Zero(),
-	}, nil)
-	if err != nil {
-		return fmt.Errorf("push message(%s) failed: %s", msg.ID, err)
-	}
-
-	msg, err = s.PushMessageAndWait(ctx, &venusTypes.Message{
-		From:   p.NewOwner,
 		To:     p.Miner,
 		Method: builtin.MethodsMiner.ChangeOwnerAddress,
 		Params: param,
@@ -387,13 +376,48 @@ func (s *ServiceImpl) MinerSetOwner(ctx context.Context, p *MinerSetOwnerReq) er
 	return nil
 }
 
+func (s *ServiceImpl) MinerConfirmOwner(ctx context.Context, p *MinerSetOwnerReq) (oldOwner address.Address, err error) {
+	minerInfo, err := s.Node.StateMinerInfo(ctx, p.Miner, types.EmptyTSK)
+	if err != nil {
+		return address.Undef, fmt.Errorf("get miner(%s) info failed: %s", p.Miner, err)
+	}
+	oldOwner = minerInfo.Owner
+
+	newOwnerId, err := s.Node.StateLookupID(ctx, p.NewOwner, types.EmptyTSK)
+	if err != nil {
+		return address.Undef, fmt.Errorf("get new owner(%s) id failed: %s", p.NewOwner, err)
+	}
+
+	if minerInfo.Owner == newOwnerId {
+		return address.Undef, fmt.Errorf("new owner(%s) is the same as old owner(%s)", p.NewOwner, minerInfo.Owner)
+	}
+
+	param, err := actors.SerializeParams(&newOwnerId)
+	if err != nil {
+		return address.Undef, fmt.Errorf("serialize params failed: %s", err)
+	}
+
+	msg, err := s.PushMessageAndWait(ctx, &types.Message{
+		From:   p.NewOwner,
+		To:     p.Miner,
+		Method: builtin.MethodsMiner.ChangeOwnerAddress,
+		Params: param,
+		Value:  big.Zero(),
+	}, nil)
+	if err != nil {
+		return address.Undef, fmt.Errorf("push message(%s) failed: %s", msg.ID, err)
+	}
+
+	return oldOwner, nil
+}
+
 func (s *ServiceImpl) MinerSetWorker(ctx context.Context, req *MinerSetWorkerReq) (WorkerChangeEpoch abi.ChainEpoch, err error) {
-	minerInfo, err := s.Node.StateMinerInfo(ctx, req.Miner, venusTypes.EmptyTSK)
+	minerInfo, err := s.Node.StateMinerInfo(ctx, req.Miner, types.EmptyTSK)
 	if err != nil {
 		return 0, fmt.Errorf("get miner(%s) info failed: %s", req.Miner, err)
 	}
 
-	newWorkerId, err := s.Node.StateLookupID(ctx, req.NewWorker, venusTypes.EmptyTSK)
+	newWorkerId, err := s.Node.StateLookupID(ctx, req.NewWorker, types.EmptyTSK)
 	if err != nil {
 		return 0, fmt.Errorf("get new worker(%s) id failed: %s", req.NewWorker, err)
 	}
@@ -406,7 +430,7 @@ func (s *ServiceImpl) MinerSetWorker(ctx context.Context, req *MinerSetWorkerReq
 		return 0, fmt.Errorf("new worker(%s) has been proposed before, which will be effective after epoch(%d)", minerInfo.NewWorker, minerInfo.WorkerChangeEpoch)
 	}
 
-	param, err := actors.SerializeParams(&venusTypes.ChangeWorkerAddressParams{
+	param, err := actors.SerializeParams(&types.ChangeWorkerAddressParams{
 		NewWorker:       newWorkerId,
 		NewControlAddrs: minerInfo.ControlAddresses,
 	})
@@ -414,7 +438,7 @@ func (s *ServiceImpl) MinerSetWorker(ctx context.Context, req *MinerSetWorkerReq
 		return 0, fmt.Errorf("serialize params failed: %s", err)
 	}
 
-	msg, err := s.PushMessageAndWait(ctx, &venusTypes.Message{
+	msg, err := s.PushMessageAndWait(ctx, &types.Message{
 		From:   minerInfo.Owner,
 		To:     req.Miner,
 		Method: builtin.MethodsMiner.ChangeWorkerAddress,
@@ -425,7 +449,7 @@ func (s *ServiceImpl) MinerSetWorker(ctx context.Context, req *MinerSetWorkerReq
 		return 0, fmt.Errorf("push message(%s) failed: %s", msg.ID, err)
 	}
 
-	minerInfo, err = s.Node.StateMinerInfo(ctx, req.Miner, venusTypes.EmptyTSK)
+	minerInfo, err = s.Node.StateMinerInfo(ctx, req.Miner, types.EmptyTSK)
 	if err != nil {
 		return 0, fmt.Errorf("get miner(%s) info failed: %s", req.Miner, err)
 	}
@@ -434,7 +458,7 @@ func (s *ServiceImpl) MinerSetWorker(ctx context.Context, req *MinerSetWorkerReq
 }
 
 func (s *ServiceImpl) MinerConfirmWorker(ctx context.Context, req *MinerSetWorkerReq) error {
-	minerInfo, err := s.Node.StateMinerInfo(ctx, req.Miner, venusTypes.EmptyTSK)
+	minerInfo, err := s.Node.StateMinerInfo(ctx, req.Miner, types.EmptyTSK)
 	if err != nil {
 		return fmt.Errorf("get miner(%s) info failed: %s", req.Miner, err)
 	}
@@ -456,7 +480,7 @@ func (s *ServiceImpl) MinerConfirmWorker(ctx context.Context, req *MinerSetWorke
 		return fmt.Errorf("worker change epoch(%d) is not reached", minerInfo.WorkerChangeEpoch)
 	}
 
-	msg, err := s.PushMessageAndWait(ctx, &venusTypes.Message{
+	msg, err := s.PushMessageAndWait(ctx, &types.Message{
 		From:   minerInfo.Owner,
 		To:     req.Miner,
 		Method: builtin.MethodsMiner.ConfirmUpdateWorkerKey,
@@ -470,7 +494,7 @@ func (s *ServiceImpl) MinerConfirmWorker(ctx context.Context, req *MinerSetWorke
 }
 
 func (s *ServiceImpl) MinerSetControllers(ctx context.Context, req *MinerSetControllersReq) (oldController []address.Address, err error) {
-	minerInfo, err := s.Node.StateMinerInfo(ctx, req.Miner, venusTypes.EmptyTSK)
+	minerInfo, err := s.Node.StateMinerInfo(ctx, req.Miner, types.EmptyTSK)
 	if err != nil {
 		return nil, fmt.Errorf("get miner(%s) info failed: %s", req.Miner, err)
 	}
@@ -478,7 +502,7 @@ func (s *ServiceImpl) MinerSetControllers(ctx context.Context, req *MinerSetCont
 
 	newControllers := make([]address.Address, 0, len(req.NewControllers))
 	for _, c := range req.NewControllers {
-		id, err := s.Node.StateLookupID(ctx, c, venusTypes.EmptyTSK)
+		id, err := s.Node.StateLookupID(ctx, c, types.EmptyTSK)
 		if err != nil {
 			return nil, fmt.Errorf("get controller(%s) id failed: %s", c, err)
 		}
@@ -489,7 +513,7 @@ func (s *ServiceImpl) MinerSetControllers(ctx context.Context, req *MinerSetCont
 		return nil, fmt.Errorf("new controllers(%s) is the same as old controllers(%s)", req.NewControllers, minerInfo.ControlAddresses)
 	}
 
-	rawParam := &venusTypes.ChangeWorkerAddressParams{
+	rawParam := &types.ChangeWorkerAddressParams{
 		NewWorker:       minerInfo.Worker,
 		NewControlAddrs: newControllers,
 	}
@@ -499,7 +523,7 @@ func (s *ServiceImpl) MinerSetControllers(ctx context.Context, req *MinerSetCont
 		return nil, fmt.Errorf("serialize params failed: %s", err)
 	}
 
-	msg, err := s.PushMessageAndWait(ctx, &venusTypes.Message{
+	msg, err := s.PushMessageAndWait(ctx, &types.Message{
 		From:   minerInfo.Owner,
 		To:     req.Miner,
 		Method: builtin.MethodsMiner.ChangeWorkerAddress,
@@ -513,8 +537,101 @@ func (s *ServiceImpl) MinerSetControllers(ctx context.Context, req *MinerSetCont
 	return oldController, nil
 }
 
+func (s *ServiceImpl) MinerSetBeneficiary(ctx context.Context, req *MinerSetBeneficiaryReq) (*types.PendingBeneficiaryChange, error) {
+	minerInfo, err := s.Node.StateMinerInfo(ctx, req.Miner, types.EmptyTSK)
+	if err != nil {
+		return nil, fmt.Errorf("get miner(%s) info failed: %s", req.Miner, err)
+	}
+
+	newBeneficiary, err := s.Node.StateLookupID(ctx, req.NewBeneficiary, types.EmptyTSK)
+	if err != nil {
+		return nil, fmt.Errorf("get beneficiary(%s) id failed: %s", req.NewBeneficiary, err)
+	}
+	req.NewBeneficiary = newBeneficiary
+
+	if minerInfo.Beneficiary == newBeneficiary {
+		return nil, fmt.Errorf("new beneficiary(%s) is the same as old beneficiary(%s)", req.NewBeneficiary, minerInfo.Beneficiary)
+	}
+
+	param, err := actors.SerializeParams(&req.ChangeBeneficiaryParams)
+	if err != nil {
+		return nil, fmt.Errorf("serialize params failed: %s", err)
+	}
+
+	// owner proposal
+	msg, err := s.PushMessageAndWait(ctx, &types.Message{
+		From:   minerInfo.Owner,
+		To:     req.Miner,
+		Method: builtin.MethodsMiner.ChangeBeneficiary,
+		Params: param,
+		Value:  big.Zero(),
+	}, nil)
+	if err != nil {
+		return nil, fmt.Errorf("push message(%s) failed: %s", msg.ID, err)
+	}
+
+	minerInfo, err = s.Node.StateMinerInfo(ctx, req.Miner, types.EmptyTSK)
+	if err != nil {
+		return nil, fmt.Errorf("get miner(%s) info failed: %s", req.Miner, err)
+	}
+
+	if minerInfo.PendingBeneficiaryTerm == nil {
+		return nil, fmt.Errorf("owner proposal beneficial change failed")
+	}
+
+	return minerInfo.PendingBeneficiaryTerm, nil
+}
+
+func (s *ServiceImpl) MinerConfirmBeneficiary(ctx context.Context, req *MinerConfirmBeneficiaryReq) (confirmor address.Address, err error) {
+	minerInfo, err := s.Node.StateMinerInfo(ctx, req.Miner, types.EmptyTSK)
+	if err != nil {
+		return address.Undef, fmt.Errorf("get miner(%s) info failed: %s", req.Miner, err)
+	}
+
+	if minerInfo.PendingBeneficiaryTerm == nil {
+		return address.Undef, fmt.Errorf("miner(%s) no pending beneficiary", req.Miner)
+	}
+	if minerInfo.PendingBeneficiaryTerm.NewBeneficiary != req.NewBeneficiary {
+		return address.Undef, fmt.Errorf("new beneficiary(%s) is not the same as proposed beneficiary(%s)", req.NewBeneficiary, minerInfo.PendingBeneficiaryTerm.NewBeneficiary)
+	}
+
+	sender := minerInfo.Beneficiary
+	if !req.ByNominee {
+		if minerInfo.PendingBeneficiaryTerm.ApprovedByBeneficiary {
+			return address.Undef, fmt.Errorf("proposal already approved by beneficiary(%s)", minerInfo.Beneficiary)
+		}
+	} else {
+		if minerInfo.PendingBeneficiaryTerm.ApprovedByNominee {
+			return address.Undef, fmt.Errorf("proposal already approved by nominee(%s)", minerInfo.PendingBeneficiaryTerm.NewBeneficiary)
+		}
+		sender = minerInfo.PendingBeneficiaryTerm.NewBeneficiary
+	}
+
+	param, err := actors.SerializeParams(&types.ChangeBeneficiaryParams{
+		NewBeneficiary: minerInfo.PendingBeneficiaryTerm.NewBeneficiary,
+		NewQuota:       minerInfo.PendingBeneficiaryTerm.NewQuota,
+		NewExpiration:  minerInfo.PendingBeneficiaryTerm.NewExpiration,
+	})
+	if err != nil {
+		return address.Undef, fmt.Errorf("serialize params failed: %s", err)
+	}
+
+	msg, err := s.PushMessageAndWait(ctx, &types.Message{
+		From:   sender,
+		To:     req.Miner,
+		Method: builtin.MethodsMiner.ChangeBeneficiary,
+		Params: param,
+		Value:  big.Zero(),
+	}, nil)
+	if err != nil {
+		return address.Undef, fmt.Errorf("push message(%s) failed: %s", msg.ID, err)
+	}
+
+	return sender, nil
+}
+
 func (s *ServiceImpl) MinerGetDeadlines(ctx context.Context, mAddr address.Address) (*dline.Info, error) {
-	return s.Node.StateMinerProvingDeadline(ctx, mAddr, venusTypes.EmptyTSK)
+	return s.Node.StateMinerProvingDeadline(ctx, mAddr, types.EmptyTSK)
 }
 
 func (s *ServiceImpl) StorageDealList(ctx context.Context, miner address.Address) ([]marketTypes.MinerDeal, error) {
@@ -548,11 +665,11 @@ func (s *ServiceImpl) RetrievalDealList(ctx context.Context) ([]marketTypes.Prov
 
 func (s *ServiceImpl) SectorExtend(ctx context.Context, req SectorExtendReq) error {
 	var err error
-	rawParams := &venusTypes.ExtendSectorExpirationParams{}
+	rawParams := &types.ExtendSectorExpirationParams{}
 
 	sectors := map[lminer.SectorLocation][]abi.SectorNumber{}
 	for _, num := range req.SectorNumbers {
-		p, err := s.Node.StateSectorPartition(ctx, req.Miner, num, venusTypes.EmptyTSK)
+		p, err := s.Node.StateSectorPartition(ctx, req.Miner, num, types.EmptyTSK)
 		if err != nil {
 			return fmt.Errorf("get sector partition failed: %s", err)
 		}
@@ -569,7 +686,7 @@ func (s *ServiceImpl) SectorExtend(ctx context.Context, req SectorExtendReq) err
 		for i, n := range numbers {
 			nums[i] = uint64(n)
 		}
-		rawParams.Extensions = append(rawParams.Extensions, venusTypes.ExpirationExtension{
+		rawParams.Extensions = append(rawParams.Extensions, types.ExpirationExtension{
 			Deadline:      p.Deadline,
 			Partition:     p.Partition,
 			Sectors:       bitfield.NewFromSet(nums),
@@ -582,12 +699,12 @@ func (s *ServiceImpl) SectorExtend(ctx context.Context, req SectorExtendReq) err
 		return err
 	}
 
-	mi, err := s.Node.StateMinerInfo(ctx, req.Miner, venusTypes.EmptyTSK)
+	mi, err := s.Node.StateMinerInfo(ctx, req.Miner, types.EmptyTSK)
 	if err != nil {
 		return fmt.Errorf("get miner info failed: %s", err)
 	}
 
-	_, err = s.Messager.PushMessage(ctx, &venusTypes.Message{
+	_, err = s.Messager.PushMessage(ctx, &types.Message{
 		From:   mi.Worker,
 		To:     req.Miner,
 		Method: builtin.MethodsMiner.ExtendSectorExpiration,
@@ -604,12 +721,12 @@ func (s *ServiceImpl) SectorExtend(ctx context.Context, req SectorExtendReq) err
 func (s *ServiceImpl) SectorGet(ctx context.Context, req SectorGetReq) ([]*SectorResp, error) {
 	ret := make([]*SectorResp, 0)
 	for _, num := range req.SectorNumbers {
-		sector, err := s.Node.StateSectorGetInfo(ctx, req.Miner, num, venusTypes.EmptyTSK)
+		sector, err := s.Node.StateSectorGetInfo(ctx, req.Miner, num, types.EmptyTSK)
 		if err != nil {
 			return nil, fmt.Errorf("get sector(%s) info failed: %s", num, err)
 		}
 
-		p, err := s.Node.StateSectorPartition(ctx, req.Miner, num, venusTypes.EmptyTSK)
+		p, err := s.Node.StateSectorPartition(ctx, req.Miner, num, types.EmptyTSK)
 		if err != nil {
 			return nil, fmt.Errorf("get sector(%s) partition failed: %s", num, err)
 		}
@@ -623,7 +740,7 @@ func (s *ServiceImpl) SectorGet(ctx context.Context, req SectorGetReq) ([]*Secto
 	return ret, nil
 }
 
-func (s *ServiceImpl) PushMessageAndWait(ctx context.Context, msg *venusTypes.Message, spec *msgTypes.SendSpec) (*msgTypes.Message, error) {
+func (s *ServiceImpl) PushMessageAndWait(ctx context.Context, msg *types.Message, spec *msgTypes.SendSpec) (*msgTypes.Message, error) {
 	id, err := s.Messager.PushMessage(ctx, msg, spec)
 	if err != nil {
 		return nil, err

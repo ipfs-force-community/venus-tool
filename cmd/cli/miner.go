@@ -25,9 +25,13 @@ var MinerCmd = &cli.Command{
 	Name:  "miner",
 	Usage: "manage miner",
 	Subcommands: []*cli.Command{
+		minerInfoCmd,
 		minerCreate,
 		minerAskCmd,
 		minerDeadlineCmd,
+		minerSetOwnerCmd,
+		minerSetWorkerCmd,
+		minerSetControllersCmd,
 	},
 }
 
@@ -451,5 +455,208 @@ var minerDeadlineCmd = &cli.Command{
 
 		return nil
 
+	},
+}
+
+var minerInfoCmd = &cli.Command{
+	Name:        "info",
+	Usage:       "query miner info",
+	ArgsUsage:   "<Miner Address>",
+	Description: `Query miner info.`,
+	Action: func(cctx *cli.Context) error {
+		ctx := cctx.Context
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
+
+		if cctx.NArg() != 1 {
+			return fmt.Errorf("must pass miner address as first and only argument")
+		}
+
+		mAddr, err := address.NewFromString(cctx.Args().First())
+		if err != nil {
+			return err
+		}
+
+		mi, err := api.MinerInfo(ctx, mAddr)
+		if err != nil {
+			return err
+		}
+
+		return printJSON(mi)
+	},
+}
+
+var minerSetOwnerCmd = &cli.Command{
+	Name:      "set-owner",
+	Usage:     "set the owner address of a miner",
+	ArgsUsage: "<minerAddress> <newOwnerAddress>",
+	Action: func(cctx *cli.Context) error {
+		ctx := cctx.Context
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
+
+		if cctx.NArg() != 2 {
+			return fmt.Errorf("must pass miner address and new owner address as first and second arguments")
+		}
+
+		mAddr, err := address.NewFromString(cctx.Args().First())
+		if err != nil {
+			return err
+		}
+
+		newOwner, err := address.NewFromString(cctx.Args().Get(1))
+		if err != nil {
+			return err
+		}
+
+		req := &service.MinerSetOwnerReq{
+			Miner:    mAddr,
+			NewOwner: newOwner,
+		}
+
+		fmt.Println("This will take some time (maybe 10 epoch), to ensure message is chained...")
+
+		err = api.MinerSetOwner(ctx, req)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Owner address changed to %s \n", newOwner)
+		return nil
+	},
+}
+
+var minerSetWorkerCmd = &cli.Command{
+	Name:      "set-worker",
+	Usage:     "set the worker address of a miner",
+	ArgsUsage: "<minerAddress> <newWorkerAddress>",
+	Flags: []cli.Flag{
+		&cli.BoolFlag{
+			Name:    "confirm",
+			Usage:   "confirm the new worker address",
+			Aliases: []string{"c"},
+		},
+	},
+	Action: func(cctx *cli.Context) error {
+		ctx := cctx.Context
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
+
+		if cctx.NArg() != 2 {
+			return fmt.Errorf("must pass miner address and new worker address as first and second arguments")
+		}
+
+		mAddr, err := address.NewFromString(cctx.Args().First())
+		if err != nil {
+			return err
+		}
+
+		newWorker, err := address.NewFromString(cctx.Args().Get(1))
+		if err != nil {
+			return err
+		}
+
+		req := &service.MinerSetWorkerReq{
+			Miner:     mAddr,
+			NewWorker: newWorker,
+		}
+
+		fmt.Println("This will take some time (maybe 10 epoch), to ensure message is chained...")
+
+		if cctx.Bool("confirm") {
+			err := api.MinerConfirmWorker(ctx, req)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("Worker address changed to %s \n", newWorker)
+			return nil
+		}
+
+		effectEpoch, err := api.MinerSetWorker(ctx, req)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Worker address(%s) change successfully proposed.\n", newWorker)
+		fmt.Printf("Call 'set-worker' with '--confirm' flag at or after height %d to complete.\n", effectEpoch)
+
+		return nil
+	},
+}
+
+var minerSetControllersCmd = &cli.Command{
+	Name:      "set-controllers",
+	Usage:     "set the controllers of a miner",
+	ArgsUsage: "<minerAddress> <newControllerAddresses>...",
+	Action: func(cctx *cli.Context) error {
+		ctx := cctx.Context
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
+
+		if cctx.NArg() < 2 {
+			return fmt.Errorf("must pass miner address and at least one new controller address")
+		}
+
+		mAddr, err := address.NewFromString(cctx.Args().First())
+		if err != nil {
+			return err
+		}
+
+		var newControllers []address.Address
+		add, del := map[address.Address]struct{}{}, map[address.Address]struct{}{}
+		for _, a := range cctx.Args().Slice()[1:] {
+			addr, err := address.NewFromString(a)
+			if err != nil {
+				return err
+			}
+			if _, ok := add[addr]; ok {
+				return fmt.Errorf("duplicate address %s", addr)
+			}
+			add[addr] = struct{}{}
+			newControllers = append(newControllers, addr)
+		}
+
+		req := &service.MinerSetControllersReq{
+			Miner:          mAddr,
+			NewControllers: newControllers,
+		}
+
+		fmt.Println("This will take some time (maybe 10 epoch), to ensure message is chained...")
+
+		old, err := api.MinerSetControllers(ctx, req)
+		if err != nil {
+			return err
+		}
+
+		for _, a := range old {
+			if _, ok := add[a]; ok {
+				delete(add, a)
+			} else {
+				del[a] = struct{}{}
+			}
+		}
+
+		if len(del) > 0 {
+			fmt.Println("The following controllers are removed:")
+			for a := range del {
+				fmt.Println(a)
+			}
+		}
+
+		if len(add) > 0 {
+			fmt.Println("The following controllers are added:")
+			for a := range add {
+				fmt.Println(a)
+			}
+		}
+		return nil
 	},
 }

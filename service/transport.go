@@ -12,6 +12,7 @@ import (
 	"github.com/filecoin-project/go-fil-markets/retrievalmarket"
 	"github.com/filecoin-project/go-fil-markets/storagemarket"
 	"github.com/filecoin-project/go-state-types/abi"
+	"github.com/filecoin-project/go-state-types/dline"
 	power2 "github.com/filecoin-project/specs-actors/v2/actors/builtin/power"
 	lminer "github.com/filecoin-project/venus/venus-shared/actors/builtin/miner"
 	nodeV1 "github.com/filecoin-project/venus/venus-shared/api/chain/v1"
@@ -166,6 +167,28 @@ type MinerCreateReq struct {
 	From       address.Address
 	SectorSize abi.SectorSize
 	MsgId      string
+}
+
+type MinerInfoResp struct {
+	venusTypes.MinerInfo
+	venusTypes.MinerPower
+	AvailBalance abi.TokenAmount
+	Deadline     dline.Info
+}
+
+type MinerSetOwnerReq struct {
+	Miner    address.Address
+	NewOwner address.Address
+}
+
+type MinerSetWorkerReq struct {
+	Miner     address.Address
+	NewWorker address.Address
+}
+
+type MinerSetControllersReq struct {
+	Miner          address.Address
+	NewControllers []address.Address
 }
 
 type SectorExtendReq struct {

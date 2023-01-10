@@ -525,7 +525,7 @@ var minerSetOwnerCmd = &cli.Command{
 			return err
 		}
 
-		fmt.Printf("Owner address changed to %s", newOwner)
+		fmt.Printf("Owner address changed to %s \n", newOwner)
 		return nil
 	},
 }
@@ -574,7 +574,7 @@ var minerSetWorkerCmd = &cli.Command{
 			if err != nil {
 				return err
 			}
-			fmt.Printf("Worker address changed to %s", newWorker)
+			fmt.Printf("Worker address changed to %s \n", newWorker)
 			return nil
 		}
 
@@ -616,6 +616,9 @@ var minerSetControllersCmd = &cli.Command{
 			addr, err := address.NewFromString(a)
 			if err != nil {
 				return err
+			}
+			if _, ok := add[addr]; ok {
+				return fmt.Errorf("duplicate address %s", addr)
 			}
 			add[addr] = struct{}{}
 			newControllers = append(newControllers, addr)

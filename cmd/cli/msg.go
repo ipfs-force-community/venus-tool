@@ -12,9 +12,9 @@ import (
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/big"
-	venusTypes "github.com/filecoin-project/venus/venus-shared/types"
+	"github.com/filecoin-project/venus/venus-shared/types"
 	"github.com/filecoin-project/venus/venus-shared/types/messager"
-	types "github.com/filecoin-project/venus/venus-shared/types/messager"
+	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
 )
 
 var (
@@ -96,7 +96,7 @@ var msgDendCmd = &cli.Command{
 			return fmt.Errorf("failed to parse target address: %w", err)
 		}
 
-		val, err := venusTypes.ParseFIL(cctx.Args().Get(1))
+		val, err := types.ParseFIL(cctx.Args().Get(1))
 		if err != nil {
 			return fmt.Errorf("failed to parse amount: %w", err)
 		}
@@ -110,7 +110,7 @@ var msgDendCmd = &cli.Command{
 
 		params.Method = abi.MethodNum(cctx.Uint64("method"))
 
-		gfc, err := venusTypes.BigFromString(cctx.String("max-fee"))
+		gfc, err := types.BigFromString(cctx.String("max-fee"))
 		if err != nil {
 			return err
 		}
@@ -203,7 +203,7 @@ var msgListCmd = &cli.Command{
 		},
 		&cli.IntFlag{
 			Name:  "state",
-			Value: int(types.UnFillMsg),
+			Value: int(msgTypes.UnFillMsg),
 			Usage: `filter by message state,
 state:
   1:  UnFillMsg
@@ -273,7 +273,7 @@ if [--failed] or [--blocked] is set, [--state] will be ignored
 				return params, nil
 			}
 
-			params.State = []types.MessageState{types.MessageState(cctx.Int("state"))}
+			params.State = []msgTypes.MessageState{msgTypes.MessageState(cctx.Int("state"))}
 
 			if cctx.IsSet("page-index") || cctx.IsSet("page-size") {
 				params.PageIndex = cctx.Int("page-index")
@@ -382,21 +382,21 @@ var msgReplaceCmd = &cli.Command{
 			}
 
 			if cctx.IsSet("max-fee") {
-				maxFee, err := venusTypes.ParseFIL(cctx.String("max-fee"))
+				maxFee, err := types.ParseFIL(cctx.String("max-fee"))
 				if err != nil {
 					return nil, fmt.Errorf("parse max fee failed: %v", err)
 				}
 				params.MaxFee = big.Int(maxFee)
 			}
 			if cctx.IsSet("gas-premium") {
-				gasPremium, err := venusTypes.BigFromString(cctx.String("gas-premium"))
+				gasPremium, err := types.BigFromString(cctx.String("gas-premium"))
 				if err != nil {
 					return nil, fmt.Errorf("parse gas premium failed: %v", err)
 				}
 				params.GasPremium = gasPremium
 			}
 			if cctx.IsSet("gas-feecap") {
-				gasFeecap, err := venusTypes.BigFromString(cctx.String("gas-feecap"))
+				gasFeecap, err := types.BigFromString(cctx.String("gas-feecap"))
 				if err != nil {
 					return nil, fmt.Errorf("parse gas feecap failed: %v", err)
 				}

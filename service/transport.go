@@ -16,7 +16,7 @@ import (
 	power2 "github.com/filecoin-project/specs-actors/v2/actors/builtin/power"
 	lminer "github.com/filecoin-project/venus/venus-shared/actors/builtin/miner"
 	nodeV1 "github.com/filecoin-project/venus/venus-shared/api/chain/v1"
-	venusTypes "github.com/filecoin-project/venus/venus-shared/types"
+	"github.com/filecoin-project/venus/venus-shared/types"
 	marketTypes "github.com/filecoin-project/venus/venus-shared/types/market"
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
 	"github.com/ipfs-force-community/venus-tool/utils"
@@ -158,7 +158,7 @@ type MinerSetRetrievalAskReq struct {
 
 type MinerSetBeneficiaryReq struct {
 	Miner address.Address
-	venusTypes.ChangeBeneficiaryParams
+	types.ChangeBeneficiaryParams
 }
 
 type MinerConfirmBeneficiaryReq struct {
@@ -181,8 +181,8 @@ type MinerCreateReq struct {
 }
 
 type MinerInfoResp struct {
-	venusTypes.MinerInfo
-	venusTypes.MinerPower
+	types.MinerInfo
+	types.MinerPower
 	AvailBalance abi.TokenAmount
 	Deadline     dline.Info
 }
@@ -219,6 +219,6 @@ type SectorGetReq struct {
 }
 
 type SectorResp struct {
-	venusTypes.SectorOnChainInfo
+	types.SectorOnChainInfo
 	SectorLocation lminer.SectorLocation
 }

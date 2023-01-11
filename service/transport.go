@@ -202,6 +202,11 @@ type MinerSetControllersReq struct {
 	NewControllers []address.Address
 }
 
+type MinerWithdrawBalanceReq struct {
+	Miner  address.Address
+	Amount abi.TokenAmount
+}
+
 type SectorExtendReq struct {
 	Miner         address.Address
 	SectorNumbers []abi.SectorNumber

@@ -43,8 +43,16 @@ type ServiceImpl struct {
 
 var _ IService = &ServiceImpl{}
 
-func (s *ServiceImpl) ChainHead(ctx context.Context) (*types.TipSet, error) {
+func (s *ServiceImpl) ChainGetHead(ctx context.Context) (*types.TipSet, error) {
 	return s.Node.ChainHead(ctx)
+}
+
+func (s *ServiceImpl) ChainGetActor(ctx context.Context, addr address.Address) (*types.Actor, error) {
+	return s.Node.StateGetActor(ctx, addr, types.EmptyTSK)
+}
+
+func (s *ServiceImpl) ChainGetNetworkName(ctx context.Context) (types.NetworkName, error) {
+	return s.Node.StateNetworkName(ctx)
 }
 
 func (s *ServiceImpl) GetDefaultWallet(ctx context.Context) (address.Address, error) {
@@ -549,8 +557,8 @@ func (s *ServiceImpl) MinerSetBeneficiary(ctx context.Context, req *MinerSetBene
 	}
 	req.NewBeneficiary = newBeneficiary
 
-	if minerInfo.Beneficiary == newBeneficiary {
-		return nil, fmt.Errorf("new beneficiary(%s) is the same as old beneficiary(%s)", req.NewBeneficiary, minerInfo.Beneficiary)
+	if minerInfo.Beneficiary == newBeneficiary && newBeneficiary == minerInfo.Owner {
+		return nil, fmt.Errorf("beneficiary %s already set to owner address", newBeneficiary)
 	}
 
 	param, err := actors.SerializeParams(&req.ChangeBeneficiaryParams)
@@ -632,6 +640,48 @@ func (s *ServiceImpl) MinerConfirmBeneficiary(ctx context.Context, req *MinerCon
 
 func (s *ServiceImpl) MinerGetDeadlines(ctx context.Context, mAddr address.Address) (*dline.Info, error) {
 	return s.Node.StateMinerProvingDeadline(ctx, mAddr, types.EmptyTSK)
+}
+
+func (s *ServiceImpl) MinerWithdrawBalance(ctx context.Context, req *MinerWithdrawBalanceReq) (abi.TokenAmount, error) {
+
+	minerInfo, err := s.Node.StateMinerInfo(ctx, req.Miner, types.EmptyTSK)
+	if err != nil {
+		return big.Zero(), fmt.Errorf("get miner(%s) info failed: %s", req.Miner, err)
+	}
+
+	available, err := s.Node.StateMinerAvailableBalance(ctx, req.Miner, types.EmptyTSK)
+	if err != nil {
+		return big.Zero(), fmt.Errorf("get miner(%s) available balance failed: %s", req.Miner, err)
+	}
+
+	if available.LessThan(req.Amount) {
+		return big.Zero(), fmt.Errorf("withdraw amount(%s) is greater than available balance(%s)", req.Amount, available)
+	}
+
+	if req.Amount.LessThanEqual(big.Zero()) {
+		req.Amount = available
+	}
+
+	param, err := actors.SerializeParams(&types.MinerWithdrawBalanceParams{
+		AmountRequested: req.Amount,
+	})
+	if err != nil {
+		return big.Zero(), fmt.Errorf("serialize params failed: %s", err)
+	}
+
+	msg, err := s.PushMessageAndWait(ctx, &types.Message{
+		From:   minerInfo.Beneficiary,
+		To:     req.Miner,
+		Method: builtin.MethodsMiner.WithdrawBalance,
+		Params: param,
+		Value:  big.Zero(),
+	}, nil)
+
+	if err != nil {
+		return big.Zero(), fmt.Errorf("push message(%s) failed: %s", msg.ID, err)
+	}
+
+	return req.Amount, nil
 }
 
 func (s *ServiceImpl) StorageDealList(ctx context.Context, miner address.Address) ([]marketTypes.MinerDeal, error) {

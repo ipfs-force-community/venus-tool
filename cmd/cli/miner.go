@@ -34,6 +34,7 @@ var MinerCmd = &cli.Command{
 		minerSetWorkerCmd,
 		minerSetControllersCmd,
 		minerSetBeneficiaryCmd,
+		minerWithdrawBalanceCmd,
 	},
 }
 
@@ -97,7 +98,7 @@ var minerGetAskCmd = &cli.Command{
 
 			fmt.Fprintf(w, "Price per GiB/Epoch\tVerified\tMin. Piece Size (padded)\tMax. Piece Size (padded)\tExpiry (Epoch)\tExpiry (Appx. Rem. Time)\tSeq. No.\n")
 
-			head, err := api.ChainHead(ctx)
+			head, err := api.ChainGetHead(ctx)
 			if err != nil {
 				return err
 			}
@@ -759,12 +760,54 @@ var minerSetBeneficiaryCmd = &cli.Command{
 			if err != nil {
 				return err
 			}
-			fmt.Println("Beneficiary changed proposed:")
+			fmt.Println("Beneficiary change proposed:")
 			err = printJSON(pendingChange)
 			if err != nil {
 				return err
 			}
 		}
+
+		return nil
+	},
+}
+
+var minerWithdrawBalanceCmd = &cli.Command{
+	Name:      "withdraw-balance",
+	Usage:     "withdraw balance from miner to beneficiary",
+	ArgsUsage: "<minerAddress> <amount>",
+	Action: func(cctx *cli.Context) error {
+		ctx := cctx.Context
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
+
+		if cctx.NArg() != 2 {
+			return fmt.Errorf("must pass miner address and amount as arguments")
+		}
+
+		mAddr, err := address.NewFromString(cctx.Args().First())
+		if err != nil {
+			return err
+		}
+
+		amount, err := types.ParseFIL(cctx.Args().Get(1))
+		if err != nil {
+			return err
+		}
+
+		req := &service.MinerWithdrawBalanceReq{
+			Miner:  mAddr,
+			Amount: abi.TokenAmount(amount),
+		}
+
+		fmt.Println("This will take some time (maybe 5 epoch), to ensure message is chained...")
+		withdrawn, err := api.MinerWithdrawBalance(ctx, req)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Balance of %s has been withdrawn \n", withdrawn)
 
 		return nil
 	},

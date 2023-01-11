@@ -297,8 +297,8 @@ github.com/filecoin-project/specs-actors/v7 v7.0.1/go.mod h1:tPLEYXoXhcpyLh69Ccq
 github.com/filecoin-project/specs-storage v0.4.1 h1:yvLEaLZj8f+uByhNC4mFOtCUyL2wQku+NGBp6hjTe9M=
 github.com/filecoin-project/specs-storage v0.4.1/go.mod h1:Z2eK6uMwAOSLjek6+sy0jNV2DSsMEENziMUz0GHRFBw=
 github.com/filecoin-project/storetheindex v0.4.17 h1:w0dVc954TGPukoVbidlYvn9Xt+wVhk5vBvrqeJiRo8I=
-github.com/filecoin-project/venus v1.8.1-0.20230104093037-158d77bf2f0b h1:65LtcvhAMPtaByLlTVBjD5BdUmrG4hDPaQ3MPi+ru7I=
-github.com/filecoin-project/venus v1.8.1-0.20230104093037-158d77bf2f0b/go.mod h1:BJn0TSnkDTX8R3duiCpgPKDYU5ybrPCgJlkxZi/wmTs=
+github.com/filecoin-project/venus v1.8.1-0.20230109091304-2aad6b348a86 h1:uwhZrj+h1k6RHDSC5KSpV8xhOcT8KEuV95rAK41ue50=
+github.com/filecoin-project/venus v1.8.1-0.20230109091304-2aad6b348a86/go.mod h1:BJn0TSnkDTX8R3duiCpgPKDYU5ybrPCgJlkxZi/wmTs=
 github.com/filecoin-project/venus-messager v1.8.0 h1:nxo98hSL1nFyRjcGZuLpYV/Koe9sGfYsGDpUzCxC4f4=
 github.com/filecoin-project/venus-messager v1.8.0/go.mod h1:qNECDJjesxa56VGqKH24AcG94bqud+0dgQ/fwebEi80=
 github.com/filecoin-project/venus/venus-devtool v0.0.0-20230104163736-6ee019132745 h1:H7mkRSXq/KQYgwB4qhEYJCSEyX+Tan8s8R38R+YIm3M=

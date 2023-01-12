@@ -23,7 +23,7 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/filecoin-project/venus-messager/cli/tablewriter"
-	venusTypes "github.com/filecoin-project/venus/venus-shared/types"
+	"github.com/filecoin-project/venus/venus-shared/types"
 	"github.com/filecoin-project/venus/venus-shared/types/market"
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
 )
@@ -87,7 +87,7 @@ func outputMsgWithTable(msgs []*service.MsgResp, verbose bool) error {
 
 	for _, msgT := range msgs {
 		msg := transformMessage(msgT)
-		val := venusTypes.MustParseFIL(msg.Msg.Value.String() + "attofil").String()
+		val := types.MustParseFIL(msg.Msg.Value.String() + "attofil").String()
 		row := map[string]interface{}{
 			"ID":         msg.ID,
 			"To":         msg.Msg.To,
@@ -160,7 +160,7 @@ type message struct {
 	Height     int64
 	Confidence int64
 	Receipt    *receipt
-	TipSetKey  venusTypes.TipSetKey
+	TipSetKey  types.TipSetKey
 
 	Meta *msgTypes.SendSpec
 
@@ -247,7 +247,7 @@ func outputStorageDeals(out io.Writer, deals []market.MinerDeal, verbose bool) e
 			propcid = "..." + propcid[len(propcid)-8:]
 		}
 
-		fil := venusTypes.FIL(venusTypes.BigMul(deal.Proposal.StoragePricePerEpoch, venusTypes.NewInt(uint64(deal.Proposal.Duration()))))
+		fil := types.FIL(types.BigMul(deal.Proposal.StoragePricePerEpoch, types.NewInt(uint64(deal.Proposal.Duration()))))
 
 		if verbose {
 			_, _ = fmt.Fprintf(w, "%s\t%t\t", deal.CreationTime.Time().Format(time.Stamp), deal.Proposal.VerifiedDeal)

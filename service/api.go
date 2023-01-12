@@ -9,7 +9,6 @@ import (
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/dline"
 	"github.com/filecoin-project/venus/venus-shared/types"
-	venusTypes "github.com/filecoin-project/venus/venus-shared/types"
 	marketTypes "github.com/filecoin-project/venus/venus-shared/types/market"
 	"github.com/ipfs/go-cid"
 )
@@ -17,7 +16,9 @@ import (
 //go:generate go run ../utils/gen/api-gen.go
 
 type IService interface {
-	ChainHead(ctx context.Context) (*venusTypes.TipSet, error) // GET:/chain/head
+	ChainGetHead(ctx context.Context) (*types.TipSet, error)                       // GET:/chain/head
+	ChainGetActor(ctx context.Context, addr address.Address) (*types.Actor, error) // GET:/chain/actor
+	ChainGetNetworkName(ctx context.Context) (types.NetworkName, error)            // GET:/chain/networkname
 
 	MsgSend(ctx context.Context, params *MsgSendReq) (string, error)        // POST:/msg/send
 	MsgQuery(ctx context.Context, params *MsgQueryReq) ([]*MsgResp, error)  // GET:/msg/query
@@ -28,10 +29,10 @@ type IService interface {
 
 	MinerInfo(ctx context.Context, mAddr address.Address) (*MinerInfoResp, error)                                        // GET:/miner/info
 	MinerCreate(ctx context.Context, params *MinerCreateReq) (address.Address, error)                                    // POST:/miner/create
-	MinerGetStorageAsk(ctx context.Context, mAddr address.Address) (*storagemarket.StorageAsk, error)                    // GET:/miner/storageask/
-	MinerGetRetrievalAsk(ctx context.Context, mAddr address.Address) (*retrievalmarket.Ask, error)                       // GET:/miner/retrievalask/
-	MinerSetStorageAsk(ctx context.Context, p *MinerSetAskReq) error                                                     // PUT:/miner/storageask/
-	MinerSetRetrievalAsk(ctx context.Context, p *MinerSetRetrievalAskReq) error                                          // PUT:/miner/retrievalask/
+	MinerGetStorageAsk(ctx context.Context, mAddr address.Address) (*storagemarket.StorageAsk, error)                    // GET:/miner/storageask
+	MinerGetRetrievalAsk(ctx context.Context, mAddr address.Address) (*retrievalmarket.Ask, error)                       // GET:/miner/retrievalask
+	MinerSetStorageAsk(ctx context.Context, p *MinerSetAskReq) error                                                     // PUT:/miner/storageask
+	MinerSetRetrievalAsk(ctx context.Context, p *MinerSetRetrievalAskReq) error                                          // PUT:/miner/retrievalask
 	MinerGetDeadlines(ctx context.Context, mAddr address.Address) (*dline.Info, error)                                   // GET:/miner/deadline
 	MinerSetOwner(ctx context.Context, p *MinerSetOwnerReq) error                                                        // PUT:/miner/owner
 	MinerConfirmOwner(ctx context.Context, p *MinerSetOwnerReq) (oldOwner address.Address, err error)                    // PUT:/miner/confirmowner
@@ -40,6 +41,10 @@ type IService interface {
 	MinerSetControllers(ctx context.Context, req *MinerSetControllersReq) (oldController []address.Address, err error)   // PUT:/miner/controllers
 	MinerSetBeneficiary(ctx context.Context, req *MinerSetBeneficiaryReq) (*types.PendingBeneficiaryChange, error)       // PUT:/miner/beneficiary
 	MinerConfirmBeneficiary(ctx context.Context, req *MinerConfirmBeneficiaryReq) (confirmor address.Address, err error) // PUT:/miner/confirmbeneficiary
+	// MinerWithdrawFromMarket withdraws funds from miner to it's beneficiary
+	MinerWithdrawToBeneficiary(ctx context.Context, req *MinerWithdrawBalanceReq) (abi.TokenAmount, error) // PUT:/miner/withdrawbeneficiary
+	// MinerWithdrawFromMarket withdraw balance from market to miner's owner or worker
+	MinerWithdrawFromMarket(ctx context.Context, req *MinerWithdrawBalanceReq) (abi.TokenAmount, error) // PUT:/miner/withdrawmarket
 
 	StorageDealList(ctx context.Context, miner address.Address) ([]marketTypes.MinerDeal, error) // GET:/deal/storage
 	StorageDealUpdateState(ctx context.Context, req StorageDealUpdateStateReq) error             // PUT:/deal/storage/state

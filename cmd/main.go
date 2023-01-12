@@ -15,6 +15,7 @@ import (
 	nodeApi "github.com/filecoin-project/venus/venus-shared/api/chain/v1"
 	marketApi "github.com/filecoin-project/venus/venus-shared/api/market"
 	msgApi "github.com/filecoin-project/venus/venus-shared/api/messager"
+	"github.com/filecoin-project/venus/venus-shared/types"
 
 	vtCli "github.com/ipfs-force-community/venus-tool/cmd/cli"
 	"github.com/ipfs-force-community/venus-tool/repo"
@@ -86,6 +87,7 @@ func main() {
 			vtCli.MinerCmd,
 			vtCli.DealCmd,
 			vtCli.SectorCmd,
+			vtCli.ChainCmd,
 		},
 	}
 	app.Setup()
@@ -162,6 +164,11 @@ var runCmd = &cli.Command{
 		}
 		fx.Supply(server)
 
+		networkName, err := nodeClient.StateNetworkName(ctx)
+		if err != nil {
+			return err
+		}
+
 		// compose
 		stop, err := builder.New(
 			ctx,
@@ -170,6 +177,7 @@ var runCmd = &cli.Command{
 			builder.Override(new(marketApi.IMarket), marketClient),
 			builder.Override(new(nodeApi.FullNode), nodeClient),
 			builder.Override(new(context.Context), ctx),
+			builder.Override(new(types.NetworkName), networkName),
 			builder.Override(new(*service.ServiceImpl), func(params service.ServiceParams) (*service.ServiceImpl, error) {
 				return params.NewService(cfg.Wallets, cfg.Miners)
 			}),

@@ -13,10 +13,14 @@ build:
 
 
 gen:
-	go generate ./...
+	@go generate ./...
 
 lint:
-	golangci-lint run
+	@golangci-lint run
 
 test:
-	go test -race ./...
+	@go test -race ./...
+
+dev-init:
+	ln -s ../../.githooks/pre-commit .git/hooks/pre-commit
+	ln -s ../../.githooks/pre-push .git/hooks/pre-push

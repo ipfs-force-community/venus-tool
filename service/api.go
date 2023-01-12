@@ -41,7 +41,10 @@ type IService interface {
 	MinerSetControllers(ctx context.Context, req *MinerSetControllersReq) (oldController []address.Address, err error)   // PUT:/miner/controllers
 	MinerSetBeneficiary(ctx context.Context, req *MinerSetBeneficiaryReq) (*types.PendingBeneficiaryChange, error)       // PUT:/miner/beneficiary
 	MinerConfirmBeneficiary(ctx context.Context, req *MinerConfirmBeneficiaryReq) (confirmor address.Address, err error) // PUT:/miner/confirmbeneficiary
-	MinerWithdrawBalance(ctx context.Context, req *MinerWithdrawBalanceReq) (abi.TokenAmount, error)                     // PUT:/miner/withdrawbalance
+	// MinerWithdrawFromMarket withdraws funds from miner to it's beneficiary
+	MinerWithdrawToBeneficiary(ctx context.Context, req *MinerWithdrawBalanceReq) (abi.TokenAmount, error) // PUT:/miner/withdrawbeneficiary
+	// MinerWithdrawFromMarket withdraw balance from market to miner's owner or worker
+	MinerWithdrawFromMarket(ctx context.Context, req *MinerWithdrawBalanceReq) (abi.TokenAmount, error) // PUT:/miner/withdrawmarket
 
 	StorageDealList(ctx context.Context, miner address.Address) ([]marketTypes.MinerDeal, error) // GET:/deal/storage
 	StorageDealUpdateState(ctx context.Context, req StorageDealUpdateStateReq) error             // PUT:/deal/storage/state

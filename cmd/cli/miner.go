@@ -34,7 +34,8 @@ var MinerCmd = &cli.Command{
 		minerSetWorkerCmd,
 		minerSetControllersCmd,
 		minerSetBeneficiaryCmd,
-		minerWithdrawBalanceCmd,
+		minerWithdrawToBeneficiaryCmd,
+		minerWithdrawFromMarketCmd,
 	},
 }
 
@@ -771,8 +772,8 @@ var minerSetBeneficiaryCmd = &cli.Command{
 	},
 }
 
-var minerWithdrawBalanceCmd = &cli.Command{
-	Name:      "withdraw-balance",
+var minerWithdrawToBeneficiaryCmd = &cli.Command{
+	Name:      "withdraw-to-beneficiary",
 	Usage:     "withdraw balance from miner to beneficiary",
 	ArgsUsage: "<minerAddress> <amount>",
 	Action: func(cctx *cli.Context) error {
@@ -802,12 +803,67 @@ var minerWithdrawBalanceCmd = &cli.Command{
 		}
 
 		fmt.Println("This will take some time (maybe 5 epoch), to ensure message is chained...")
-		withdrawn, err := api.MinerWithdrawBalance(ctx, req)
+		withdrawn, err := api.MinerWithdrawToBeneficiary(ctx, req)
 		if err != nil {
 			return err
 		}
 
-		fmt.Printf("Balance of %s has been withdrawn \n", withdrawn)
+		fmt.Printf("Balance of %s has been withdrawn \n", types.FIL(withdrawn))
+
+		return nil
+	},
+}
+
+var minerWithdrawFromMarketCmd = &cli.Command{
+	Name:      "withdraw-from-market",
+	Usage:     "withdraw balance from market",
+	ArgsUsage: "<minerAddress> <amount>",
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:  "to",
+			Usage: "the address will withdraw fund to, it should be the owner or worker of miner",
+		},
+	},
+	Action: func(cctx *cli.Context) error {
+		ctx := cctx.Context
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
+
+		if cctx.NArg() != 2 {
+			return fmt.Errorf("must pass miner address and amount as arguments")
+		}
+
+		mAddr, err := address.NewFromString(cctx.Args().First())
+		if err != nil {
+			return err
+		}
+
+		amount, err := types.ParseFIL(cctx.Args().Get(1))
+		if err != nil {
+			return err
+		}
+
+		req := &service.MinerWithdrawBalanceReq{
+			Miner:  mAddr,
+			Amount: abi.TokenAmount(amount),
+		}
+
+		if cctx.IsSet("to") {
+			req.To, err = address.NewFromString(cctx.String("to"))
+			if err != nil {
+				return err
+			}
+		}
+
+		fmt.Println("This will take some time (maybe 5 epoch), to ensure message is chained...")
+		withdrawn, err := api.MinerWithdrawFromMarket(ctx, req)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Balance of %s has been withdrawn \n", types.FIL(withdrawn))
 
 		return nil
 	},

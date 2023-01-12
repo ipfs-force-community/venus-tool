@@ -204,6 +204,7 @@ type MinerSetControllersReq struct {
 
 type MinerWithdrawBalanceReq struct {
 	Miner  address.Address
+	To     address.Address
 	Amount abi.TokenAmount
 }
 

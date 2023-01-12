@@ -17,34 +17,35 @@ import (
 
 type IServiceStruct struct {
 	Internal struct {
-		AddrList                func(ctx context.Context) ([]*AddrsResp, error)                                                     ` GET:"/addr/list" `
-		AddrOperate             func(ctx context.Context, params *AddrsOperateReq) error                                            ` PUT:"/addr/operate" `
-		ChainGetActor           func(ctx context.Context, addr address.Address) (*types.Actor, error)                               ` GET:"/chain/actor" `
-		ChainGetHead            func(ctx context.Context) (*types.TipSet, error)                                                    ` GET:"/chain/head" `
-		ChainGetNetworkName     func(ctx context.Context) (types.NetworkName, error)                                                ` GET:"/chain/networkname" `
-		MinerConfirmBeneficiary func(ctx context.Context, req *MinerConfirmBeneficiaryReq) (confirmor address.Address, err error)   ` PUT:"/miner/confirmbeneficiary" `
-		MinerConfirmOwner       func(ctx context.Context, p *MinerSetOwnerReq) (oldOwner address.Address, err error)                ` PUT:"/miner/confirmowner" `
-		MinerConfirmWorker      func(ctx context.Context, req *MinerSetWorkerReq) error                                             ` PUT:"/miner/confirmworker" `
-		MinerCreate             func(ctx context.Context, params *MinerCreateReq) (address.Address, error)                          ` POST:"/miner/create" `
-		MinerGetDeadlines       func(ctx context.Context, mAddr address.Address) (*dline.Info, error)                               ` GET:"/miner/deadline" `
-		MinerGetRetrievalAsk    func(ctx context.Context, mAddr address.Address) (*retrievalmarket.Ask, error)                      ` GET:"/miner/retrievalask" `
-		MinerGetStorageAsk      func(ctx context.Context, mAddr address.Address) (*storagemarket.StorageAsk, error)                 ` GET:"/miner/storageask" `
-		MinerInfo               func(ctx context.Context, mAddr address.Address) (*MinerInfoResp, error)                            ` GET:"/miner/info" `
-		MinerSetBeneficiary     func(ctx context.Context, req *MinerSetBeneficiaryReq) (*types.PendingBeneficiaryChange, error)     ` PUT:"/miner/beneficiary" `
-		MinerSetControllers     func(ctx context.Context, req *MinerSetControllersReq) (oldController []address.Address, err error) ` PUT:"/miner/controllers" `
-		MinerSetOwner           func(ctx context.Context, p *MinerSetOwnerReq) error                                                ` PUT:"/miner/owner" `
-		MinerSetRetrievalAsk    func(ctx context.Context, p *MinerSetRetrievalAskReq) error                                         ` PUT:"/miner/retrievalask" `
-		MinerSetStorageAsk      func(ctx context.Context, p *MinerSetAskReq) error                                                  ` PUT:"/miner/storageask" `
-		MinerSetWorker          func(ctx context.Context, req *MinerSetWorkerReq) (WorkerChangeEpoch abi.ChainEpoch, err error)     ` PUT:"/miner/worker" `
-		MinerWithdrawBalance    func(ctx context.Context, req *MinerWithdrawBalanceReq) (abi.TokenAmount, error)                    ` PUT:"/miner/withdrawbalance" `
-		MsgQuery                func(ctx context.Context, params *MsgQueryReq) ([]*MsgResp, error)                                  ` GET:"/msg/query" `
-		MsgReplace              func(ctx context.Context, params *MsgReplaceReq) (cid.Cid, error)                                   ` POST:"/msg/replace" `
-		MsgSend                 func(ctx context.Context, params *MsgSendReq) (string, error)                                       ` POST:"/msg/send" `
-		RetrievalDealList       func(ctx context.Context) ([]marketTypes.ProviderDealState, error)                                  ` GET:"/deal/retrieval" `
-		SectorExtend            func(ctx context.Context, req SectorExtendReq) error                                                ` PUT:"/sector/extend" `
-		SectorGet               func(ctx context.Context, req SectorGetReq) ([]*SectorResp, error)                                  ` GET:"/sector/get" `
-		StorageDealList         func(ctx context.Context, miner address.Address) ([]marketTypes.MinerDeal, error)                   ` GET:"/deal/storage" `
-		StorageDealUpdateState  func(ctx context.Context, req StorageDealUpdateStateReq) error                                      ` PUT:"/deal/storage/state" `
+		AddrList                   func(ctx context.Context) ([]*AddrsResp, error)                                                     ` GET:"/addr/list" `
+		AddrOperate                func(ctx context.Context, params *AddrsOperateReq) error                                            ` PUT:"/addr/operate" `
+		ChainGetActor              func(ctx context.Context, addr address.Address) (*types.Actor, error)                               ` GET:"/chain/actor" `
+		ChainGetHead               func(ctx context.Context) (*types.TipSet, error)                                                    ` GET:"/chain/head" `
+		ChainGetNetworkName        func(ctx context.Context) (types.NetworkName, error)                                                ` GET:"/chain/networkname" `
+		MinerConfirmBeneficiary    func(ctx context.Context, req *MinerConfirmBeneficiaryReq) (confirmor address.Address, err error)   ` PUT:"/miner/confirmbeneficiary" `
+		MinerConfirmOwner          func(ctx context.Context, p *MinerSetOwnerReq) (oldOwner address.Address, err error)                ` PUT:"/miner/confirmowner" `
+		MinerConfirmWorker         func(ctx context.Context, req *MinerSetWorkerReq) error                                             ` PUT:"/miner/confirmworker" `
+		MinerCreate                func(ctx context.Context, params *MinerCreateReq) (address.Address, error)                          ` POST:"/miner/create" `
+		MinerGetDeadlines          func(ctx context.Context, mAddr address.Address) (*dline.Info, error)                               ` GET:"/miner/deadline" `
+		MinerGetRetrievalAsk       func(ctx context.Context, mAddr address.Address) (*retrievalmarket.Ask, error)                      ` GET:"/miner/retrievalask" `
+		MinerGetStorageAsk         func(ctx context.Context, mAddr address.Address) (*storagemarket.StorageAsk, error)                 ` GET:"/miner/storageask" `
+		MinerInfo                  func(ctx context.Context, mAddr address.Address) (*MinerInfoResp, error)                            ` GET:"/miner/info" `
+		MinerSetBeneficiary        func(ctx context.Context, req *MinerSetBeneficiaryReq) (*types.PendingBeneficiaryChange, error)     ` PUT:"/miner/beneficiary" `
+		MinerSetControllers        func(ctx context.Context, req *MinerSetControllersReq) (oldController []address.Address, err error) ` PUT:"/miner/controllers" `
+		MinerSetOwner              func(ctx context.Context, p *MinerSetOwnerReq) error                                                ` PUT:"/miner/owner" `
+		MinerSetRetrievalAsk       func(ctx context.Context, p *MinerSetRetrievalAskReq) error                                         ` PUT:"/miner/retrievalask" `
+		MinerSetStorageAsk         func(ctx context.Context, p *MinerSetAskReq) error                                                  ` PUT:"/miner/storageask" `
+		MinerSetWorker             func(ctx context.Context, req *MinerSetWorkerReq) (WorkerChangeEpoch abi.ChainEpoch, err error)     ` PUT:"/miner/worker" `
+		MinerWithdrawFromMarket    func(ctx context.Context, req *MinerWithdrawBalanceReq) (abi.TokenAmount, error)                    ` PUT:"/miner/withdrawmarket" `
+		MinerWithdrawToBeneficiary func(ctx context.Context, req *MinerWithdrawBalanceReq) (abi.TokenAmount, error)                    ` PUT:"/miner/withdrawbeneficiary" `
+		MsgQuery                   func(ctx context.Context, params *MsgQueryReq) ([]*MsgResp, error)                                  ` GET:"/msg/query" `
+		MsgReplace                 func(ctx context.Context, params *MsgReplaceReq) (cid.Cid, error)                                   ` POST:"/msg/replace" `
+		MsgSend                    func(ctx context.Context, params *MsgSendReq) (string, error)                                       ` POST:"/msg/send" `
+		RetrievalDealList          func(ctx context.Context) ([]marketTypes.ProviderDealState, error)                                  ` GET:"/deal/retrieval" `
+		SectorExtend               func(ctx context.Context, req SectorExtendReq) error                                                ` PUT:"/sector/extend" `
+		SectorGet                  func(ctx context.Context, req SectorGetReq) ([]*SectorResp, error)                                  ` GET:"/sector/get" `
+		StorageDealList            func(ctx context.Context, miner address.Address) ([]marketTypes.MinerDeal, error)                   ` GET:"/deal/storage" `
+		StorageDealUpdateState     func(ctx context.Context, req StorageDealUpdateStateReq) error                                      ` PUT:"/deal/storage/state" `
 	}
 }
 
@@ -105,8 +106,11 @@ func (s *IServiceStruct) MinerSetStorageAsk(p0 context.Context, p1 *MinerSetAskR
 func (s *IServiceStruct) MinerSetWorker(p0 context.Context, p1 *MinerSetWorkerReq) (abi.ChainEpoch, error) {
 	return s.Internal.MinerSetWorker(p0, p1)
 }
-func (s *IServiceStruct) MinerWithdrawBalance(p0 context.Context, p1 *MinerWithdrawBalanceReq) (abi.TokenAmount, error) {
-	return s.Internal.MinerWithdrawBalance(p0, p1)
+func (s *IServiceStruct) MinerWithdrawFromMarket(p0 context.Context, p1 *MinerWithdrawBalanceReq) (abi.TokenAmount, error) {
+	return s.Internal.MinerWithdrawFromMarket(p0, p1)
+}
+func (s *IServiceStruct) MinerWithdrawToBeneficiary(p0 context.Context, p1 *MinerWithdrawBalanceReq) (abi.TokenAmount, error) {
+	return s.Internal.MinerWithdrawToBeneficiary(p0, p1)
 }
 func (s *IServiceStruct) MsgQuery(p0 context.Context, p1 *MsgQueryReq) ([]*MsgResp, error) {
 	return s.Internal.MsgQuery(p0, p1)

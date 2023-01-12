@@ -557,8 +557,13 @@ func (s *ServiceImpl) MinerSetBeneficiary(ctx context.Context, req *MinerSetBene
 	}
 	req.NewBeneficiary = newBeneficiary
 
-	if minerInfo.Beneficiary == newBeneficiary && newBeneficiary == minerInfo.Owner {
-		return nil, fmt.Errorf("beneficiary %s already set to owner address", newBeneficiary)
+	if newBeneficiary == minerInfo.Owner {
+		req.NewQuota = big.Zero()
+		req.NewExpiration = 0
+
+		if minerInfo.Beneficiary == newBeneficiary {
+			return nil, fmt.Errorf("beneficiary %s already set to owner address", newBeneficiary)
+		}
 	}
 
 	param, err := actors.SerializeParams(&req.ChangeBeneficiaryParams)
@@ -642,7 +647,7 @@ func (s *ServiceImpl) MinerGetDeadlines(ctx context.Context, mAddr address.Addre
 	return s.Node.StateMinerProvingDeadline(ctx, mAddr, types.EmptyTSK)
 }
 
-func (s *ServiceImpl) MinerWithdrawBalance(ctx context.Context, req *MinerWithdrawBalanceReq) (abi.TokenAmount, error) {
+func (s *ServiceImpl) MinerWithdrawToBeneficiary(ctx context.Context, req *MinerWithdrawBalanceReq) (abi.TokenAmount, error) {
 
 	minerInfo, err := s.Node.StateMinerInfo(ctx, req.Miner, types.EmptyTSK)
 	if err != nil {
@@ -680,6 +685,64 @@ func (s *ServiceImpl) MinerWithdrawBalance(ctx context.Context, req *MinerWithdr
 	if err != nil {
 		return big.Zero(), fmt.Errorf("push message(%s) failed: %s", msg.ID, err)
 	}
+
+	return req.Amount, nil
+}
+
+func (s *ServiceImpl) MinerWithdrawFromMarket(ctx context.Context, req *MinerWithdrawBalanceReq) (abi.TokenAmount, error) {
+	minerInfo, err := s.Node.StateMinerInfo(ctx, req.Miner, types.EmptyTSK)
+	if err != nil {
+		return big.Zero(), fmt.Errorf("get miner(%s) info failed: %s", req.Miner, err)
+	}
+	marketBalance, err := s.Node.StateMarketBalance(ctx, req.Miner, types.EmptyTSK)
+	if err != nil {
+		return big.Zero(), fmt.Errorf("get miner(%s) available balance failed: %s", req.Miner, err)
+	}
+
+	reserved, err := s.Market.MarketGetReserved(ctx, req.Miner)
+	if err != nil {
+		return big.Zero(), fmt.Errorf("get miner(%s) reserved balance failed: %s", req.Miner, err)
+	}
+
+	avail := big.Subtract(big.Subtract(marketBalance.Escrow, marketBalance.Locked), reserved)
+
+	if avail.LessThanEqual(big.Zero()) {
+		return big.Zero(), fmt.Errorf("no available balance to withdraw")
+	}
+
+	if avail.LessThan(req.Amount) {
+		return big.Zero(), fmt.Errorf("withdraw amount(%s) is greater than available balance(%s)", req.Amount, avail)
+	}
+
+	if req.Amount.LessThanEqual(big.Zero()) {
+		req.Amount = avail
+	}
+
+	if req.To == address.Undef {
+		req.To = minerInfo.Owner
+	} else {
+		toId, err := s.Node.StateLookupID(ctx, req.To, types.EmptyTSK)
+		if err != nil {
+			return big.Zero(), fmt.Errorf("lookup to address(%s) failed: %s", req.To, err)
+		}
+		req.To = toId
+		if toId != minerInfo.Owner && toId != minerInfo.Worker {
+			return big.Zero(), fmt.Errorf("to address(%s) is not miner owner(%s) or worker(%s)", req.To, minerInfo.Owner, minerInfo.Worker)
+		}
+	}
+
+	mCid, err := s.Market.MarketWithdraw(ctx, req.To, req.Miner, req.Amount)
+	if err != nil {
+		return big.Zero(), fmt.Errorf("withdraw from market failed: %s", err)
+	}
+	id := mCid.String()
+	log.Infof("push message(%s) success", id)
+
+	msg, err := s.MsgWait(ctx, id)
+	if err != nil {
+		return big.Zero(), fmt.Errorf("push message(%s) failed: %s", msg.ID, err)
+	}
+	log.Infof("messager(%s) is chained", id)
 
 	return req.Amount, nil
 }

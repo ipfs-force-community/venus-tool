@@ -52,4 +52,6 @@ type IService interface {
 
 	SectorExtend(ctx context.Context, req SectorExtendReq) error            // PUT:/sector/extend
 	SectorGet(ctx context.Context, req SectorGetReq) ([]*SectorResp, error) // GET:/sector/get
+
+	MsigCreate(ctx context.Context, req *MultiSigCreateReq) (address.Address, error) // POST:/msig/create
 }

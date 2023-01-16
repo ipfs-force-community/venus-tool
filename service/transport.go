@@ -223,3 +223,11 @@ type SectorResp struct {
 	types.SectorOnChainInfo
 	SectorLocation lminer.SectorLocation
 }
+
+type MultiSigCreateReq struct {
+	From               address.Address
+	Signers            []address.Address
+	ApprovalsThreshold uint64
+	LockedDuration     abi.ChainEpoch
+	Value              abi.TokenAmount
+}

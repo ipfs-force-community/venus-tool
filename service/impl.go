@@ -14,6 +14,7 @@ import (
 	"github.com/filecoin-project/go-state-types/big"
 	"github.com/filecoin-project/go-state-types/builtin"
 	"github.com/filecoin-project/go-state-types/dline"
+	init2 "github.com/filecoin-project/specs-actors/v2/actors/builtin/init"
 	power2 "github.com/filecoin-project/specs-actors/v2/actors/builtin/power"
 	"github.com/filecoin-project/venus/pkg/constants"
 	"github.com/filecoin-project/venus/venus-shared/actors"
@@ -851,6 +852,61 @@ func (s *ServiceImpl) SectorGet(ctx context.Context, req SectorGetReq) ([]*Secto
 	}
 
 	return ret, nil
+}
+
+func (s *ServiceImpl) MsigCreate(ctx context.Context, req *MultiSigCreateReq) (address.Address, error) {
+	var err error
+	// check params
+	if req.ApprovalsThreshold < 1 {
+		return address.Undef, fmt.Errorf("threshold(%d) must be greater than 1", req.ApprovalsThreshold)
+	}
+
+	if uint64(len(req.Signers)) < req.ApprovalsThreshold {
+		return address.Undef, fmt.Errorf("signers(%d) must be greater than threshold(%d)", len(req.Signers), req.ApprovalsThreshold)
+	}
+
+	if req.Value.LessThan(big.Zero()) {
+		return address.Undef, fmt.Errorf("value(%s) must be equal or greater than 0", req.Value)
+	}
+
+	if req.LockedDuration < 0 {
+		return address.Undef, fmt.Errorf("unlockAt(%d) must be equal or greater than 0", req.LockedDuration)
+	}
+
+	// check signers
+	set := make(map[address.Address]struct{})
+	for _, signer := range req.Signers {
+		id, err := s.Node.StateLookupID(ctx, signer, types.EmptyTSK)
+		if err != nil {
+			return address.Undef, fmt.Errorf("lookup signer(%s) failed: %s", signer, err)
+		}
+		if _, ok := set[id]; ok {
+			return address.Undef, fmt.Errorf("duplicate signer(%s)", signer)
+		} else {
+			set[id] = struct{}{}
+		}
+	}
+
+	msgPrototype, err := s.Node.MsigCreate(ctx, req.ApprovalsThreshold, req.Signers, req.LockedDuration, req.Value, req.From, big.Zero())
+	if err != nil {
+		return address.Undef, fmt.Errorf("create multisig Prototype failed: %s", err)
+	}
+
+	msg, err := s.PushMessageAndWait(ctx, &msgPrototype.Message, nil)
+	if err != nil {
+		return address.Undef, fmt.Errorf("push message failed: %s", err)
+	}
+
+	if msg.Receipt.ExitCode.IsError() {
+		return address.Undef, fmt.Errorf("exec create multisig failed: %s", msg.Receipt.ExitCode)
+	}
+
+	var execRet init2.ExecReturn
+	if err := execRet.UnmarshalCBOR(bytes.NewReader(msg.Receipt.Return)); err != nil {
+		return address.Undef, fmt.Errorf("unmarshal multisig create exec return failed: %s", err)
+	}
+
+	return execRet.RobustAddress, nil
 }
 
 func (s *ServiceImpl) PushMessageAndWait(ctx context.Context, msg *types.Message, spec *msgTypes.SendSpec) (*msgTypes.Message, error) {

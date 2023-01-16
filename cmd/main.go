@@ -88,6 +88,7 @@ func main() {
 			vtCli.DealCmd,
 			vtCli.SectorCmd,
 			vtCli.ChainCmd,
+			vtCli.MultiSigCmd,
 		},
 	}
 	app.Setup()

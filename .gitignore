@@ -8,5 +8,7 @@
 *.toml.*
 ./*.log
 *.db
+/log
+/logs
 
 __debug_bin

@@ -28,6 +28,7 @@ import (
 	marketTypes "github.com/filecoin-project/venus/venus-shared/types/market"
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
 	"github.com/google/uuid"
+	"github.com/ipfs-force-community/venus-tool/utils"
 	"github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log"
 )
@@ -63,23 +64,41 @@ func (s *ServiceImpl) GetDefaultWallet(ctx context.Context) (address.Address, er
 	return s.Wallets[0], nil
 }
 
-func (s *ServiceImpl) MsgSend(ctx context.Context, params *MsgSendReq) (string, error) {
+func (s *ServiceImpl) MsgSend(ctx context.Context, req *MsgSendReq) (string, error) {
 
-	decParams, err := params.Decode(s.Node)
-	if err != nil {
-		return "", err
+	var decParams []byte
+	var err error
+	switch req.Params.EncType {
+	case EncJson:
+		act, err := s.Node.GetActor(ctx, req.To)
+		if err != nil {
+			return "", err
+		}
+		decParams, err = req.Params.DecodeJSON(act.Code, req.Method)
+		if err != nil {
+			return "", err
+		}
+	case EncHex:
+		decParams, err = req.Params.DecodeHex()
+		if err != nil {
+			return "", err
+		}
+	case EncNull:
+		decParams = req.Params.Data
+	default:
+		return "", fmt.Errorf("unknown encoding type: %s", req.Params.EncType)
 	}
 
 	msg := &types.Message{
-		From:  params.From,
-		To:    params.To,
-		Value: params.Value,
+		From:  req.From,
+		To:    req.To,
+		Value: req.Value,
 
-		Method: params.Method,
+		Method: req.Method,
 		Params: decParams,
 	}
 
-	return s.Messager.PushMessage(ctx, msg, &params.SendSpec)
+	return s.Messager.PushMessage(ctx, msg, &req.SendSpec)
 }
 
 func (s *ServiceImpl) MsgQuery(ctx context.Context, params *MsgQueryReq) ([]*MsgResp, error) {
@@ -136,10 +155,16 @@ func (s *ServiceImpl) MsgQuery(ctx context.Context, params *MsgQueryReq) ([]*Msg
 		resp := &MsgResp{
 			Message: *msg,
 		}
-		_, err := resp.getMethodName(s.Node)
+
+		act, err := s.Node.GetActor(ctx, msg.To)
 		if err != nil {
-			log.Warnf("get method name failed: %s", err)
+			log.Warnf("get actor failed: %s", err)
 		}
+		methodMeta, err := utils.GetMethodMeta(act.Code, msg.Method)
+		if err != nil {
+			log.Warnf("get method meta failed: %s", err)
+		}
+		resp.MethodName = methodMeta.Name
 
 		ret = append(ret, resp)
 	}

@@ -90,8 +90,8 @@ var msgDendCmd = &cli.Command{
 			return err
 		}
 
-		var params service.MsgSendReq
-		params.To, err = address.NewFromString(cctx.Args().Get(0))
+		var req service.MsgSendReq
+		req.To, err = address.NewFromString(cctx.Args().Get(0))
 		if err != nil {
 			return fmt.Errorf("failed to parse target address: %w", err)
 		}
@@ -100,39 +100,39 @@ var msgDendCmd = &cli.Command{
 		if err != nil {
 			return fmt.Errorf("failed to parse amount: %w", err)
 		}
-		params.Value = abi.TokenAmount(val)
+		req.Value = abi.TokenAmount(val)
 
 		addr, err := address.NewFromString(cctx.String("from"))
 		if err != nil {
 			return fmt.Errorf("failed to parse from address: %w", err)
 		}
-		params.From = addr
+		req.From = addr
 
-		params.Method = abi.MethodNum(cctx.Uint64("method"))
+		req.Method = abi.MethodNum(cctx.Uint64("method"))
 
 		gfc, err := types.BigFromString(cctx.String("max-fee"))
 		if err != nil {
 			return err
 		}
-		params.MaxFee = gfc
+		req.MaxFee = gfc
 
-		params.GasOverPremium = cctx.Float64("gas-over-premium")
+		req.GasOverPremium = cctx.Float64("gas-over-premium")
 
-		params.GasOverEstimation = cctx.Float64("gas-over-estimation")
+		req.GasOverEstimation = cctx.Float64("gas-over-estimation")
 
 		if cctx.IsSet("params-json") {
-			params.Params = []byte(cctx.String("params-json"))
-			params.EncType = service.EncJson
+			req.Params.Data = []byte(cctx.String("params-json"))
+			req.Params.EncType = service.EncJson
 		}
 		if cctx.IsSet("params-hex") {
-			if len(params.Params) != 0 {
+			if len(req.Params.Data) != 0 {
 				return fmt.Errorf("can only specify one of 'params-json' and 'params-hex'")
 			}
-			params.Params = []byte(cctx.String("params-hex"))
-			params.EncType = service.EncHex
+			req.Params.Data = []byte(cctx.String("params-hex"))
+			req.Params.EncType = service.EncHex
 		}
 
-		id, err := api.MsgSend(cctx.Context, &params)
+		id, err := api.MsgSend(cctx.Context, &req)
 		if err != nil {
 			return err
 		}

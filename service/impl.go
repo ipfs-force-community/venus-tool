@@ -978,6 +978,15 @@ func (s *ServiceImpl) MsigCreate(ctx context.Context, req *MultisigCreateReq) (a
 	return execRet.RobustAddress, nil
 }
 
+func (s *ServiceImpl) MsigInfo(ctx context.Context, msig address.Address) (*types.MsigInfo, error) {
+	info, err := s.Node.StateMsigInfo(ctx, msig, types.EmptyTSK)
+	if err != nil {
+		return nil, fmt.Errorf("get multisig info failed: %s", err)
+	}
+
+	return info, nil
+}
+
 func (s *ServiceImpl) MsigPropose(ctx context.Context, req *MultisigProposeReq) (*types.ProposeReturn, error) {
 	var err error
 
@@ -1041,7 +1050,7 @@ func (s *ServiceImpl) MsigListPropose(ctx context.Context, msig address.Address)
 	return ret, nil
 }
 
-func (s *ServiceImpl) MsigAddSigner(ctx context.Context, req *MultisigAddSignerReq) (*types.ProposeReturn, error) {
+func (s *ServiceImpl) MsigAddSigner(ctx context.Context, req *MultisigChangeSignerReq) (*types.ProposeReturn, error) {
 	var err error
 
 	_, err = s.Node.StateLookupID(ctx, req.NewSigner, types.EmptyTSK)
@@ -1049,7 +1058,7 @@ func (s *ServiceImpl) MsigAddSigner(ctx context.Context, req *MultisigAddSignerR
 		return nil, fmt.Errorf("lookup signer(%s) failed: %s", req.NewSigner, err)
 	}
 
-	msgPrototype, err := s.Node.MsigAddPropose(ctx, req.Msig, req.Proposer, req.NewSigner, req.IncreaseThresHold)
+	msgPrototype, err := s.Node.MsigAddPropose(ctx, req.Msig, req.Proposer, req.NewSigner, req.AlterThresHold)
 	if err != nil {
 		return nil, fmt.Errorf("create multisig add propose Prototype failed: %s", err)
 	}
@@ -1067,6 +1076,37 @@ func (s *ServiceImpl) MsigAddSigner(ctx context.Context, req *MultisigAddSignerR
 	err = msgReturn.UnmarshalCBOR(bytes.NewReader(msg.Receipt.Return))
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal add propose return failed: %s", err)
+	}
+
+	return &msgReturn, nil
+}
+
+func (s *ServiceImpl) MsigRemoveSigner(ctx context.Context, req *MultisigChangeSignerReq) (*types.ProposeReturn, error) {
+	var err error
+
+	_, err = s.Node.StateLookupID(ctx, req.NewSigner, types.EmptyTSK)
+	if err != nil {
+		return nil, fmt.Errorf("lookup signer(%s) failed: %s", req.NewSigner, err)
+	}
+
+	msgPrototype, err := s.Node.MsigRemoveSigner(ctx, req.Msig, req.Proposer, req.NewSigner, req.AlterThresHold)
+	if err != nil {
+		return nil, fmt.Errorf("create multisig remove propose Prototype failed: %s", err)
+	}
+
+	msg, err := s.PushMessageAndWait(ctx, &msgPrototype.Message, nil)
+	if err != nil {
+		return nil, fmt.Errorf("push message failed: %s", err)
+	}
+
+	if msg.Receipt.ExitCode.IsError() {
+		return nil, fmt.Errorf("exec remove propose failed: %s", msg.Receipt.ExitCode)
+	}
+
+	var msgReturn types.ProposeReturn
+	err = msgReturn.UnmarshalCBOR(bytes.NewReader(msg.Receipt.Return))
+	if err != nil {
+		return nil, fmt.Errorf("unmarshal remove propose return failed: %s", err)
 	}
 
 	return &msgReturn, nil

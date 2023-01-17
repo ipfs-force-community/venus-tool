@@ -55,10 +55,12 @@ type IService interface {
 	SectorExtend(ctx context.Context, req SectorExtendReq) error            // PUT:/sector/extend
 	SectorGet(ctx context.Context, req SectorGetReq) ([]*SectorResp, error) // GET:/sector/get
 
-	MsigCreate(ctx context.Context, req *MultisigCreateReq) (address.Address, error)             // POST:/msig/create
-	MsigPropose(ctx context.Context, req *MultisigProposeReq) (*types.ProposeReturn, error)      // POST:/msig/propose
-	MsigListPropose(ctx context.Context, msig address.Address) ([]*types.MsigTransaction, error) // GET:/msig/proposes
-	MsigAddSigner(ctx context.Context, req *MultisigAddSignerReq) (*types.ProposeReturn, error)  // POST:/msig/signer
-	MsigApprove(ctx context.Context, req *MultisigApproveReq) (*types.ApproveReturn, error)      // POST:/msig/approve
-	MsigCancel(ctx context.Context, req *MultisigCancelReq) error                                // POST:/msig/cancel
+	MsigCreate(ctx context.Context, req *MultisigCreateReq) (address.Address, error)                  // POST:/msig/create
+	MsigInfo(ctx context.Context, msig address.Address) (*types.MsigInfo, error)                      // GET:/msig/info
+	MsigPropose(ctx context.Context, req *MultisigProposeReq) (*types.ProposeReturn, error)           // POST:/msig/propose
+	MsigListPropose(ctx context.Context, msig address.Address) ([]*types.MsigTransaction, error)      // GET:/msig/proposes
+	MsigAddSigner(ctx context.Context, req *MultisigChangeSignerReq) (*types.ProposeReturn, error)    // POST:/msig/signer/ass
+	MsigRemoveSigner(ctx context.Context, req *MultisigChangeSignerReq) (*types.ProposeReturn, error) // POST:/msig/signer/remove
+	MsigApprove(ctx context.Context, req *MultisigApproveReq) (*types.ApproveReturn, error)           // POST:/msig/approve
+	MsigCancel(ctx context.Context, req *MultisigCancelReq) error                                     // POST:/msig/cancel
 }

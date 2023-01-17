@@ -43,12 +43,14 @@ type IServiceStruct struct {
 		MsgQuery                   func(ctx context.Context, params *MsgQueryReq) ([]*MsgResp, error)                                  ` GET:"/msg/query" `
 		MsgReplace                 func(ctx context.Context, params *MsgReplaceReq) (cid.Cid, error)                                   ` POST:"/msg/replace" `
 		MsgSend                    func(ctx context.Context, params *MsgSendReq) (string, error)                                       ` POST:"/msg/send" `
-		MsigAddSigner              func(ctx context.Context, req *MultisigAddSignerReq) (*types.ProposeReturn, error)                  ` POST:"/msig/signer" `
+		MsigAddSigner              func(ctx context.Context, req *MultisigChangeSignerReq) (*types.ProposeReturn, error)               ` POST:"/msig/signer/ass" `
 		MsigApprove                func(ctx context.Context, req *MultisigApproveReq) (*types.ApproveReturn, error)                    ` POST:"/msig/approve" `
 		MsigCancel                 func(ctx context.Context, req *MultisigCancelReq) error                                             ` POST:"/msig/cancel" `
 		MsigCreate                 func(ctx context.Context, req *MultisigCreateReq) (address.Address, error)                          ` POST:"/msig/create" `
+		MsigInfo                   func(ctx context.Context, msig address.Address) (*types.MsigInfo, error)                            ` GET:"/msig/info" `
 		MsigListPropose            func(ctx context.Context, msig address.Address) ([]*types.MsigTransaction, error)                   ` GET:"/msig/proposes" `
 		MsigPropose                func(ctx context.Context, req *MultisigProposeReq) (*types.ProposeReturn, error)                    ` POST:"/msig/propose" `
+		MsigRemoveSigner           func(ctx context.Context, req *MultisigChangeSignerReq) (*types.ProposeReturn, error)               ` POST:"/msig/signer/remove" `
 		RetrievalDealList          func(ctx context.Context) ([]marketTypes.ProviderDealState, error)                                  ` GET:"/deal/retrieval" `
 		SectorExtend               func(ctx context.Context, req SectorExtendReq) error                                                ` PUT:"/sector/extend" `
 		SectorGet                  func(ctx context.Context, req SectorGetReq) ([]*SectorResp, error)                                  ` GET:"/sector/get" `
@@ -135,7 +137,7 @@ func (s *IServiceStruct) MsgReplace(p0 context.Context, p1 *MsgReplaceReq) (cid.
 func (s *IServiceStruct) MsgSend(p0 context.Context, p1 *MsgSendReq) (string, error) {
 	return s.Internal.MsgSend(p0, p1)
 }
-func (s *IServiceStruct) MsigAddSigner(p0 context.Context, p1 *MultisigAddSignerReq) (*types.ProposeReturn, error) {
+func (s *IServiceStruct) MsigAddSigner(p0 context.Context, p1 *MultisigChangeSignerReq) (*types.ProposeReturn, error) {
 	return s.Internal.MsigAddSigner(p0, p1)
 }
 func (s *IServiceStruct) MsigApprove(p0 context.Context, p1 *MultisigApproveReq) (*types.ApproveReturn, error) {
@@ -147,11 +149,17 @@ func (s *IServiceStruct) MsigCancel(p0 context.Context, p1 *MultisigCancelReq) e
 func (s *IServiceStruct) MsigCreate(p0 context.Context, p1 *MultisigCreateReq) (address.Address, error) {
 	return s.Internal.MsigCreate(p0, p1)
 }
+func (s *IServiceStruct) MsigInfo(p0 context.Context, p1 address.Address) (*types.MsigInfo, error) {
+	return s.Internal.MsigInfo(p0, p1)
+}
 func (s *IServiceStruct) MsigListPropose(p0 context.Context, p1 address.Address) ([]*types.MsigTransaction, error) {
 	return s.Internal.MsigListPropose(p0, p1)
 }
 func (s *IServiceStruct) MsigPropose(p0 context.Context, p1 *MultisigProposeReq) (*types.ProposeReturn, error) {
 	return s.Internal.MsigPropose(p0, p1)
+}
+func (s *IServiceStruct) MsigRemoveSigner(p0 context.Context, p1 *MultisigChangeSignerReq) (*types.ProposeReturn, error) {
+	return s.Internal.MsigRemoveSigner(p0, p1)
 }
 func (s *IServiceStruct) RetrievalDealList(p0 context.Context) ([]marketTypes.ProviderDealState, error) {
 	return s.Internal.RetrievalDealList(p0)

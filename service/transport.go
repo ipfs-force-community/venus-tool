@@ -224,11 +224,11 @@ type MultisigProposeReq struct {
 	Params EncodedParams
 }
 
-type MultisigAddSignerReq struct {
-	NewSigner         address.Address
-	Proposer          address.Address
-	Msig              address.Address
-	IncreaseThresHold bool
+type MultisigChangeSignerReq struct {
+	NewSigner      address.Address
+	Proposer       address.Address
+	Msig           address.Address
+	AlterThresHold bool
 }
 
 type MultisigTransactionReq struct {

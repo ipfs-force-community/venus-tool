@@ -18,12 +18,14 @@ var MultiSigCmd = &cli.Command{
 	Name:  "msig",
 	Usage: "Manage multisig wallets",
 	Subcommands: []*cli.Command{
-		multisigCreateCmd,
+		multisigInfoCmd,
 		multisigProposeCmd,
 		multisigProposeListCmd,
 		multisigApproveCmd,
 		multisigCancelCmd,
+		multisigCreateCmd,
 		multisigAddSignerCmd,
+		multisigRemoveSignerCmd,
 	},
 }
 
@@ -314,11 +316,11 @@ var multisigAddSignerCmd = &cli.Command{
 
 		inc := cctx.Bool("increase-threshold")
 
-		req := &service.MultisigAddSignerReq{
-			Msig:              msigAddr,
-			Proposer:          from,
-			NewSigner:         signer,
-			IncreaseThresHold: inc,
+		req := &service.MultisigChangeSignerReq{
+			Msig:           msigAddr,
+			Proposer:       from,
+			NewSigner:      signer,
+			AlterThresHold: inc,
 		}
 
 		ret, err := api.MsigAddSigner(cctx.Context, req)
@@ -416,5 +418,101 @@ var multisigCancelCmd = &cli.Command{
 
 		fmt.Printf("Cancelled transaction(%d) successfully \n", txid)
 		return nil
+	},
+}
+
+var multisigInfoCmd = &cli.Command{
+	Name:      "info",
+	Usage:     "Get info about a multisig wallet",
+	ArgsUsage: "<multisig address>",
+	Action: func(cctx *cli.Context) error {
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
+
+		if cctx.NArg() != 1 {
+			return fmt.Errorf("must specify multisig address")
+		}
+
+		msigAddr, err := address.NewFromString(cctx.Args().Get(0))
+		if err != nil {
+			return err
+		}
+
+		ret, err := api.MsigInfo(cctx.Context, msigAddr)
+		if err != nil {
+			return err
+		}
+
+		type output struct {
+			types.MsigInfo
+			InitialBalance types.FIL
+			CurrentBalance types.FIL
+			LockBalance    types.FIL
+		}
+
+		out := output{
+			MsigInfo:       *ret,
+			InitialBalance: types.FIL(ret.InitialBalance),
+			CurrentBalance: types.FIL(ret.CurrentBalance),
+			LockBalance:    types.FIL(ret.LockBalance),
+		}
+
+		return printJSON(out)
+	},
+}
+
+var multisigRemoveSignerCmd = &cli.Command{
+	Name:      "remove",
+	Usage:     "Remove a signer from a multisig wallet",
+	ArgsUsage: "<multisig address> <proposer address> <signer address>",
+	Flags: []cli.Flag{
+		&cli.BoolFlag{
+			Name:    "decrease-threshold",
+			Usage:   "decrease the multisig threshold by 1",
+			Aliases: []string{"dec"},
+		},
+	},
+	Action: func(cctx *cli.Context) error {
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
+
+		if cctx.NArg() != 3 {
+			return fmt.Errorf("must specify multisig address, proposer address, and signer address")
+		}
+
+		msigAddr, err := address.NewFromString(cctx.Args().Get(0))
+		if err != nil {
+			return err
+		}
+
+		from, err := address.NewFromString(cctx.Args().Get(1))
+		if err != nil {
+			return err
+		}
+
+		signer, err := address.NewFromString(cctx.Args().Get(2))
+		if err != nil {
+			return err
+		}
+
+		dec := cctx.Bool("decrease-threshold")
+
+		req := &service.MultisigChangeSignerReq{
+			Msig:           msigAddr,
+			Proposer:       from,
+			NewSigner:      signer,
+			AlterThresHold: dec,
+		}
+
+		ret, err := api.MsigRemoveSigner(cctx.Context, req)
+		if err != nil {
+			return err
+		}
+
+		return printJSON(ret)
 	},
 }

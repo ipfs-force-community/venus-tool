@@ -45,6 +45,7 @@ type IServiceStruct struct {
 		MsgSend                    func(ctx context.Context, params *MsgSendReq) (string, error)                                       ` POST:"/msg/send" `
 		MsigAddSigner              func(ctx context.Context, req *MultisigAddSignerReq) (*types.ProposeReturn, error)                  ` POST:"/msig/signer" `
 		MsigApprove                func(ctx context.Context, req *MultisigApproveReq) (*types.ApproveReturn, error)                    ` POST:"/msig/approve" `
+		MsigCancel                 func(ctx context.Context, req *MultisigCancelReq) error                                             ` POST:"/msig/cancel" `
 		MsigCreate                 func(ctx context.Context, req *MultisigCreateReq) (address.Address, error)                          ` POST:"/msig/create" `
 		MsigListPropose            func(ctx context.Context, msig address.Address) ([]*types.MsigTransaction, error)                   ` GET:"/msig/proposes" `
 		MsigPropose                func(ctx context.Context, req *MultisigProposeReq) (*types.ProposeReturn, error)                    ` POST:"/msig/propose" `
@@ -139,6 +140,9 @@ func (s *IServiceStruct) MsigAddSigner(p0 context.Context, p1 *MultisigAddSigner
 }
 func (s *IServiceStruct) MsigApprove(p0 context.Context, p1 *MultisigApproveReq) (*types.ApproveReturn, error) {
 	return s.Internal.MsigApprove(p0, p1)
+}
+func (s *IServiceStruct) MsigCancel(p0 context.Context, p1 *MultisigCancelReq) error {
+	return s.Internal.MsigCancel(p0, p1)
 }
 func (s *IServiceStruct) MsigCreate(p0 context.Context, p1 *MultisigCreateReq) (address.Address, error) {
 	return s.Internal.MsigCreate(p0, p1)

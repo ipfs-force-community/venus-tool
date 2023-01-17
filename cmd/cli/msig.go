@@ -22,6 +22,7 @@ var MultiSigCmd = &cli.Command{
 		multisigProposeCmd,
 		multisigProposeListCmd,
 		multisigApproveCmd,
+		multisigCancelCmd,
 		multisigAddSignerCmd,
 	},
 }
@@ -358,7 +359,7 @@ var multisigApproveCmd = &cli.Command{
 			return err
 		}
 
-		req := &service.MultisigApproveReq{
+		req := &service.MultisigTransactionReq{
 			Msig:     msigAddr,
 			Proposer: from,
 			TxID:     txid,
@@ -370,5 +371,50 @@ var multisigApproveCmd = &cli.Command{
 		}
 
 		return printJSON(ret)
+	},
+}
+
+var multisigCancelCmd = &cli.Command{
+	Name:      "cancel",
+	Usage:     "Cancel a multisig transaction",
+	ArgsUsage: "<multisig address> <proposer address> <txid>",
+	Action: func(cctx *cli.Context) error {
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
+
+		if cctx.NArg() != 3 {
+			return fmt.Errorf("must specify multisig address, proposer address, and txid")
+		}
+
+		msigAddr, err := address.NewFromString(cctx.Args().Get(0))
+		if err != nil {
+			return err
+		}
+
+		from, err := address.NewFromString(cctx.Args().Get(1))
+		if err != nil {
+			return err
+		}
+
+		txid, err := strconv.ParseUint(cctx.Args().Get(2), 10, 64)
+		if err != nil {
+			return err
+		}
+
+		req := &service.MultisigTransactionReq{
+			Msig:     msigAddr,
+			Proposer: from,
+			TxID:     txid,
+		}
+
+		err = api.MsigCancel(cctx.Context, req)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Cancelled transaction(%d) successfully \n", txid)
+		return nil
 	},
 }

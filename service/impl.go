@@ -1103,6 +1103,31 @@ func (s *ServiceImpl) MsigApprove(ctx context.Context, req *MultisigApproveReq) 
 	return &msgReturn, nil
 }
 
+func (s *ServiceImpl) MsigCancel(ctx context.Context, req *MultisigCancelReq) error {
+	var err error
+
+	_, err = s.Node.StateLookupID(ctx, req.Proposer, types.EmptyTSK)
+	if err != nil {
+		return fmt.Errorf("lookup proposer(%s) failed: %s", req.Proposer, err)
+	}
+
+	msgPrototype, err := s.Node.MsigCancel(ctx, req.Msig, req.TxID, req.Proposer)
+	if err != nil {
+		return fmt.Errorf("create multisig cancel Prototype failed: %s", err)
+	}
+
+	msg, err := s.PushMessageAndWait(ctx, &msgPrototype.Message, nil)
+	if err != nil {
+		return fmt.Errorf("push message failed: %s", err)
+	}
+
+	if msg.Receipt.ExitCode.IsError() {
+		return fmt.Errorf("exec cancel failed: %s", msg.Receipt.ExitCode)
+	}
+
+	return nil
+}
+
 func (s *ServiceImpl) PushMessageAndWait(ctx context.Context, msg *types.Message, spec *msgTypes.SendSpec) (*msgTypes.Message, error) {
 	id, err := s.Messager.PushMessage(ctx, msg, spec)
 	if err != nil {

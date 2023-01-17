@@ -231,8 +231,11 @@ type MultisigAddSignerReq struct {
 	IncreaseThresHold bool
 }
 
-type MultisigApproveReq struct {
+type MultisigTransactionReq struct {
 	Msig     address.Address
 	Proposer address.Address
 	TxID     uint64
 }
+
+type MultisigApproveReq = MultisigTransactionReq
+type MultisigCancelReq = MultisigTransactionReq

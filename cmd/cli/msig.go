@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
@@ -20,6 +21,7 @@ var MultiSigCmd = &cli.Command{
 		multisigCreateCmd,
 		multisigProposeCmd,
 		multisigProposeListCmd,
+		multisigApproveCmd,
 		multisigAddSignerCmd,
 	},
 }
@@ -225,6 +227,7 @@ var multisigProposeListCmd = &cli.Command{
 			Params     json.Marshaler
 			Method     abi.MethodNum
 			MethodName string
+			Approved   []address.Address
 		}
 
 		var out []ProposeOutput
@@ -240,6 +243,8 @@ var multisigProposeListCmd = &cli.Command{
 				if err != nil {
 					return err
 				}
+			} else {
+				b = []byte("null")
 			}
 
 			params := marshaler{
@@ -262,6 +267,7 @@ var multisigProposeListCmd = &cli.Command{
 				Params:     &params,
 				Method:     p.Method,
 				MethodName: methodName,
+				Approved:   p.Approved,
 			})
 		}
 
@@ -315,6 +321,50 @@ var multisigAddSignerCmd = &cli.Command{
 		}
 
 		ret, err := api.MsigAddSigner(cctx.Context, req)
+		if err != nil {
+			return err
+		}
+
+		return printJSON(ret)
+	},
+}
+
+var multisigApproveCmd = &cli.Command{
+	Name:      "approve",
+	Usage:     "Approve a multisig transaction",
+	ArgsUsage: "<multisig address> <proposer address> <txid>",
+	Action: func(cctx *cli.Context) error {
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
+
+		if cctx.NArg() != 3 {
+			return fmt.Errorf("must specify multisig address, proposer address, and txid")
+		}
+
+		msigAddr, err := address.NewFromString(cctx.Args().Get(0))
+		if err != nil {
+			return err
+		}
+
+		from, err := address.NewFromString(cctx.Args().Get(1))
+		if err != nil {
+			return err
+		}
+
+		txid, err := strconv.ParseUint(cctx.Args().Get(2), 10, 64)
+		if err != nil {
+			return err
+		}
+
+		req := &service.MultisigApproveReq{
+			Msig:     msigAddr,
+			Proposer: from,
+			TxID:     txid,
+		}
+
+		ret, err := api.MsigApprove(cctx.Context, req)
 		if err != nil {
 			return err
 		}

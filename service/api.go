@@ -59,4 +59,5 @@ type IService interface {
 	MsigPropose(ctx context.Context, req *MultisigProposeReq) (*types.ProposeReturn, error)      // POST:/msig/propose
 	MsigListPropose(ctx context.Context, msig address.Address) ([]*types.MsigTransaction, error) // GET:/msig/proposes
 	MsigAddSigner(ctx context.Context, req *MultisigAddSignerReq) (*types.ProposeReturn, error)  // POST:/msig/signer
+	MsigApprove(ctx context.Context, req *MultisigApproveReq) (*types.ApproveReturn, error)      // POST:/msig/approve
 }

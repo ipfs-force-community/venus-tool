@@ -1072,6 +1072,37 @@ func (s *ServiceImpl) MsigAddSigner(ctx context.Context, req *MultisigAddSignerR
 	return &msgReturn, nil
 }
 
+func (s *ServiceImpl) MsigApprove(ctx context.Context, req *MultisigApproveReq) (*types.ApproveReturn, error) {
+	var err error
+
+	_, err = s.Node.StateLookupID(ctx, req.Proposer, types.EmptyTSK)
+	if err != nil {
+		return nil, fmt.Errorf("lookup proposer(%s) failed: %s", req.Proposer, err)
+	}
+
+	msgPrototype, err := s.Node.MsigApprove(ctx, req.Msig, req.TxID, req.Proposer)
+	if err != nil {
+		return nil, fmt.Errorf("create multisig approve Prototype failed: %s", err)
+	}
+
+	msg, err := s.PushMessageAndWait(ctx, &msgPrototype.Message, nil)
+	if err != nil {
+		return nil, fmt.Errorf("push message failed: %s", err)
+	}
+
+	if msg.Receipt.ExitCode.IsError() {
+		return nil, fmt.Errorf("exec approve failed: %s", msg.Receipt.ExitCode)
+	}
+
+	var msgReturn types.ApproveReturn
+	err = msgReturn.UnmarshalCBOR(bytes.NewReader(msg.Receipt.Return))
+	if err != nil {
+		return nil, fmt.Errorf("unmarshal approve return failed: %s", err)
+	}
+
+	return &msgReturn, nil
+}
+
 func (s *ServiceImpl) PushMessageAndWait(ctx context.Context, msg *types.Message, spec *msgTypes.SendSpec) (*msgTypes.Message, error) {
 	id, err := s.Messager.PushMessage(ctx, msg, spec)
 	if err != nil {

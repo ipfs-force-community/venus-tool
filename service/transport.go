@@ -230,3 +230,9 @@ type MultisigAddSignerReq struct {
 	Msig              address.Address
 	IncreaseThresHold bool
 }
+
+type MultisigApproveReq struct {
+	Msig     address.Address
+	Proposer address.Address
+	TxID     uint64
+}

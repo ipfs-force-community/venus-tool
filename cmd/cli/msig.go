@@ -26,6 +26,7 @@ var MultiSigCmd = &cli.Command{
 		multisigCreateCmd,
 		multisigAddSignerCmd,
 		multisigRemoveSignerCmd,
+		multisigSwapSignerCmd,
 	},
 }
 
@@ -509,6 +510,56 @@ var multisigRemoveSignerCmd = &cli.Command{
 		}
 
 		ret, err := api.MsigRemoveSigner(cctx.Context, req)
+		if err != nil {
+			return err
+		}
+
+		return printJSON(ret)
+	},
+}
+
+var multisigSwapSignerCmd = &cli.Command{
+	Name:      "swap",
+	Usage:     "Swap a signer in a multisig wallet",
+	ArgsUsage: "<multisig address> <proposer address> <old signer address> <new signer address>",
+	Action: func(cctx *cli.Context) error {
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
+
+		if cctx.NArg() != 4 {
+			return fmt.Errorf("must specify multisig address, proposer address, old signer address, and new signer address")
+		}
+
+		msigAddr, err := address.NewFromString(cctx.Args().Get(0))
+		if err != nil {
+			return err
+		}
+
+		from, err := address.NewFromString(cctx.Args().Get(1))
+		if err != nil {
+			return err
+		}
+
+		oldSigner, err := address.NewFromString(cctx.Args().Get(2))
+		if err != nil {
+			return err
+		}
+
+		newSigner, err := address.NewFromString(cctx.Args().Get(3))
+		if err != nil {
+			return err
+		}
+
+		req := &service.MultisigSwapSignerReq{
+			Msig:      msigAddr,
+			Proposer:  from,
+			OldSigner: oldSigner,
+			NewSigner: newSigner,
+		}
+
+		ret, err := api.MsigSwapSigner(cctx.Context, req)
 		if err != nil {
 			return err
 		}

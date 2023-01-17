@@ -1112,6 +1112,37 @@ func (s *ServiceImpl) MsigRemoveSigner(ctx context.Context, req *MultisigChangeS
 	return &msgReturn, nil
 }
 
+func (s *ServiceImpl) MsigSwapSigner(ctx context.Context, req *MultisigSwapSignerReq) (*types.ProposeReturn, error) {
+	var err error
+
+	_, err = s.Node.StateLookupID(ctx, req.Proposer, types.EmptyTSK)
+	if err != nil {
+		return nil, fmt.Errorf("lookup from(%s) failed: %s", req.Proposer, err)
+	}
+
+	msgPrototype, err := s.Node.MsigSwapPropose(ctx, req.Msig, req.Proposer, req.OldSigner, req.NewSigner)
+	if err != nil {
+		return nil, fmt.Errorf("create multisig swap propose Prototype failed: %s", err)
+	}
+
+	msg, err := s.PushMessageAndWait(ctx, &msgPrototype.Message, nil)
+	if err != nil {
+		return nil, fmt.Errorf("push message failed: %s", err)
+	}
+
+	if msg.Receipt.ExitCode.IsError() {
+		return nil, fmt.Errorf("exec swap propose failed: %s", msg.Receipt.ExitCode)
+	}
+
+	var msgReturn types.ProposeReturn
+	err = msgReturn.UnmarshalCBOR(bytes.NewReader(msg.Receipt.Return))
+	if err != nil {
+		return nil, fmt.Errorf("unmarshal swap propose return failed: %s", err)
+	}
+
+	return &msgReturn, nil
+}
+
 func (s *ServiceImpl) MsigApprove(ctx context.Context, req *MultisigApproveReq) (*types.ApproveReturn, error) {
 	var err error
 

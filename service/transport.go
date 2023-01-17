@@ -239,3 +239,10 @@ type MultisigTransactionReq struct {
 
 type MultisigApproveReq = MultisigTransactionReq
 type MultisigCancelReq = MultisigTransactionReq
+
+type MultisigSwapSignerReq struct {
+	Msig      address.Address
+	Proposer  address.Address
+	OldSigner address.Address
+	NewSigner address.Address
+}

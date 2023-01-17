@@ -63,4 +63,5 @@ type IService interface {
 	MsigRemoveSigner(ctx context.Context, req *MultisigChangeSignerReq) (*types.ProposeReturn, error) // POST:/msig/signer/remove
 	MsigApprove(ctx context.Context, req *MultisigApproveReq) (*types.ApproveReturn, error)           // POST:/msig/approve
 	MsigCancel(ctx context.Context, req *MultisigCancelReq) error                                     // POST:/msig/cancel
+	MsigSwapSigner(ctx context.Context, req *MultisigSwapSignerReq) (*types.ProposeReturn, error)     // POST:/msig/signer/swap
 }

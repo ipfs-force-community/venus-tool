@@ -96,6 +96,17 @@ func (ep *EncodedParams) DecodeHex() (out []byte, err error) {
 	return hex.DecodeString(string(ep.Data))
 }
 
+type MsgGetMethodNameReq struct {
+	To     address.Address
+	Method abi.MethodNum
+}
+
+type MsgDecodeParamReq struct {
+	To     address.Address
+	Method abi.MethodNum
+	Params []byte
+}
+
 type AddrOperateType string
 
 var (
@@ -196,7 +207,7 @@ type SectorResp struct {
 	SectorLocation lminer.SectorLocation
 }
 
-type MultiSigCreateReq struct {
+type MultisigCreateReq struct {
 	From               address.Address
 	Signers            []address.Address
 	ApprovalsThreshold uint64
@@ -204,10 +215,18 @@ type MultiSigCreateReq struct {
 	Value              abi.TokenAmount
 }
 
-type MultiSigProposeReq struct {
+type MultisigProposeReq struct {
+	Msig   address.Address
 	From   address.Address
 	To     address.Address
 	Value  abi.TokenAmount
 	Method abi.MethodNum
 	Params EncodedParams
+}
+
+type MultisigAddSignerReq struct {
+	NewSigner         address.Address
+	Proposer          address.Address
+	Msig              address.Address
+	IncreaseThresHold bool
 }

@@ -10,7 +10,7 @@ require (
 	github.com/filecoin-project/go-fil-markets v1.25.0
 	github.com/filecoin-project/go-state-types v0.10.0-alpha-2
 	github.com/filecoin-project/specs-actors/v2 v2.3.6
-	github.com/filecoin-project/venus v1.8.1-0.20230112083616-33282118b78b
+	github.com/filecoin-project/venus v1.8.1-0.20230116084024-db7ec7deb81e
 	github.com/filecoin-project/venus-messager v1.8.0
 	github.com/filecoin-project/venus/venus-devtool v0.0.0-20230104163736-6ee019132745
 	github.com/gin-gonic/gin v1.8.1

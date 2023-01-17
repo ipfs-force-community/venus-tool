@@ -37,13 +37,13 @@ var MsgCmd = &cli.Command{
 	Name:  "msg",
 	Usage: "Message related commands",
 	Subcommands: []*cli.Command{
-		msgDendCmd,
+		msgSendCmd,
 		msgListCmd,
 		msgReplaceCmd,
 	},
 }
 
-var msgDendCmd = &cli.Command{
+var msgSendCmd = &cli.Command{
 	Name:      "send",
 	Usage:     "Send a message",
 	ArgsUsage: "[targetAddress] [amount]",

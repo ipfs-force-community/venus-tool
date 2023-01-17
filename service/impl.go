@@ -3,6 +3,7 @@ package service
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 
@@ -31,6 +32,7 @@ import (
 	"github.com/ipfs-force-community/venus-tool/utils"
 	"github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log"
+	cbg "github.com/whyrusleeping/cbor-gen"
 )
 
 var log = logging.Logger("service")
@@ -66,27 +68,27 @@ func (s *ServiceImpl) GetDefaultWallet(ctx context.Context) (address.Address, er
 
 func (s *ServiceImpl) MsgSend(ctx context.Context, req *MsgSendReq) (string, error) {
 
-	var decParams []byte
-	var err error
-	switch req.Params.EncType {
-	case EncJson:
-		act, err := s.Node.GetActor(ctx, req.To)
-		if err != nil {
-			return "", err
+	dec := func(req EncodedParams, to address.Address, method abi.MethodNum) ([]byte, error) {
+
+		switch req.EncType {
+		case EncJson:
+			act, err := s.Node.GetActor(ctx, to)
+			if err != nil {
+				return nil, err
+			}
+			return req.DecodeJSON(act.Code, method)
+		case EncHex:
+			return req.DecodeHex()
+		case EncNull:
+			return req.Data, nil
+		default:
+			return nil, fmt.Errorf("unknown encoding type: %s", req.EncType)
 		}
-		decParams, err = req.Params.DecodeJSON(act.Code, req.Method)
-		if err != nil {
-			return "", err
-		}
-	case EncHex:
-		decParams, err = req.Params.DecodeHex()
-		if err != nil {
-			return "", err
-		}
-	case EncNull:
-		decParams = req.Params.Data
-	default:
-		return "", fmt.Errorf("unknown encoding type: %s", req.Params.EncType)
+	}
+
+	decParams, err := dec(req.Params, req.To, req.Method)
+	if err != nil {
+		return "", err
 	}
 
 	msg := &types.Message{
@@ -184,6 +186,48 @@ func (s *ServiceImpl) MsgWait(ctx context.Context, msgId string) (*msgTypes.Mess
 		return nil, err
 	}
 	return msg, nil
+}
+
+// todo:
+func (s *ServiceImpl) MsgDecodeParam2Json(ctx context.Context, req *MsgDecodeParamReq) ([]byte, error) {
+	if len(req.Params) == 0 {
+		return []byte{}, nil
+	}
+
+	var err error
+
+	act, err := s.Node.GetActor(ctx, req.To)
+	if err != nil {
+		return nil, err
+	}
+	methodMeta, err := utils.GetMethodMeta(act.Code, req.Method)
+	if err != nil {
+		return nil, err
+	}
+
+	paramsRV := methodMeta.Params
+	if paramsRV.Kind() == reflect.Ptr {
+		paramsRV = paramsRV.Elem()
+	}
+	params := reflect.New(paramsRV).Interface().(cbg.CBORUnmarshaler)
+	if err := params.UnmarshalCBOR(bytes.NewReader(req.Params)); err != nil {
+		return nil, err
+	}
+	return json.Marshal(params)
+}
+
+func (s *ServiceImpl) MsgGetMethodName(ctx context.Context, req *MsgGetMethodNameReq) (string, error) {
+	act, err := s.Node.GetActor(ctx, req.To)
+	if err != nil {
+		return "", err
+	}
+
+	methodMeta, err := utils.GetMethodMeta(act.Code, req.Method)
+	if err != nil {
+		return "", err
+	}
+
+	return methodMeta.Name, nil
 }
 
 func (s *ServiceImpl) AddrOperate(ctx context.Context, params *AddrsOperateReq) error {
@@ -879,7 +923,7 @@ func (s *ServiceImpl) SectorGet(ctx context.Context, req SectorGetReq) ([]*Secto
 	return ret, nil
 }
 
-func (s *ServiceImpl) MsigCreate(ctx context.Context, req *MultiSigCreateReq) (address.Address, error) {
+func (s *ServiceImpl) MsigCreate(ctx context.Context, req *MultisigCreateReq) (address.Address, error) {
 	var err error
 	// check params
 	if req.ApprovalsThreshold < 1 {
@@ -934,6 +978,100 @@ func (s *ServiceImpl) MsigCreate(ctx context.Context, req *MultiSigCreateReq) (a
 	return execRet.RobustAddress, nil
 }
 
+func (s *ServiceImpl) MsigPropose(ctx context.Context, req *MultisigProposeReq) (*types.ProposeReturn, error) {
+	var err error
+
+	dec := func(req EncodedParams, to address.Address, method abi.MethodNum) ([]byte, error) {
+
+		switch req.EncType {
+		case EncJson:
+			act, err := s.Node.GetActor(ctx, to)
+			if err != nil {
+				return nil, err
+			}
+			return req.DecodeJSON(act.Code, method)
+		case EncHex:
+			return req.DecodeHex()
+		case EncNull:
+			return req.Data, nil
+		default:
+			return nil, fmt.Errorf("unknown encoding type: %s", req.EncType)
+		}
+	}
+
+	if req.Value.LessThan(big.Zero()) {
+		return nil, fmt.Errorf("value(%s) must be equal or greater than 0", req.Value)
+	}
+
+	params, err := dec(req.Params, req.To, req.Method)
+	if err != nil {
+		return nil, fmt.Errorf("decode params failed: %s", err)
+	}
+
+	msgPrototype, err := s.Node.MsigPropose(ctx, req.Msig, req.To, req.Value, req.From, uint64(req.Method), params)
+	if err != nil {
+		return nil, fmt.Errorf("create multisig propose Prototype failed: %s", err)
+	}
+
+	msg, err := s.PushMessageAndWait(ctx, &msgPrototype.Message, nil)
+	if err != nil {
+		return nil, fmt.Errorf("push message failed: %s", err)
+	}
+
+	if msg.Receipt.ExitCode.IsError() {
+		return nil, fmt.Errorf("exec propose failed: %s", msg.Receipt.ExitCode)
+	}
+	var msgReturn types.ProposeReturn
+	err = msgReturn.UnmarshalCBOR(bytes.NewReader(msg.Receipt.Return))
+	if err != nil {
+		return nil, fmt.Errorf("unmarshal propose return failed: %s", err)
+	}
+
+	return &msgReturn, nil
+}
+
+func (s *ServiceImpl) MsigListPropose(ctx context.Context, msig address.Address) ([]*types.MsigTransaction, error) {
+	var err error
+
+	ret, err := s.Node.MsigGetPending(ctx, msig, types.EmptyTSK)
+	if err != nil {
+		return nil, fmt.Errorf("create multisig get pending Prototype failed: %s", err)
+	}
+
+	return ret, nil
+}
+
+func (s *ServiceImpl) MsigAddSigner(ctx context.Context, req *MultisigAddSignerReq) (*types.ProposeReturn, error) {
+	var err error
+
+	_, err = s.Node.StateLookupID(ctx, req.NewSigner, types.EmptyTSK)
+	if err != nil {
+		return nil, fmt.Errorf("lookup signer(%s) failed: %s", req.NewSigner, err)
+	}
+
+	msgPrototype, err := s.Node.MsigAddPropose(ctx, req.Msig, req.Proposer, req.NewSigner, req.IncreaseThresHold)
+	if err != nil {
+		return nil, fmt.Errorf("create multisig add propose Prototype failed: %s", err)
+	}
+
+	msg, err := s.PushMessageAndWait(ctx, &msgPrototype.Message, nil)
+	if err != nil {
+		return nil, fmt.Errorf("push message failed: %s", err)
+	}
+
+	if msg.Receipt.ExitCode.IsError() {
+		return nil, fmt.Errorf("exec add propose failed: %s", msg.Receipt.ExitCode)
+	}
+
+	var msgReturn types.ProposeReturn
+	err = msgReturn.UnmarshalCBOR(bytes.NewReader(msg.Receipt.Return))
+	if err != nil {
+		return nil, fmt.Errorf("unmarshal add propose return failed: %s", err)
+	}
+
+	return &msgReturn, nil
+}
+
 func (s *ServiceImpl) PushMessageAndWait(ctx context.Context, msg *types.Message, spec *msgTypes.SendSpec) (*msgTypes.Message, error) {
 	id, err := s.Messager.PushMessage(ctx, msg, spec)
 	if err != nil {
@@ -945,7 +1083,7 @@ func (s *ServiceImpl) PushMessageAndWait(ctx context.Context, msg *types.Message
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("messager(%s) is chained", id)
+	log.Infof("messager(%s) is chained, exit code (%s), gas used(%d), return len(%d)", id, ret.Receipt.ExitCode, ret.Receipt.GasUsed, len(ret.Receipt.Return))
 
 	return ret, nil
 }

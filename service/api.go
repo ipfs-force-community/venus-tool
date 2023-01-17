@@ -20,9 +20,11 @@ type IService interface {
 	ChainGetActor(ctx context.Context, addr address.Address) (*types.Actor, error) // GET:/chain/actor
 	ChainGetNetworkName(ctx context.Context) (types.NetworkName, error)            // GET:/chain/networkname
 
-	MsgSend(ctx context.Context, params *MsgSendReq) (string, error)        // POST:/msg/send
-	MsgQuery(ctx context.Context, params *MsgQueryReq) ([]*MsgResp, error)  // GET:/msg/query
-	MsgReplace(ctx context.Context, params *MsgReplaceReq) (cid.Cid, error) // POST:/msg/replace
+	MsgSend(ctx context.Context, params *MsgSendReq) (string, error)                 // POST:/msg/send
+	MsgQuery(ctx context.Context, params *MsgQueryReq) ([]*MsgResp, error)           // GET:/msg/query
+	MsgReplace(ctx context.Context, params *MsgReplaceReq) (cid.Cid, error)          // POST:/msg/replace
+	MsgDecodeParam2Json(ctx context.Context, req *MsgDecodeParamReq) ([]byte, error) // GET:/msg/decodeparam
+	MsgGetMethodName(ctx context.Context, req *MsgGetMethodNameReq) (string, error)  // GET:/msg/getmethodname
 
 	AddrOperate(ctx context.Context, params *AddrsOperateReq) error // PUT:/addr/operate
 	AddrList(ctx context.Context) ([]*AddrsResp, error)             // GET:/addr/list
@@ -53,5 +55,8 @@ type IService interface {
 	SectorExtend(ctx context.Context, req SectorExtendReq) error            // PUT:/sector/extend
 	SectorGet(ctx context.Context, req SectorGetReq) ([]*SectorResp, error) // GET:/sector/get
 
-	MsigCreate(ctx context.Context, req *MultiSigCreateReq) (address.Address, error) // POST:/msig/create
+	MsigCreate(ctx context.Context, req *MultisigCreateReq) (address.Address, error)             // POST:/msig/create
+	MsigPropose(ctx context.Context, req *MultisigProposeReq) (*types.ProposeReturn, error)      // POST:/msig/propose
+	MsigListPropose(ctx context.Context, msig address.Address) ([]*types.MsigTransaction, error) // GET:/msig/proposes
+	MsigAddSigner(ctx context.Context, req *MultisigAddSignerReq) (*types.ProposeReturn, error)  // POST:/msig/signer
 }

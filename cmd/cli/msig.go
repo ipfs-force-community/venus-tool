@@ -225,12 +225,11 @@ var multisigProposeListCmd = &cli.Command{
 
 		type ProposeOutput struct {
 			TxID       int64
-			To         address.Address
 			Value      types.FIL
-			RawParams  []byte
-			Params     json.Marshaler
-			Method     abi.MethodNum
 			MethodName string
+			MethodId   abi.MethodNum
+			Params     json.Marshaler
+			RawParams  []byte
 			Approved   []address.Address
 		}
 
@@ -265,11 +264,10 @@ var multisigProposeListCmd = &cli.Command{
 
 			out = append(out, ProposeOutput{
 				TxID:       p.ID,
-				To:         p.To,
 				Value:      types.FIL(p.Value),
 				RawParams:  p.Params,
 				Params:     &params,
-				Method:     p.Method,
+				MethodId:   p.Method,
 				MethodName: methodName,
 				Approved:   p.Approved,
 			})

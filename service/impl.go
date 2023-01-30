@@ -29,10 +29,12 @@ import (
 	marketTypes "github.com/filecoin-project/venus/venus-shared/types/market"
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
 	"github.com/google/uuid"
-	"github.com/ipfs-force-community/venus-tool/utils"
 	"github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log"
 	cbg "github.com/whyrusleeping/cbor-gen"
+
+	"github.com/ipfs-force-community/venus-tool/pkg/multisig"
+	"github.com/ipfs-force-community/venus-tool/utils"
 )
 
 var log = logging.Logger("service")
@@ -41,8 +43,11 @@ type ServiceImpl struct {
 	Messager messager.IMessager
 	Market   market.IMarket
 	Node     nodeV1.FullNode
-	Wallets  []address.Address
-	Miners   []address.Address
+
+	Multisig multisig.IMultiSig
+
+	Wallets []address.Address
+	Miners  []address.Address
 }
 
 var _ IService = &ServiceImpl{}
@@ -956,7 +961,7 @@ func (s *ServiceImpl) MsigCreate(ctx context.Context, req *MultisigCreateReq) (a
 		}
 	}
 
-	msgPrototype, err := s.Node.MsigCreate(ctx, req.ApprovalsThreshold, req.Signers, req.LockedDuration, req.Value, req.From, big.Zero())
+	msgPrototype, err := s.Multisig.MsigCreate(ctx, req.ApprovalsThreshold, req.Signers, req.LockedDuration, req.Value, req.From, big.Zero())
 	if err != nil {
 		return address.Undef, fmt.Errorf("create multisig Prototype failed: %s", err)
 	}
@@ -979,7 +984,7 @@ func (s *ServiceImpl) MsigCreate(ctx context.Context, req *MultisigCreateReq) (a
 }
 
 func (s *ServiceImpl) MsigInfo(ctx context.Context, msig address.Address) (*types.MsigInfo, error) {
-	info, err := s.Node.StateMsigInfo(ctx, msig, types.EmptyTSK)
+	info, err := s.Multisig.StateMsigInfo(ctx, msig, types.EmptyTSK)
 	if err != nil {
 		return nil, fmt.Errorf("get multisig info failed: %s", err)
 	}
@@ -1017,7 +1022,7 @@ func (s *ServiceImpl) MsigPropose(ctx context.Context, req *MultisigProposeReq) 
 		return nil, fmt.Errorf("decode params failed: %s", err)
 	}
 
-	msgPrototype, err := s.Node.MsigPropose(ctx, req.Msig, req.To, req.Value, req.From, uint64(req.Method), params)
+	msgPrototype, err := s.Multisig.MsigPropose(ctx, req.Msig, req.To, req.Value, req.From, uint64(req.Method), params)
 	if err != nil {
 		return nil, fmt.Errorf("create multisig propose Prototype failed: %s", err)
 	}
@@ -1042,7 +1047,7 @@ func (s *ServiceImpl) MsigPropose(ctx context.Context, req *MultisigProposeReq) 
 func (s *ServiceImpl) MsigListPropose(ctx context.Context, msig address.Address) ([]*types.MsigTransaction, error) {
 	var err error
 
-	ret, err := s.Node.MsigGetPending(ctx, msig, types.EmptyTSK)
+	ret, err := s.Multisig.MsigGetPending(ctx, msig, types.EmptyTSK)
 	if err != nil {
 		return nil, fmt.Errorf("create multisig get pending Prototype failed: %s", err)
 	}
@@ -1058,7 +1063,7 @@ func (s *ServiceImpl) MsigAddSigner(ctx context.Context, req *MultisigChangeSign
 		return nil, fmt.Errorf("lookup signer(%s) failed: %s", req.NewSigner, err)
 	}
 
-	msgPrototype, err := s.Node.MsigAddPropose(ctx, req.Msig, req.Proposer, req.NewSigner, req.AlterThresHold)
+	msgPrototype, err := s.Multisig.MsigAddPropose(ctx, req.Msig, req.Proposer, req.NewSigner, req.AlterThresHold)
 	if err != nil {
 		return nil, fmt.Errorf("create multisig add propose Prototype failed: %s", err)
 	}
@@ -1089,7 +1094,7 @@ func (s *ServiceImpl) MsigRemoveSigner(ctx context.Context, req *MultisigChangeS
 		return nil, fmt.Errorf("lookup signer(%s) failed: %s", req.NewSigner, err)
 	}
 
-	msgPrototype, err := s.Node.MsigRemoveSigner(ctx, req.Msig, req.Proposer, req.NewSigner, req.AlterThresHold)
+	msgPrototype, err := s.Multisig.MsigRemoveSigner(ctx, req.Msig, req.Proposer, req.NewSigner, req.AlterThresHold)
 	if err != nil {
 		return nil, fmt.Errorf("create multisig remove propose Prototype failed: %s", err)
 	}
@@ -1120,7 +1125,7 @@ func (s *ServiceImpl) MsigSwapSigner(ctx context.Context, req *MultisigSwapSigne
 		return nil, fmt.Errorf("lookup from(%s) failed: %s", req.Proposer, err)
 	}
 
-	msgPrototype, err := s.Node.MsigSwapPropose(ctx, req.Msig, req.Proposer, req.OldSigner, req.NewSigner)
+	msgPrototype, err := s.Multisig.MsigSwapPropose(ctx, req.Msig, req.Proposer, req.OldSigner, req.NewSigner)
 	if err != nil {
 		return nil, fmt.Errorf("create multisig swap propose Prototype failed: %s", err)
 	}
@@ -1151,7 +1156,7 @@ func (s *ServiceImpl) MsigApprove(ctx context.Context, req *MultisigApproveReq) 
 		return nil, fmt.Errorf("lookup proposer(%s) failed: %s", req.Proposer, err)
 	}
 
-	msgPrototype, err := s.Node.MsigApprove(ctx, req.Msig, req.TxID, req.Proposer)
+	msgPrototype, err := s.Multisig.MsigApprove(ctx, req.Msig, req.TxID, req.Proposer)
 	if err != nil {
 		return nil, fmt.Errorf("create multisig approve Prototype failed: %s", err)
 	}
@@ -1182,7 +1187,7 @@ func (s *ServiceImpl) MsigCancel(ctx context.Context, req *MultisigCancelReq) er
 		return fmt.Errorf("lookup proposer(%s) failed: %s", req.Proposer, err)
 	}
 
-	msgPrototype, err := s.Node.MsigCancel(ctx, req.Msig, req.TxID, req.Proposer)
+	msgPrototype, err := s.Multisig.MsigCancel(ctx, req.Msig, req.TxID, req.Proposer)
 	if err != nil {
 		return fmt.Errorf("create multisig cancel Prototype failed: %s", err)
 	}

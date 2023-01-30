@@ -283,10 +283,8 @@ func outputStorageDeals(out io.Writer, deals []market.MinerDeal, verbose bool) e
 	return w.Flush()
 }
 
-type marshaler struct {
-	Data []byte
-}
+type marshaler []byte
 
-func (m *marshaler) MarshalJSON() ([]byte, error) {
-	return m.Data, nil
+func (m marshaler) MarshalJSON() ([]byte, error) {
+	return m, nil
 }

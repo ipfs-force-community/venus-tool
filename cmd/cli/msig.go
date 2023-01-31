@@ -246,10 +246,7 @@ var multisigProposeListCmd = &cli.Command{
 				if err != nil {
 					return err
 				}
-			} else {
-				b = []byte("null")
 			}
-
 
 			methodName, err := api.MsgGetMethodName(cctx.Context, &service.MsgGetMethodNameReq{
 				To:     p.To,
@@ -263,7 +260,7 @@ var multisigProposeListCmd = &cli.Command{
 				TxID:       p.ID,
 				Value:      types.FIL(p.Value),
 				RawParams:  p.Params,
-				Params:     marshaler(b),
+				Params:     json.RawMessage(b),
 				MethodId:   p.Method,
 				MethodName: methodName,
 				Approved:   p.Approved,

@@ -72,9 +72,7 @@ func (s *ServiceImpl) GetDefaultWallet(ctx context.Context) (address.Address, er
 }
 
 func (s *ServiceImpl) MsgSend(ctx context.Context, req *MsgSendReq) (string, error) {
-
 	dec := func(req EncodedParams, to address.Address, method abi.MethodNum) ([]byte, error) {
-
 		switch req.EncType {
 		case EncJson:
 			act, err := s.Node.GetActor(ctx, to)

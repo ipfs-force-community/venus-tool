@@ -15,7 +15,6 @@ import (
 	"github.com/filecoin-project/go-state-types/dline"
 	power2 "github.com/filecoin-project/specs-actors/v2/actors/builtin/power"
 	lminer "github.com/filecoin-project/venus/venus-shared/actors/builtin/miner"
-	nodeV1 "github.com/filecoin-project/venus/venus-shared/api/chain/v1"
 	"github.com/filecoin-project/venus/venus-shared/types"
 	marketTypes "github.com/filecoin-project/venus/venus-shared/types/market"
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
@@ -27,15 +26,6 @@ import (
 type MsgResp struct {
 	msgTypes.Message
 	MethodName string
-}
-
-func (mr *MsgResp) getMethodName(node nodeV1.IActor) (string, error) {
-	methodMeta, err := utils.GetMethodMeta(node, mr.To, mr.Method)
-	if err != nil {
-		return "", err
-	}
-	mr.MethodName = methodMeta.Name
-	return methodMeta.Name, nil
 }
 
 func (mr *MsgResp) MarshalJSON() ([]byte, error) {
@@ -50,6 +40,8 @@ func (mr *MsgResp) MarshalJSON() ([]byte, error) {
 	})
 }
 
+type MsgReplaceReq = msgTypes.ReplacMessageParams
+
 type MsgQueryReq struct {
 	msgTypes.MsgQueryParams
 	IsFailed    bool
@@ -60,19 +52,21 @@ type MsgQueryReq struct {
 }
 
 type MsgSendReq struct {
-	From    address.Address
-	To      address.Address
-	Value   abi.TokenAmount
-	Method  abi.MethodNum
-	Params  []byte
-	EncType EncodingType
+	From   address.Address
+	To     address.Address
+	Value  abi.TokenAmount
+	Method abi.MethodNum
+	Params EncodedParams
 
 	msgTypes.SendSpec
 }
 
-type MsgReplaceReq = msgTypes.ReplacMessageParams
-
 type EncodingType string
+
+type EncodedParams struct {
+	Data    []byte
+	EncType EncodingType
+}
 
 const (
 	EncNull EncodingType = ""
@@ -80,36 +74,14 @@ const (
 	EncJson EncodingType = "json"
 )
 
-func (sp *MsgSendReq) Decode(node nodeV1.IActor) (params []byte, err error) {
-
-	switch sp.EncType {
-	case EncNull:
-		params = sp.Params
-	case EncJson:
-		params, err = sp.DecodeJSON(node)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decode json params: %w", err)
-		}
-	case EncHex:
-		params, err = sp.DecodeHex()
-		if err != nil {
-			return nil, fmt.Errorf("failed to decode hex params: %w", err)
-		}
-	default:
-		return nil, fmt.Errorf("unexpected param type %s", sp.EncType)
-	}
-
-	return params, nil
-}
-
-func (sp *MsgSendReq) DecodeJSON(node nodeV1.IActor) (out []byte, err error) {
-	methodMeta, err := utils.GetMethodMeta(node, sp.To, sp.Method)
+func (ep *EncodedParams) DecodeJSON(actorCode cid.Cid, method abi.MethodNum) (out []byte, err error) {
+	methodMeta, err := utils.GetMethodMeta(actorCode, method)
 	if err != nil {
 		return nil, err
 	}
 
 	p := reflect.New(methodMeta.Params.Elem()).Interface().(cbg.CBORMarshaler)
-	if err := json.Unmarshal(sp.Params, p); err != nil {
+	if err := json.Unmarshal(ep.Data, p); err != nil {
 		return nil, fmt.Errorf("unmarshaling input into params type: %w", err)
 	}
 
@@ -120,8 +92,19 @@ func (sp *MsgSendReq) DecodeJSON(node nodeV1.IActor) (out []byte, err error) {
 	return buf.Bytes(), nil
 }
 
-func (sp *MsgSendReq) DecodeHex() (out []byte, err error) {
-	return hex.DecodeString(string(sp.Params))
+func (ep *EncodedParams) DecodeHex() (out []byte, err error) {
+	return hex.DecodeString(string(ep.Data))
+}
+
+type MsgGetMethodNameReq struct {
+	To     address.Address
+	Method abi.MethodNum
+}
+
+type MsgDecodeParamReq struct {
+	To     address.Address
+	Method abi.MethodNum
+	Params []byte
 }
 
 type AddrOperateType string
@@ -222,4 +205,44 @@ type SectorGetReq struct {
 type SectorResp struct {
 	types.SectorOnChainInfo
 	SectorLocation lminer.SectorLocation
+}
+
+type MultisigCreateReq struct {
+	From               address.Address
+	Signers            []address.Address
+	ApprovalsThreshold uint64
+	LockedDuration     abi.ChainEpoch
+	Value              abi.TokenAmount
+}
+
+type MultisigProposeReq struct {
+	Msig   address.Address
+	From   address.Address
+	To     address.Address
+	Value  abi.TokenAmount
+	Method abi.MethodNum
+	Params EncodedParams
+}
+
+type MultisigChangeSignerReq struct {
+	NewSigner      address.Address
+	Proposer       address.Address
+	Msig           address.Address
+	AlterThresHold bool
+}
+
+type MultisigTransactionReq struct {
+	Msig     address.Address
+	Proposer address.Address
+	TxID     uint64
+}
+
+type MultisigApproveReq = MultisigTransactionReq
+type MultisigCancelReq = MultisigTransactionReq
+
+type MultisigSwapSignerReq struct {
+	Msig      address.Address
+	Proposer  address.Address
+	OldSigner address.Address
+	NewSigner address.Address
 }

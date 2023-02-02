@@ -10,7 +10,7 @@ require (
 	github.com/filecoin-project/go-fil-markets v1.25.0
 	github.com/filecoin-project/go-state-types v0.10.0-alpha-2
 	github.com/filecoin-project/specs-actors/v2 v2.3.6
-	github.com/filecoin-project/venus v1.8.1-0.20230109091304-2aad6b348a86
+	github.com/filecoin-project/venus v1.8.1-0.20230130092930-9afcc8d286ba
 	github.com/filecoin-project/venus-messager v1.8.0
 	github.com/filecoin-project/venus/venus-devtool v0.0.0-20230104163736-6ee019132745
 	github.com/gin-gonic/gin v1.8.1
@@ -18,6 +18,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/ipfs-force-community/venus-common-utils v0.0.0-20220217030526-e5e4c6bc14f7
 	github.com/ipfs/go-cid v0.2.0
+	github.com/ipfs/go-ipld-cbor v0.0.6
 	github.com/ipfs/go-log v1.0.5
 	github.com/ipfs/go-log/v2 v2.5.1
 	github.com/libp2p/go-libp2p v0.22.0
@@ -102,7 +103,6 @@ require (
 	github.com/ipfs/go-ipfs-files v0.1.1 // indirect
 	github.com/ipfs/go-ipfs-http-client v0.4.0 // indirect
 	github.com/ipfs/go-ipfs-util v0.0.2 // indirect
-	github.com/ipfs/go-ipld-cbor v0.0.6 // indirect
 	github.com/ipfs/go-ipld-format v0.4.0 // indirect
 	github.com/ipfs/go-ipld-legacy v0.1.1 // indirect
 	github.com/ipfs/go-merkledag v0.8.1 // indirect

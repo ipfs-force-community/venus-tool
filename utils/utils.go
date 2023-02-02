@@ -4,11 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
-	v1 "github.com/filecoin-project/venus/venus-shared/api/chain/v1"
 	"github.com/filecoin-project/venus/venus-shared/types"
 	"github.com/filecoin-project/venus/venus-shared/utils"
+	"github.com/ipfs/go-cid"
 )
 
 type networkNameKeeper struct {
@@ -24,16 +23,10 @@ func LoadBuiltinActors(ctx context.Context, networkName types.NetworkName) error
 	return utils.LoadBuiltinActors(ctx, nk)
 }
 
-func GetMethodMeta(node v1.IActor, to address.Address, method abi.MethodNum) (utils.MethodMeta, error) {
-	ctx := context.Background()
-	act, err := node.StateGetActor(ctx, to, types.EmptyTSK)
-	if err != nil {
-		return utils.MethodMeta{}, err
-	}
-
-	methodMeta, found := utils.MethodsMap[act.Code][method]
+func GetMethodMeta(actorCode cid.Cid, method abi.MethodNum) (utils.MethodMeta, error) {
+	methodMeta, found := utils.MethodsMap[actorCode][method]
 	if !found {
-		return utils.MethodMeta{}, fmt.Errorf("method %d not found on actor %s", method, act.Code)
+		return utils.MethodMeta{}, fmt.Errorf("method %d not found on actor %s", method, actorCode)
 	}
 	return methodMeta, nil
 }

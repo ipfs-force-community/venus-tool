@@ -890,7 +890,7 @@ func (s *ServiceImpl) SectorExtend(ctx context.Context, req SectorExtendReq) err
 		return fmt.Errorf("get miner info failed: %s", err)
 	}
 
-	_, err = s.Messager.PushMessage(ctx, &types.Message{
+	_, err = s.PushMessageAndWait(ctx, &types.Message{
 		From:   mi.Worker,
 		To:     req.Miner,
 		Method: builtin.MethodsMiner.ExtendSectorExpiration,
@@ -969,10 +969,6 @@ func (s *ServiceImpl) MsigCreate(ctx context.Context, req *MultisigCreateReq) (a
 		return address.Undef, fmt.Errorf("push message failed: %s", err)
 	}
 
-	if msg.Receipt.ExitCode.IsError() {
-		return address.Undef, fmt.Errorf("exec create multisig failed: %s", msg.Receipt.ExitCode)
-	}
-
 	var execRet init2.ExecReturn
 	if err := execRet.UnmarshalCBOR(bytes.NewReader(msg.Receipt.Return)); err != nil {
 		return address.Undef, fmt.Errorf("unmarshal multisig create exec return failed: %s", err)
@@ -1030,9 +1026,6 @@ func (s *ServiceImpl) MsigPropose(ctx context.Context, req *MultisigProposeReq) 
 		return nil, fmt.Errorf("push message failed: %s", err)
 	}
 
-	if msg.Receipt.ExitCode.IsError() {
-		return nil, fmt.Errorf("exec propose failed: %s", msg.Receipt.ExitCode)
-	}
 	var msgReturn types.ProposeReturn
 	err = msgReturn.UnmarshalCBOR(bytes.NewReader(msg.Receipt.Return))
 	if err != nil {
@@ -1071,10 +1064,6 @@ func (s *ServiceImpl) MsigAddSigner(ctx context.Context, req *MultisigChangeSign
 		return nil, fmt.Errorf("push message failed: %s", err)
 	}
 
-	if msg.Receipt.ExitCode.IsError() {
-		return nil, fmt.Errorf("exec add propose failed: %s", msg.Receipt.ExitCode)
-	}
-
 	var msgReturn types.ProposeReturn
 	err = msgReturn.UnmarshalCBOR(bytes.NewReader(msg.Receipt.Return))
 	if err != nil {
@@ -1100,10 +1089,6 @@ func (s *ServiceImpl) MsigRemoveSigner(ctx context.Context, req *MultisigChangeS
 	msg, err := s.PushMessageAndWait(ctx, &msgPrototype.Message, nil)
 	if err != nil {
 		return nil, fmt.Errorf("push message failed: %s", err)
-	}
-
-	if msg.Receipt.ExitCode.IsError() {
-		return nil, fmt.Errorf("exec remove propose failed: %s", msg.Receipt.ExitCode)
 	}
 
 	var msgReturn types.ProposeReturn
@@ -1133,10 +1118,6 @@ func (s *ServiceImpl) MsigSwapSigner(ctx context.Context, req *MultisigSwapSigne
 		return nil, fmt.Errorf("push message failed: %s", err)
 	}
 
-	if msg.Receipt.ExitCode.IsError() {
-		return nil, fmt.Errorf("exec swap propose failed: %s", msg.Receipt.ExitCode)
-	}
-
 	var msgReturn types.ProposeReturn
 	err = msgReturn.UnmarshalCBOR(bytes.NewReader(msg.Receipt.Return))
 	if err != nil {
@@ -1164,10 +1145,6 @@ func (s *ServiceImpl) MsigApprove(ctx context.Context, req *MultisigApproveReq) 
 		return nil, fmt.Errorf("push message failed: %s", err)
 	}
 
-	if msg.Receipt.ExitCode.IsError() {
-		return nil, fmt.Errorf("exec approve failed: %s", msg.Receipt.ExitCode)
-	}
-
 	var msgReturn types.ApproveReturn
 	err = msgReturn.UnmarshalCBOR(bytes.NewReader(msg.Receipt.Return))
 	if err != nil {
@@ -1190,13 +1167,9 @@ func (s *ServiceImpl) MsigCancel(ctx context.Context, req *MultisigCancelReq) er
 		return fmt.Errorf("create multisig cancel Prototype failed: %s", err)
 	}
 
-	msg, err := s.PushMessageAndWait(ctx, &msgPrototype.Message, nil)
+	_, err = s.PushMessageAndWait(ctx, &msgPrototype.Message, nil)
 	if err != nil {
 		return fmt.Errorf("push message failed: %s", err)
-	}
-
-	if msg.Receipt.ExitCode.IsError() {
-		return fmt.Errorf("exec cancel failed: %s", msg.Receipt.ExitCode)
 	}
 
 	return nil
@@ -1211,9 +1184,13 @@ func (s *ServiceImpl) PushMessageAndWait(ctx context.Context, msg *types.Message
 
 	ret, err := s.MsgWait(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("wait message(%s) failed: %s", id, err)
 	}
-	log.Infof("messager(%s) is chained, exit code (%s), gas used(%d), return len(%d)", id, ret.Receipt.ExitCode, ret.Receipt.GasUsed, len(ret.Receipt.Return))
 
+	log.Infof("messager(%s) is chained, exit code (%s), gas used(%d), return(%s)", id, ret.Receipt.ExitCode, ret.Receipt.GasUsed, len(ret.Receipt.Return))
+
+	if ret.Receipt.ExitCode.IsError() {
+		return ret, fmt.Errorf("exec messager failed: msgid(%s) exitcode(%s) return(%s)", ret.ID, ret.Receipt.ExitCode, ret.Receipt.Return)
+	}
 	return ret, nil
 }

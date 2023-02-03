@@ -57,7 +57,7 @@ var minerAskCmd = &cli.Command{
 var minerGetAskCmd = &cli.Command{
 	Name:      "get",
 	Usage:     "get miner ask",
-	ArgsUsage: "[miner address]",
+	ArgsUsage: "<miner address>",
 	Action: func(cctx *cli.Context) error {
 		ctx := cctx.Context
 
@@ -119,7 +119,7 @@ var minerGetAskCmd = &cli.Command{
 var minerSetAskCmd = &cli.Command{
 	Name:      "set",
 	Usage:     "set miner ask",
-	ArgsUsage: "[miner address]",
+	ArgsUsage: "<miner address>",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:     "price",

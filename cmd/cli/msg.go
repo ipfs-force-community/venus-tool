@@ -34,8 +34,9 @@ var (
 )
 
 var MsgCmd = &cli.Command{
-	Name:  "msg",
-	Usage: "Message related commands",
+	Name:    "msg",
+	Usage:   "Message related commands",
+	Aliases: []string{"message"},
 	Subcommands: []*cli.Command{
 		msgSendCmd,
 		msgListCmd,
@@ -46,7 +47,7 @@ var MsgCmd = &cli.Command{
 var msgSendCmd = &cli.Command{
 	Name:      "send",
 	Usage:     "Send a message",
-	ArgsUsage: "[targetAddress] [amount]",
+	ArgsUsage: "<targetAddress> <amount>",
 	Flags: []cli.Flag{
 		flagFrom,
 		&cli.Uint64Flag{

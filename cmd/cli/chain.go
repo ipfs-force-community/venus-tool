@@ -41,8 +41,12 @@ var chainHeadCmd = &cli.Command{
 var chainGetActorCmd = &cli.Command{
 	Name:      "get-actor",
 	Usage:     "get actor info",
-	ArgsUsage: "[address]",
+	ArgsUsage: "<address>",
 	Action: func(cctx *cli.Context) error {
+		if cctx.NArg() != 1 {
+			return fmt.Errorf("must pass exactly one address")
+		}
+
 		api, err := getAPI(cctx)
 		if err != nil {
 			return err

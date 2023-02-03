@@ -32,7 +32,7 @@ var sectorExtendCmd = &cli.Command{
 		},
 	},
 	Action: func(cctx *cli.Context) error {
-		if cctx.Args().Len() < 2 {
+		if cctx.NArg() < 2 {
 			return fmt.Errorf("must pass miner and at least one sector number")
 		}
 

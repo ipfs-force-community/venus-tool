@@ -890,7 +890,7 @@ func (s *ServiceImpl) SectorExtend(ctx context.Context, req SectorExtendReq) err
 		return fmt.Errorf("get miner info failed: %s", err)
 	}
 
-	_, err = s.Messager.PushMessage(ctx, &types.Message{
+	msg, err := s.PushMessageAndWait(ctx, &types.Message{
 		From:   mi.Worker,
 		To:     req.Miner,
 		Method: builtin.MethodsMiner.ExtendSectorExpiration,
@@ -899,6 +899,10 @@ func (s *ServiceImpl) SectorExtend(ctx context.Context, req SectorExtendReq) err
 	}, &msgTypes.SendSpec{})
 	if err != nil {
 		return fmt.Errorf("push message failed: %s", err)
+	}
+
+	if msg.Receipt.ExitCode.IsError() {
+		return fmt.Errorf("exec cancel failed: %s", msg.Receipt.ExitCode)
 	}
 
 	return nil

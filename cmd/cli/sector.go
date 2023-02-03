@@ -11,10 +11,11 @@ import (
 )
 
 var SectorCmd = &cli.Command{
-	Name:  "sector",
-	Usage: "Interact with sectors",
+	Name:    "sector",
+	Usage:   "Interact with sectors",
+	Aliases: []string{"sectors"},
 	Subcommands: []*cli.Command{
-		sectorGetCmd,
+		sectorInfoCmd,
 		sectorExtendCmd,
 	},
 }
@@ -22,13 +23,8 @@ var SectorCmd = &cli.Command{
 var sectorExtendCmd = &cli.Command{
 	Name:      "extend",
 	Usage:     "Extend a sector's lifetime",
-	ArgsUsage: "[sectorNumber]...",
+	ArgsUsage: "<miner> <sectorNumber>...",
 	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:     "miner",
-			Usage:    "miner address",
-			Required: true,
-		},
 		&cli.Int64Flag{
 			Name:     "expiration",
 			Usage:    "new expiration epoch",
@@ -36,8 +32,8 @@ var sectorExtendCmd = &cli.Command{
 		},
 	},
 	Action: func(cctx *cli.Context) error {
-		if !cctx.Args().Present() {
-			return fmt.Errorf("must pass at least one sector number")
+		if cctx.Args().Len() < 2 {
+			return fmt.Errorf("must pass miner and at least one sector number")
 		}
 
 		ctx := cctx.Context
@@ -46,7 +42,7 @@ var sectorExtendCmd = &cli.Command{
 			return err
 		}
 
-		miner, err := address.NewFromString(cctx.String("miner"))
+		miner, err := address.NewFromString(cctx.Args().Get(0))
 		if err != nil {
 			return err
 		}
@@ -58,7 +54,7 @@ var sectorExtendCmd = &cli.Command{
 			Expiration: abi.ChainEpoch(expiration),
 		}
 
-		for i, s := range cctx.Args().Slice() {
+		for i, s := range cctx.Args().Slice()[1:] {
 			id, err := strconv.ParseUint(s, 10, 64)
 			if err != nil {
 				return fmt.Errorf("could not parse sector %d: %w", i, err)
@@ -77,8 +73,9 @@ var sectorExtendCmd = &cli.Command{
 	},
 }
 
-var sectorGetCmd = &cli.Command{
-	Name:      "get",
+var sectorInfoCmd = &cli.Command{
+	Name:      "info",
+	Aliases:   []string{"get"},
 	Usage:     "Get sectors info",
 	ArgsUsage: "[miner] [sectorNumber]...",
 	Action: func(cctx *cli.Context) error {

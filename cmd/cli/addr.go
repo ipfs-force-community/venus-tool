@@ -13,6 +13,7 @@ import (
 var AddrCmd = &cli.Command{
 	Name:      "addr",
 	Usage:     "operate the address which is used to send message",
+	Aliases:   []string{"address"},
 	ArgsUsage: "[address]",
 	Subcommands: []*cli.Command{
 		addrListCmd,

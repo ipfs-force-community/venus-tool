@@ -34,8 +34,9 @@ var (
 )
 
 var MsgCmd = &cli.Command{
-	Name:  "msg",
-	Usage: "Message related commands",
+	Name:    "msg",
+	Usage:   "Message related commands",
+	Aliases: []string{"message"},
 	Subcommands: []*cli.Command{
 		msgSendCmd,
 		msgListCmd,

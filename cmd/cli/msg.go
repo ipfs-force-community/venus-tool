@@ -47,7 +47,7 @@ var MsgCmd = &cli.Command{
 var msgSendCmd = &cli.Command{
 	Name:      "send",
 	Usage:     "Send a message",
-	ArgsUsage: "[targetAddress] [amount]",
+	ArgsUsage: "<targetAddress> <amount>",
 	Flags: []cli.Flag{
 		flagFrom,
 		&cli.Uint64Flag{

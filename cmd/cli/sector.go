@@ -77,7 +77,7 @@ var sectorInfoCmd = &cli.Command{
 	Name:      "info",
 	Aliases:   []string{"get"},
 	Usage:     "Get sectors info",
-	ArgsUsage: "[miner] [sectorNumber]...",
+	ArgsUsage: "<miner> <sectorNumber>...",
 	Action: func(cctx *cli.Context) error {
 		if cctx.Args().Len() < 2 {
 			return fmt.Errorf("must pass miner address and sector number")

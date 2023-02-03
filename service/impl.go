@@ -1190,7 +1190,7 @@ func (s *ServiceImpl) PushMessageAndWait(ctx context.Context, msg *types.Message
 	log.Infof("messager(%s) is chained, exit code (%s), gas used(%d), return(%s)", id, ret.Receipt.ExitCode, ret.Receipt.GasUsed, len(ret.Receipt.Return))
 
 	if ret.Receipt.ExitCode.IsError() {
-		return ret, fmt.Errorf("exec messager failed: msgid( %s ) exitcode( %s ) return( %s )", ret.ID, ret.Receipt.ExitCode, ret.Receipt.Return)
+		return ret, fmt.Errorf("exec messager failed: msgid(%s) exitcode(%s) return(%s)", ret.ID, ret.Receipt.ExitCode, ret.Receipt.Return)
 	}
 	return ret, nil
 }

@@ -41,6 +41,26 @@ type ServiceImpl struct {
 
 var _ IService = &ServiceImpl{}
 
+func (s *ServiceImpl) PushMessageAndWait(ctx context.Context, msg *types.Message, spec *msgTypes.SendSpec) (*msgTypes.Message, error) {
+	id, err := s.Messager.PushMessage(ctx, msg, spec)
+	if err != nil {
+		return nil, err
+	}
+	log.Infof("push message(%s) success", id)
+
+	ret, err := s.MsgWait(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("wait message(%s) failed: %s", id, err)
+	}
+
+	log.Infof("messager(%s) is chained, exit code (%s), gas used(%d), return(%s)", id, ret.Receipt.ExitCode, ret.Receipt.GasUsed, len(ret.Receipt.Return))
+
+	if ret.Receipt.ExitCode.IsError() {
+		return ret, fmt.Errorf("exec messager failed: msgid(%s) exitcode(%s) return(%s)", ret.ID, ret.Receipt.ExitCode, ret.Receipt.Return)
+	}
+	return ret, nil
+}
+
 func (s *ServiceImpl) ChainGetHead(ctx context.Context) (*types.TipSet, error) {
 	return s.Node.ChainHead(ctx)
 }
@@ -291,24 +311,4 @@ func (s *ServiceImpl) StorageDealUpdateState(ctx context.Context, req StorageDea
 
 func (s *ServiceImpl) RetrievalDealList(ctx context.Context) ([]marketTypes.ProviderDealState, error) {
 	return s.Market.MarketListRetrievalDeals(ctx)
-}
-
-func (s *ServiceImpl) PushMessageAndWait(ctx context.Context, msg *types.Message, spec *msgTypes.SendSpec) (*msgTypes.Message, error) {
-	id, err := s.Messager.PushMessage(ctx, msg, spec)
-	if err != nil {
-		return nil, err
-	}
-	log.Infof("push message(%s) success", id)
-
-	ret, err := s.MsgWait(ctx, id)
-	if err != nil {
-		return nil, fmt.Errorf("wait message(%s) failed: %s", id, err)
-	}
-
-	log.Infof("messager(%s) is chained, exit code (%s), gas used(%d), return(%s)", id, ret.Receipt.ExitCode, ret.Receipt.GasUsed, len(ret.Receipt.Return))
-
-	if ret.Receipt.ExitCode.IsError() {
-		return ret, fmt.Errorf("exec messager failed: msgid(%s) exitcode(%s) return(%s)", ret.ID, ret.Receipt.ExitCode, ret.Receipt.Return)
-	}
-	return ret, nil
 }

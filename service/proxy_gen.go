@@ -57,6 +57,7 @@ type IServiceStruct struct {
 		SectorGet                  func(ctx context.Context, req SectorGetReq) ([]*SectorResp, error)                                  ` GET:"/sector/get" `
 		StorageDealList            func(ctx context.Context, miner address.Address) ([]marketTypes.MinerDeal, error)                   ` GET:"/deal/storage" `
 		StorageDealUpdateState     func(ctx context.Context, req StorageDealUpdateStateReq) error                                      ` PUT:"/deal/storage/state" `
+		WalletSignRecordQuery      func(ctx context.Context, req *WalletSignRecordQueryReq) ([]WalletSignRecordResp, error)            ` GET:"/wallet/signrecord" `
 	}
 }
 
@@ -179,4 +180,7 @@ func (s *IServiceStruct) StorageDealList(p0 context.Context, p1 address.Address)
 }
 func (s *IServiceStruct) StorageDealUpdateState(p0 context.Context, p1 StorageDealUpdateStateReq) error {
 	return s.Internal.StorageDealUpdateState(p0, p1)
+}
+func (s *IServiceStruct) WalletSignRecordQuery(p0 context.Context, p1 *WalletSignRecordQueryReq) ([]WalletSignRecordResp, error) {
+	return s.Internal.WalletSignRecordQuery(p0, p1)
 }

@@ -64,4 +64,6 @@ type IService interface {
 	MsigApprove(ctx context.Context, req *MultisigApproveReq) (*types.ApproveReturn, error)           // POST:/msig/approve
 	MsigCancel(ctx context.Context, req *MultisigCancelReq) error                                     // POST:/msig/cancel
 	MsigSwapSigner(ctx context.Context, req *MultisigSwapSignerReq) (*types.ProposeReturn, error)     // POST:/msig/signer/swap
+
+	WalletSignRecordQuery(ctx context.Context, req *WalletSignRecordQueryReq) ([]WalletSignRecordResp, error) // GET:/wallet/signrecord
 }

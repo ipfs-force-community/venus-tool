@@ -96,6 +96,7 @@ func main() {
 			vtCli.SectorCmd,
 			vtCli.ChainCmd,
 			vtCli.MultiSigCmd,
+			vtCli.WalletCmd,
 		},
 	}
 	app.Setup()

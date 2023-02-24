@@ -10,6 +10,7 @@ import (
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 
+	w_cli "github.com/filecoin-project/venus-wallet/cli"
 	"github.com/filecoin-project/venus/pkg/constants"
 	nodeV1 "github.com/filecoin-project/venus/venus-shared/api/chain/v1"
 	"github.com/filecoin-project/venus/venus-shared/api/market"
@@ -311,4 +312,24 @@ func (s *ServiceImpl) StorageDealUpdateState(ctx context.Context, req StorageDea
 
 func (s *ServiceImpl) RetrievalDealList(ctx context.Context) ([]marketTypes.ProviderDealState, error) {
 	return s.Market.MarketListRetrievalDeals(ctx)
+}
+
+func (s *ServiceImpl) WalletSignRecordQuery(ctx context.Context, req *WalletSignRecordQueryReq) ([]WalletSignRecordResp, error) {
+	records, err := s.Wallet.QuerySignRecord(ctx, (*types.QuerySignRecordParams)(req))
+	if err != nil {
+		return nil, err
+	}
+	ret := make([]WalletSignRecordResp, 0, len(records))
+	for _, r := range records {
+		detail, err := w_cli.GetDetailInJsonRawMessage(&r)
+		if err != nil {
+			return nil, err
+		}
+		ret = append(ret, WalletSignRecordResp{
+			SignRecord: r,
+			Detail:     detail,
+		})
+	}
+
+	return ret, nil
 }

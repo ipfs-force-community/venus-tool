@@ -14,6 +14,7 @@ type Config struct {
 	NodeAPI     *APIInfo
 	MessagerAPI *APIInfo
 	MarketAPI   *APIInfo
+	WalletAPI   *APIInfo
 	Wallets     []address.Address
 	Miners      []address.Address
 }
@@ -64,6 +65,10 @@ func DefaultConfig() *Config {
 			Token: "",
 		},
 		NodeAPI: &APIInfo{
+			Addr:  "",
+			Token: "",
+		},
+		WalletAPI: &APIInfo{
 			Addr:  "",
 			Token: "",
 		},

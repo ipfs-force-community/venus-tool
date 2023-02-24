@@ -9,6 +9,7 @@ require (
 	github.com/filecoin-project/go-bitfield v0.2.4
 	github.com/filecoin-project/go-fil-markets v1.25.0
 	github.com/filecoin-project/go-state-types v0.10.0-alpha-2
+	github.com/filecoin-project/lotus v1.18.0
 	github.com/filecoin-project/specs-actors/v2 v2.3.6
 	github.com/filecoin-project/venus v1.8.1-0.20230130092930-9afcc8d286ba
 	github.com/filecoin-project/venus-messager v1.8.0
@@ -62,7 +63,6 @@ require (
 	github.com/filecoin-project/go-jsonrpc v0.1.8 // indirect
 	github.com/filecoin-project/go-padreader v0.0.1 // indirect
 	github.com/filecoin-project/go-statestore v0.2.0 // indirect
-	github.com/filecoin-project/lotus v1.18.0 // indirect
 	github.com/filecoin-project/specs-actors v0.9.15 // indirect
 	github.com/filecoin-project/specs-actors/v3 v3.1.2 // indirect
 	github.com/filecoin-project/specs-actors/v4 v4.0.2 // indirect

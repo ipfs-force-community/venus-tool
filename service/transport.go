@@ -160,7 +160,6 @@ type MinerCreateReq struct {
 	power2.CreateMinerParams
 	From       address.Address
 	SectorSize abi.SectorSize
-	MsgId      string
 }
 
 type MinerInfoResp struct {
@@ -245,4 +244,11 @@ type MultisigSwapSignerReq struct {
 	Proposer  address.Address
 	OldSigner address.Address
 	NewSigner address.Address
+}
+
+type WalletSignRecordQueryReq types.QuerySignRecordParams
+
+type WalletSignRecordResp struct {
+	types.SignRecord
+	Detail json.RawMessage
 }

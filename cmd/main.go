@@ -15,6 +15,7 @@ import (
 	nodeApi "github.com/filecoin-project/venus/venus-shared/api/chain/v1"
 	marketApi "github.com/filecoin-project/venus/venus-shared/api/market"
 	msgApi "github.com/filecoin-project/venus/venus-shared/api/messager"
+	walletApi "github.com/filecoin-project/venus/venus-shared/api/wallet"
 	"github.com/filecoin-project/venus/venus-shared/types"
 
 	vtCli "github.com/ipfs-force-community/venus-tool/cmd/cli"
@@ -63,6 +64,12 @@ var flagMarketAPI = &cli.StringFlag{
 	Usage:   "specify venus-market token and api address. ex: --market-api=token:addr , if token was ignored, will use common token",
 }
 
+var flagWalletAPI = &cli.StringFlag{
+	Name:    "wallet-api",
+	Aliases: []string{"wallet"},
+	Usage:   "specify venus-wallet token and api address. ex: --wallet-api=token:addr , if token was ignored, will use common token",
+}
+
 var flagComToken = &cli.StringFlag{
 	Name:    "common-token",
 	Aliases: []string{"token"},
@@ -89,6 +96,7 @@ func main() {
 			vtCli.SectorCmd,
 			vtCli.ChainCmd,
 			vtCli.MultiSigCmd,
+			vtCli.WalletCmd,
 		},
 	}
 	app.Setup()
@@ -141,6 +149,9 @@ var runCmd = &cli.Command{
 		if cfg.NodeAPI.Addr == "" {
 			return errors.New("node api url is empty")
 		}
+		if cfg.WalletAPI.Addr == "" {
+			return errors.New("wallet api url is empty")
+		}
 
 		msgClient, msgCloser, err := msgApi.DialIMessagerRPC(ctx, cfg.MessagerAPI.Addr, cfg.MessagerAPI.Token, nil)
 		if err != nil {
@@ -160,6 +171,12 @@ var runCmd = &cli.Command{
 		}
 		defer nodeCloser()
 
+		walletClient, walletCloser, err := walletApi.DialIFullAPIRPC(ctx, cfg.WalletAPI.Addr, cfg.WalletAPI.Token, nil)
+		if err != nil {
+			return err
+		}
+		defer walletCloser()
+
 		server := &http.Server{
 			Addr: cfg.Server.ListenAddr,
 		}
@@ -177,6 +194,7 @@ var runCmd = &cli.Command{
 			builder.Override(new(msgApi.IMessager), msgClient),
 			builder.Override(new(marketApi.IMarket), marketClient),
 			builder.Override(new(nodeApi.FullNode), nodeClient),
+			builder.Override(new(service.IWallet), walletClient),
 			builder.Override(new(context.Context), ctx),
 			builder.Override(new(types.NetworkName), networkName),
 			builder.Override(new(*service.ServiceImpl), func(params service.ServiceParams) (*service.ServiceImpl, error) {
@@ -241,5 +259,11 @@ func updateFlag(cfg *config.Config, ctx *cli.Context) {
 	}
 	if cfg.MarketAPI.Token == "" && commonToken != "" {
 		cfg.MarketAPI.Token = commonToken
+	}
+	if ctx.IsSet(flagWalletAPI.Name) {
+		updateApi(ctx.String(flagWalletAPI.Name), cfg.WalletAPI)
+	}
+	if cfg.WalletAPI.Token == "" && commonToken != "" {
+		cfg.WalletAPI.Token = commonToken
 	}
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -14,7 +13,6 @@ import (
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/venus/pkg/constants"
 	"github.com/filecoin-project/venus/venus-shared/types"
-	"github.com/google/uuid"
 	"github.com/ipfs-force-community/venus-tool/service"
 	"github.com/libp2p/go-libp2p/core/peer"
 
@@ -325,10 +323,6 @@ var minerCreate = &cli.Command{
 			Name:  "multiaddr",
 			Usage: "P2P peer address of the miner",
 		},
-		&cli.StringFlag{
-			Name:  "exid",
-			Usage: "extra identifier to avoid duplicate msg id for pushing into venus-messager",
-		},
 	},
 	Action: func(cctx *cli.Context) error {
 		ctx := cctx.Context
@@ -402,24 +396,13 @@ var minerCreate = &cli.Command{
 			}
 		}
 
-		if cctx.IsSet("exid") {
-			params.MsgId = cctx.String("exid")
-		} else {
-			params.MsgId = uuid.New().String()
-		}
-
+		fmt.Println("Creating miner, this might take a while")
 		miner, err := api.MinerCreate(ctx, params)
-		for err != nil && strings.Contains(err.Error(), "temp error") {
-			log.Debugf("on waiting: %s", err)
-			time.Sleep(5 * time.Second)
-			miner, err = api.MinerCreate(ctx, params)
-		}
 		if err != nil {
 			return err
 		}
 
 		fmt.Println(miner)
-
 		return nil
 	},
 }

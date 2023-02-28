@@ -11,9 +11,9 @@ require (
 	github.com/filecoin-project/go-state-types v0.10.0-rc3
 	github.com/filecoin-project/lotus v1.20.0-rc2
 	github.com/filecoin-project/specs-actors/v2 v2.3.6
-	github.com/filecoin-project/venus v1.10.0-rc2.0.20230223072511-aa47b88a7889
+	github.com/filecoin-project/venus v1.10.0-rc2.0.20230228065413-0179375cef9f
 	github.com/filecoin-project/venus-messager v1.8.0
-	github.com/filecoin-project/venus-wallet v1.10.0-rc2.0.20230224074510-cbf6b8a0aa01
+	github.com/filecoin-project/venus-wallet v1.10.0-rc2.0.20230228062511-02b8d1383aa8
 	github.com/filecoin-project/venus/venus-devtool v0.0.0-20230222094911-e3023defddfb
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-resty/resty/v2 v2.4.0
@@ -39,7 +39,7 @@ require (
 	github.com/deepmap/oapi-codegen v1.3.13 // indirect
 	github.com/dgraph-io/badger/v3 v3.2103.0 // indirect
 	github.com/filecoin-project/go-ds-versioning v0.1.2 // indirect
-	github.com/filecoin-project/venus-auth v1.10.0-rc2 // indirect
+	github.com/filecoin-project/venus-auth v1.10.0-rc2.0.20230228032348-a2418f5a8838 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/fxamacker/cbor/v2 v2.4.0 // indirect
 	github.com/go-kit/log v0.2.0 // indirect
@@ -103,6 +103,7 @@ require (
 	github.com/dgraph-io/ristretto v0.1.0 // indirect
 	github.com/dgryski/go-farm v0.0.0-20190423205320-6a90982ecee2 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
+	github.com/etherlabsio/healthcheck/v2 v2.0.0 // indirect
 	github.com/filecoin-project/filecoin-ffi v0.30.4-0.20220623181130-943e33574dca // indirect
 	github.com/filecoin-project/go-amt-ipld/v2 v2.1.1-0.20201006184820-924ee87a1349 // indirect
 	github.com/filecoin-project/go-amt-ipld/v3 v3.1.0 // indirect
@@ -229,10 +230,10 @@ require (
 	go.uber.org/zap v1.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/net v0.0.0-20220920183852-bf014ff85ad5 // indirect
-	golang.org/x/sys v0.0.0-20220919091848-fb04ddd9f9c8 // indirect
-	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/net v0.7.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/term v0.5.0 // indirect
+	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect

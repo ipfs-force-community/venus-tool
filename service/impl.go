@@ -315,7 +315,7 @@ func (s *ServiceImpl) RetrievalDealList(ctx context.Context) ([]marketTypes.Prov
 }
 
 func (s *ServiceImpl) WalletSignRecordQuery(ctx context.Context, req *WalletSignRecordQueryReq) ([]WalletSignRecordResp, error) {
-	records, err := s.Wallet.QuerySignRecord(ctx, (*types.QuerySignRecordParams)(req))
+	records, err := s.Wallet.ListSignedRecord(ctx, (*types.QuerySignRecordParams)(req))
 	if err != nil {
 		return nil, err
 	}

@@ -114,6 +114,7 @@ var runCmd = &cli.Command{
 		flagNodeAPI,
 		flagMsgAPI,
 		flagMarketAPI,
+		flagWalletAPI,
 		flagComToken,
 	},
 	Action: func(cctx *cli.Context) error {

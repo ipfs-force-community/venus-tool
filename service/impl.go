@@ -22,6 +22,7 @@ import (
 	logging "github.com/ipfs/go-log"
 	cbg "github.com/whyrusleeping/cbor-gen"
 
+	"github.com/ipfs-force-community/venus-tool/dep"
 	"github.com/ipfs-force-community/venus-tool/pkg/multisig"
 	"github.com/ipfs-force-community/venus-tool/utils"
 )
@@ -32,12 +33,10 @@ type ServiceImpl struct {
 	Messager messager.IMessager
 	Market   market.IMarket
 	Node     nodeV1.FullNode
-	Wallet   IWallet
+	Wallet   dep.IWallet
+	Auth     dep.IAuth
 
 	Multisig multisig.IMultiSig
-
-	Wallets []address.Address
-	Miners  []address.Address
 }
 
 var _ IService = &ServiceImpl{}
@@ -75,10 +74,15 @@ func (s *ServiceImpl) ChainGetNetworkName(ctx context.Context) (types.NetworkNam
 }
 
 func (s *ServiceImpl) GetDefaultWallet(ctx context.Context) (address.Address, error) {
-	if len(s.Wallets) == 0 {
+	wallets, err := s.Wallet.WalletList(ctx)
+	if err != nil {
+		return address.Undef, err
+	}
+
+	if len(wallets) == 0 {
 		return address.Undef, fmt.Errorf("no wallet configured")
 	}
-	return s.Wallets[0], nil
+	return wallets[0], nil
 }
 
 func (s *ServiceImpl) MsgSend(ctx context.Context, req *MsgSendReq) (string, error) {
@@ -143,7 +147,11 @@ func (s *ServiceImpl) MsgQuery(ctx context.Context, params *MsgQueryReq) ([]*Msg
 		msgs = append(msgs, msg)
 	} else if params.IsBlocked {
 		if len(params.From) == 0 {
-			params.From = s.Wallets
+			wallets, err := s.Wallet.WalletList(ctx)
+			if err != nil {
+				return nil, err
+			}
+			params.From = wallets
 		}
 		for _, from := range params.From {
 			msgsT, err := s.Messager.ListBlockedMessage(ctx, from, params.BlockedTime)
@@ -273,16 +281,56 @@ func (s *ServiceImpl) AddrOperate(ctx context.Context, params *AddrsOperateReq) 
 	}
 }
 
-func (s *ServiceImpl) AddrList(ctx context.Context) ([]*AddrsResp, error) {
-	addrs, err := s.Messager.ListAddress(ctx)
+func (s *ServiceImpl) AddrInfo(ctx context.Context, addr address.Address) (*AddrsResp, error) {
+	addrInfo, err := s.Messager.GetAddress(ctx, addr)
 	if err != nil {
 		return nil, err
 	}
-	ret := make([]*AddrsResp, 0, len(addrs))
-	for _, addr := range addrs {
-		ret = append(ret, (*AddrsResp)(addr))
+	return (*AddrsResp)(addrInfo), nil
+}
+
+func (s *ServiceImpl) AddrList(ctx context.Context) ([]*AddrsResp, error) {
+	addrInfos, err := s.Messager.ListAddress(ctx)
+	if err != nil {
+		return nil, err
 	}
+
+	addrs, err := s.Wallet.WalletList(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ret := make([]*AddrsResp, 0, len(addrs)+len(addrInfos))
+	for _, addr := range addrs {
+		// if addr is not in addrInfos, add it
+		var exist bool
+		for _, addrInfo := range addrInfos {
+			if addrInfo.Addr == addr {
+				exist = true
+				break
+			}
+		}
+		if !exist {
+			addrInfo, err := s.Messager.GetAddress(ctx, addr)
+			if err != nil {
+				log.Warnf("get address(%s) info failed: %s", addr, err)
+				addrInfo = &msgTypes.Address{
+					ID:   types.NewUUID(),
+					Addr: addr,
+				}
+			}
+			ret = append(ret, (*AddrsResp)(addrInfo))
+		}
+	}
+
+	for _, addrInfo := range addrInfos {
+		ret = append(ret, (*AddrsResp)(addrInfo))
+	}
+
 	return ret, err
+}
+
+func (s *ServiceImpl) WalletList(ctx context.Context) ([]address.Address, error) {
+	return s.Wallet.WalletList(ctx)
 }
 
 func (s *ServiceImpl) StorageDealList(ctx context.Context, miner address.Address) ([]marketTypes.MinerDeal, error) {
@@ -296,7 +344,13 @@ func (s *ServiceImpl) StorageDealList(ctx context.Context, miner address.Address
 	}
 
 	ret := make([]marketTypes.MinerDeal, 0)
-	for _, m := range s.Miners {
+	miners, err := s.listMiner(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, m := range miners {
+
 		deals, err := s.Market.MarketListIncompleteDeals(ctx, m)
 		if err != nil {
 			return nil, err
@@ -331,5 +385,23 @@ func (s *ServiceImpl) WalletSignRecordQuery(ctx context.Context, req *WalletSign
 		})
 	}
 
+	return ret, nil
+}
+
+func (s *ServiceImpl) listMiner(ctx context.Context) ([]address.Address, error) {
+	userName, err := s.Auth.GetUserName(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	miners, err := s.Auth.ListMiners(ctx, userName)
+	if err != nil {
+		return nil, err
+	}
+
+	ret := make([]address.Address, 0, len(miners))
+	for _, m := range miners {
+		ret = append(ret, m.Miner)
+	}
 	return ret, nil
 }

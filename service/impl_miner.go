@@ -603,3 +603,7 @@ func (s *ServiceImpl) SectorGet(ctx context.Context, req SectorGetReq) ([]*Secto
 
 	return ret, nil
 }
+
+func (s *ServiceImpl) MinerList(ctx context.Context) ([]address.Address, error) {
+	return s.listMiner(ctx)
+}

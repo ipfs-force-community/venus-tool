@@ -19,6 +19,7 @@ import (
 	"github.com/filecoin-project/venus/venus-shared/types"
 
 	vtCli "github.com/ipfs-force-community/venus-tool/cmd/cli"
+	"github.com/ipfs-force-community/venus-tool/dep"
 	"github.com/ipfs-force-community/venus-tool/repo"
 	"github.com/ipfs-force-community/venus-tool/repo/config"
 	"github.com/ipfs-force-community/venus-tool/route"
@@ -27,7 +28,6 @@ import (
 	"github.com/ipfs-force-community/venus-tool/version"
 
 	"github.com/ipfs-force-community/venus-common-utils/builder"
-	_ "github.com/ipfs-force-community/venus-tool/service"
 )
 
 var log = logging.Logger("main")
@@ -68,6 +68,12 @@ var flagWalletAPI = &cli.StringFlag{
 	Name:    "wallet-api",
 	Aliases: []string{"wallet"},
 	Usage:   "specify venus-wallet token and api address. ex: --wallet-api=token:addr , if token was ignored, will use common token",
+}
+
+var flagAuthAPI = &cli.StringFlag{
+	Name:    "auth-api",
+	Aliases: []string{"auth"},
+	Usage:   "specify venus-auth token and api address. ex: --auth-api=token:addr , if token was ignored, will use common token",
 }
 
 var flagComToken = &cli.StringFlag{
@@ -111,6 +117,7 @@ var runCmd = &cli.Command{
 	Usage: "run venus-tool daemon",
 	Flags: []cli.Flag{
 		flagListen,
+		flagAuthAPI,
 		flagNodeAPI,
 		flagMsgAPI,
 		flagMarketAPI,
@@ -191,16 +198,16 @@ var runCmd = &cli.Command{
 		// compose
 		stop, err := builder.New(
 			ctx,
+			builder.Override(new(*config.Config), cfg),
 			builder.Override(new(*http.Server), server),
 			builder.Override(new(msgApi.IMessager), msgClient),
 			builder.Override(new(marketApi.IMarket), marketClient),
 			builder.Override(new(nodeApi.FullNode), nodeClient),
-			builder.Override(new(service.IWallet), walletClient),
+			builder.Override(new(dep.IWallet), walletClient),
+			builder.Override(new(dep.IAuth), dep.NewAuth),
 			builder.Override(new(context.Context), ctx),
 			builder.Override(new(types.NetworkName), networkName),
-			builder.Override(new(*service.ServiceImpl), func(params service.ServiceParams) (*service.ServiceImpl, error) {
-				return params.NewService(cfg.Wallets, cfg.Miners)
-			}),
+			builder.Override(new(*service.ServiceImpl), service.NewService),
 			builder.Override(builder.NextInvoke(), utils.SetupLogLevels),
 			builder.Override(builder.NextInvoke(), utils.LoadBuiltinActors),
 			builder.Override(builder.NextInvoke(), route.RegisterAndStart),
@@ -234,37 +241,28 @@ func updateFlag(cfg *config.Config, ctx *cli.Context) {
 		}
 		if token != "" {
 			apiCfg.Token = token
+		} else if commonToken != "" {
+			apiCfg.Token = commonToken
 		}
 	}
 
 	if ctx.IsSet(flagListen.Name) {
 		cfg.Server.ListenAddr = ctx.String(flagListen.Name)
 	}
-
 	if ctx.IsSet(flagNodeAPI.Name) {
 		updateApi(ctx.String(flagNodeAPI.Name), cfg.NodeAPI)
 	}
-	if cfg.NodeAPI.Token == "" && commonToken != "" {
-		cfg.NodeAPI.Token = commonToken
-	}
-
 	if ctx.IsSet(flagMsgAPI.Name) {
 		updateApi(ctx.String(flagMsgAPI.Name), cfg.MessagerAPI)
 	}
-	if cfg.MessagerAPI.Token == "" && commonToken != "" {
-		cfg.MessagerAPI.Token = commonToken
-	}
-
 	if ctx.IsSet(flagMarketAPI.Name) {
 		updateApi(ctx.String(flagMarketAPI.Name), cfg.MarketAPI)
-	}
-	if cfg.MarketAPI.Token == "" && commonToken != "" {
-		cfg.MarketAPI.Token = commonToken
 	}
 	if ctx.IsSet(flagWalletAPI.Name) {
 		updateApi(ctx.String(flagWalletAPI.Name), cfg.WalletAPI)
 	}
-	if cfg.WalletAPI.Token == "" && commonToken != "" {
-		cfg.WalletAPI.Token = commonToken
+	if ctx.IsSet(flagAuthAPI.Name) {
+		updateApi(ctx.String(flagAuthAPI.Name), cfg.AuthAPI)
 	}
+
 }

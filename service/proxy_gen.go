@@ -17,6 +17,7 @@ import (
 
 type IServiceStruct struct {
 	Internal struct {
+		AddrInfo                   func(ctx context.Context, addr address.Address) (*AddrsResp, error)                                 ` GET:"/addr/info"`
 		AddrList                   func(ctx context.Context) ([]*AddrsResp, error)                                                     ` GET:"/addr/list"`
 		AddrOperate                func(ctx context.Context, params *AddrsOperateReq) error                                            ` PUT:"/addr/operate"`
 		ChainGetActor              func(ctx context.Context, addr address.Address) (*types.Actor, error)                               ` GET:"/chain/actor"`
@@ -30,6 +31,7 @@ type IServiceStruct struct {
 		MinerGetRetrievalAsk       func(ctx context.Context, mAddr address.Address) (*retrievalmarket.Ask, error)                      ` GET:"/miner/retrievalask"`
 		MinerGetStorageAsk         func(ctx context.Context, mAddr address.Address) (*storagemarket.StorageAsk, error)                 ` GET:"/miner/storageask"`
 		MinerInfo                  func(ctx context.Context, mAddr address.Address) (*MinerInfoResp, error)                            ` GET:"/miner/info"`
+		MinerList                  func(ctx context.Context) ([]address.Address, error)                                                ` GET:"/miner/list"`
 		MinerSetBeneficiary        func(ctx context.Context, req *MinerSetBeneficiaryReq) (*types.PendingBeneficiaryChange, error)     ` PUT:"/miner/beneficiary"`
 		MinerSetControllers        func(ctx context.Context, req *MinerSetControllersReq) (oldController []address.Address, err error) ` PUT:"/miner/controllers"`
 		MinerSetOwner              func(ctx context.Context, p *MinerSetOwnerReq) error                                                ` PUT:"/miner/owner"`
@@ -57,10 +59,14 @@ type IServiceStruct struct {
 		SectorGet                  func(ctx context.Context, req SectorGetReq) ([]*SectorResp, error)                                  ` GET:"/sector/get"`
 		StorageDealList            func(ctx context.Context, miner address.Address) ([]marketTypes.MinerDeal, error)                   ` GET:"/deal/storage"`
 		StorageDealUpdateState     func(ctx context.Context, req StorageDealUpdateStateReq) error                                      ` PUT:"/deal/storage/state"`
+		WalletList                 func(ctx context.Context) ([]address.Address, error)                                                ` GET:"/wallet/list"`
 		WalletSignRecordQuery      func(ctx context.Context, req *WalletSignRecordQueryReq) ([]WalletSignRecordResp, error)            ` GET:"/wallet/signrecord"`
 	}
 }
 
+func (s *IServiceStruct) AddrInfo(p0 context.Context, p1 address.Address) (*AddrsResp, error) {
+	return s.Internal.AddrInfo(p0, p1)
+}
 func (s *IServiceStruct) AddrList(p0 context.Context) ([]*AddrsResp, error) {
 	return s.Internal.AddrList(p0)
 }
@@ -99,6 +105,9 @@ func (s *IServiceStruct) MinerGetStorageAsk(p0 context.Context, p1 address.Addre
 }
 func (s *IServiceStruct) MinerInfo(p0 context.Context, p1 address.Address) (*MinerInfoResp, error) {
 	return s.Internal.MinerInfo(p0, p1)
+}
+func (s *IServiceStruct) MinerList(p0 context.Context) ([]address.Address, error) {
+	return s.Internal.MinerList(p0)
 }
 func (s *IServiceStruct) MinerSetBeneficiary(p0 context.Context, p1 *MinerSetBeneficiaryReq) (*types.PendingBeneficiaryChange, error) {
 	return s.Internal.MinerSetBeneficiary(p0, p1)
@@ -180,6 +189,9 @@ func (s *IServiceStruct) StorageDealList(p0 context.Context, p1 address.Address)
 }
 func (s *IServiceStruct) StorageDealUpdateState(p0 context.Context, p1 StorageDealUpdateStateReq) error {
 	return s.Internal.StorageDealUpdateState(p0, p1)
+}
+func (s *IServiceStruct) WalletList(p0 context.Context) ([]address.Address, error) {
+	return s.Internal.WalletList(p0)
 }
 func (s *IServiceStruct) WalletSignRecordQuery(p0 context.Context, p1 *WalletSignRecordQueryReq) ([]WalletSignRecordResp, error) {
 	return s.Internal.WalletSignRecordQuery(p0, p1)

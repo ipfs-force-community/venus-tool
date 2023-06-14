@@ -47,6 +47,7 @@ type RouteInfo struct {
 	HandlerType reflect.Type
 }
 
+// Parse extracts route info from a struct fill with api functions field and route comments
 func Parse(dst interface{}) map[string]RouteInfo {
 	rtDst := reflect.TypeOf(dst)
 	rvDst := reflect.ValueOf(dst)
@@ -99,6 +100,7 @@ func Parse(dst interface{}) map[string]RouteInfo {
 	return ret
 }
 
+// Wrap wraps a function to a gin.HandlerFunc
 func Wrap(fn interface{}) gin.HandlerFunc {
 	fnType := reflect.TypeOf(fn)
 	fnValue := reflect.ValueOf(fn)

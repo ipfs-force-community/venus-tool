@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 
 	"github.com/BurntSushi/toml"
-	"github.com/filecoin-project/go-address"
 )
 
 type Config struct {
@@ -15,8 +14,7 @@ type Config struct {
 	MessagerAPI *APIInfo
 	MarketAPI   *APIInfo
 	WalletAPI   *APIInfo
-	Wallets     []address.Address
-	Miners      []address.Address
+	AuthAPI     *APIInfo
 }
 
 type APIInfo struct {
@@ -72,7 +70,9 @@ func DefaultConfig() *Config {
 			Addr:  "",
 			Token: "",
 		},
-		Wallets: []address.Address{},
-		Miners:  []address.Address{},
+		AuthAPI: &APIInfo{
+			Addr:  "",
+			Token: "",
+		},
 	}
 }

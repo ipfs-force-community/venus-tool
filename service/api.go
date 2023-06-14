@@ -27,9 +27,15 @@ type IService interface {
 	MsgGetMethodName(ctx context.Context, req *MsgGetMethodNameReq) (string, error)  // GET:/msg/getmethodname
 
 	AddrOperate(ctx context.Context, params *AddrsOperateReq) error // PUT:/addr/operate
+	AddrInfo(ctx context.Context, addr address.Address) (*AddrsResp, error) // GET:/addr/info
+	// return the addr setting from messager
 	AddrList(ctx context.Context) ([]*AddrsResp, error)             // GET:/addr/list
+	// return addr registered in wallet 
+	WalletList(ctx context.Context) ([]address.Address, error)      // GET:/wallet/list
+
 
 	MinerInfo(ctx context.Context, mAddr address.Address) (*MinerInfoResp, error)                                        // GET:/miner/info
+	MinerList(ctx context.Context) ([]address.Address, error)                                                            // GET:/miner/list
 	MinerCreate(ctx context.Context, params *MinerCreateReq) (address.Address, error)                                    // POST:/miner/create
 	MinerGetStorageAsk(ctx context.Context, mAddr address.Address) (*storagemarket.StorageAsk, error)                    // GET:/miner/storageask
 	MinerGetRetrievalAsk(ctx context.Context, mAddr address.Address) (*retrievalmarket.Ask, error)                       // GET:/miner/retrievalask

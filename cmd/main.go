@@ -76,6 +76,12 @@ var flagAuthAPI = &cli.StringFlag{
 	Usage:   "specify venus-auth token and api address. ex: --auth-api=token:addr , if token was ignored, will use common token",
 }
 
+var flagDamoclesAPI = &cli.StringFlag{
+	Name:    "damocles-api",
+	Aliases: []string{"damocles"},
+	Usage:   "specify venus-damocles token and api address. ex: --damocles-api=token:addr , if token was ignored, will use common token",
+}
+
 var flagComToken = &cli.StringFlag{
 	Name:    "common-token",
 	Aliases: []string{"token"},
@@ -122,6 +128,7 @@ var runCmd = &cli.Command{
 		flagMsgAPI,
 		flagMarketAPI,
 		flagWalletAPI,
+		flagDamoclesAPI,
 		flagComToken,
 	},
 	Action: func(cctx *cli.Context) error {
@@ -205,6 +212,8 @@ var runCmd = &cli.Command{
 			builder.Override(new(nodeApi.FullNode), nodeClient),
 			builder.Override(new(dep.IWallet), walletClient),
 			builder.Override(new(dep.IAuth), dep.NewAuth),
+			builder.Override(new(*dep.Damocles), dep.NewDamocles),
+
 			builder.Override(new(context.Context), ctx),
 			builder.Override(new(types.NetworkName), networkName),
 			builder.Override(new(*service.ServiceImpl), service.NewService),
@@ -250,19 +259,21 @@ func updateFlag(cfg *config.Config, ctx *cli.Context) {
 		cfg.Server.ListenAddr = ctx.String(flagListen.Name)
 	}
 	if ctx.IsSet(flagNodeAPI.Name) {
-		updateApi(ctx.String(flagNodeAPI.Name), cfg.NodeAPI)
+		updateApi(ctx.String(flagNodeAPI.Name), &cfg.NodeAPI)
 	}
 	if ctx.IsSet(flagMsgAPI.Name) {
-		updateApi(ctx.String(flagMsgAPI.Name), cfg.MessagerAPI)
+		updateApi(ctx.String(flagMsgAPI.Name), &cfg.MessagerAPI)
 	}
 	if ctx.IsSet(flagMarketAPI.Name) {
-		updateApi(ctx.String(flagMarketAPI.Name), cfg.MarketAPI)
+		updateApi(ctx.String(flagMarketAPI.Name), &cfg.MarketAPI)
 	}
 	if ctx.IsSet(flagWalletAPI.Name) {
-		updateApi(ctx.String(flagWalletAPI.Name), cfg.WalletAPI)
+		updateApi(ctx.String(flagWalletAPI.Name), &cfg.WalletAPI)
 	}
 	if ctx.IsSet(flagAuthAPI.Name) {
-		updateApi(ctx.String(flagAuthAPI.Name), cfg.AuthAPI)
+		updateApi(ctx.String(flagAuthAPI.Name), &cfg.AuthAPI)
 	}
-
+	if ctx.IsSet(flagDamoclesAPI.Name) {
+		updateApi(ctx.String(flagDamoclesAPI.Name), &cfg.DamoclesAPI)
+	}
 }

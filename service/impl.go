@@ -36,6 +36,7 @@ type ServiceImpl struct {
 	Node     nodeV1.FullNode
 	Wallet   dep.IWallet
 	Auth     dep.IAuth
+	Damocles *dep.Damocles
 
 	Multisig multisig.IMultiSig
 }

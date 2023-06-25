@@ -12,6 +12,7 @@ func NewService(params dep.ServiceParams) (*ServiceImpl, error) {
 		Node:     params.Node,
 		Wallet:   params.Wallet,
 		Auth:     params.Auth,
+		Damocles: params.Damocles,
 
 		Multisig: multisig.NewMultiSig(params.Node),
 	}, nil

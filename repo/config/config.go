@@ -10,11 +10,12 @@ import (
 type Config struct {
 	Path        string `toml:"-"`
 	Server      *ServerConfig
-	NodeAPI     *APIInfo
-	MessagerAPI *APIInfo
-	MarketAPI   *APIInfo
-	WalletAPI   *APIInfo
-	AuthAPI     *APIInfo
+	NodeAPI     APIInfo
+	MessagerAPI APIInfo
+	MarketAPI   APIInfo
+	WalletAPI   APIInfo
+	AuthAPI     APIInfo
+	DamoclesAPI APIInfo
 }
 
 type APIInfo struct {
@@ -53,26 +54,6 @@ func DefaultConfig() *Config {
 	return &Config{
 		Server: &ServerConfig{
 			ListenAddr: "127.0.0.1:12580",
-		},
-		MarketAPI: &APIInfo{
-			Addr:  "",
-			Token: "",
-		},
-		MessagerAPI: &APIInfo{
-			Addr:  "",
-			Token: "",
-		},
-		NodeAPI: &APIInfo{
-			Addr:  "",
-			Token: "",
-		},
-		WalletAPI: &APIInfo{
-			Addr:  "",
-			Token: "",
-		},
-		AuthAPI: &APIInfo{
-			Addr:  "",
-			Token: "",
 		},
 	}
 }

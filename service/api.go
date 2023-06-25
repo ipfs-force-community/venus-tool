@@ -10,6 +10,7 @@ import (
 	"github.com/filecoin-project/go-state-types/dline"
 	"github.com/filecoin-project/venus/venus-shared/types"
 	marketTypes "github.com/filecoin-project/venus/venus-shared/types/market"
+	"github.com/ipfs-force-community/venus-tool/dep"
 	"github.com/ipfs/go-cid"
 )
 
@@ -26,13 +27,12 @@ type IService interface {
 	MsgDecodeParam2Json(ctx context.Context, req *MsgDecodeParamReq) ([]byte, error) // GET:/msg/decodeparam
 	MsgGetMethodName(ctx context.Context, req *MsgGetMethodNameReq) (string, error)  // GET:/msg/getmethodname
 
-	AddrOperate(ctx context.Context, params *AddrsOperateReq) error // PUT:/addr/operate
+	AddrOperate(ctx context.Context, params *AddrsOperateReq) error         // PUT:/addr/operate
 	AddrInfo(ctx context.Context, addr address.Address) (*AddrsResp, error) // GET:/addr/info
 	// return the addr setting from messager
-	AddrList(ctx context.Context) ([]*AddrsResp, error)             // GET:/addr/list
-	// return addr registered in wallet 
-	WalletList(ctx context.Context) ([]address.Address, error)      // GET:/wallet/list
-
+	AddrList(ctx context.Context) ([]*AddrsResp, error) // GET:/addr/list
+	// return addr registered in wallet
+	WalletList(ctx context.Context) ([]address.Address, error) // GET:/wallet/list
 
 	MinerInfo(ctx context.Context, mAddr address.Address) (*MinerInfoResp, error)                                        // GET:/miner/info
 	MinerList(ctx context.Context) ([]address.Address, error)                                                            // GET:/miner/list
@@ -72,4 +72,6 @@ type IService interface {
 	MsigSwapSigner(ctx context.Context, req *MultisigSwapSignerReq) (*types.ProposeReturn, error)     // POST:/msig/signer/swap
 
 	WalletSignRecordQuery(ctx context.Context, req *WalletSignRecordQueryReq) ([]WalletSignRecordResp, error) // GET:/wallet/signrecord
+
+	ThreadList(ctx context.Context) ([]*dep.ThreadInfo, error) // GET:/thread/list
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/filecoin-project/go-fil-markets/storagemarket"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/dline"
+	"github.com/ipfs-force-community/venus-tool/dep"
 	cid "github.com/ipfs/go-cid"
 
 	"github.com/filecoin-project/venus/venus-shared/types"
@@ -59,6 +60,7 @@ type IServiceStruct struct {
 		SectorGet                  func(ctx context.Context, req SectorGetReq) ([]*SectorResp, error)                                  ` GET:"/sector/get"`
 		StorageDealList            func(ctx context.Context, miner address.Address) ([]marketTypes.MinerDeal, error)                   ` GET:"/deal/storage"`
 		StorageDealUpdateState     func(ctx context.Context, req StorageDealUpdateStateReq) error                                      ` PUT:"/deal/storage/state"`
+		ThreadList                 func(ctx context.Context) ([]*dep.ThreadInfo, error)                                                ` GET:"/thread/list"`
 		WalletList                 func(ctx context.Context) ([]address.Address, error)                                                ` GET:"/wallet/list"`
 		WalletSignRecordQuery      func(ctx context.Context, req *WalletSignRecordQueryReq) ([]WalletSignRecordResp, error)            ` GET:"/wallet/signrecord"`
 	}
@@ -189,6 +191,9 @@ func (s *IServiceStruct) StorageDealList(p0 context.Context, p1 address.Address)
 }
 func (s *IServiceStruct) StorageDealUpdateState(p0 context.Context, p1 StorageDealUpdateStateReq) error {
 	return s.Internal.StorageDealUpdateState(p0, p1)
+}
+func (s *IServiceStruct) ThreadList(p0 context.Context) ([]*dep.ThreadInfo, error) {
+	return s.Internal.ThreadList(p0)
 }
 func (s *IServiceStruct) WalletList(p0 context.Context) ([]address.Address, error) {
 	return s.Internal.WalletList(p0)

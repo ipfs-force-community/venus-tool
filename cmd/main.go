@@ -13,7 +13,7 @@ import (
 	"go.uber.org/fx"
 
 	nodeApi "github.com/filecoin-project/venus/venus-shared/api/chain/v1"
-	marketApi "github.com/filecoin-project/venus/venus-shared/api/market"
+	marketApi "github.com/filecoin-project/venus/venus-shared/api/market/v1"
 	msgApi "github.com/filecoin-project/venus/venus-shared/api/messager"
 	walletApi "github.com/filecoin-project/venus/venus-shared/api/wallet"
 	"github.com/filecoin-project/venus/venus-shared/types"

@@ -7,7 +7,7 @@ endif
 
 GOFLAGS+=-ldflags="$(ldflags)"
 
-build:
+build: deps
 	rm -rf venus-tool
 	go build $(GOFLAGS) -o venus-tool ./cmd
 
@@ -43,3 +43,19 @@ endif
 
 docker-push: docker
 	docker push $(PRIVATE_REGISTRY)/filvenus/venus-tool:$(TAG)
+
+
+build_deps:
+	mkdir $@
+
+build_deps/.update-modules: build_deps
+	git submodule update --init --recursive
+	touch $@
+
+FFI_PATH:=extern/filecoin-ffi/
+build_deps/.filecoin-install: build_deps $(FFI_PATH)
+	make -C $(FFI_PATH)
+	@touch $@
+
+
+deps: build_deps/.update-modules build_deps/.filecoin-install

@@ -3,6 +3,7 @@ package service
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -10,14 +11,14 @@ import (
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 
-	w_cli "github.com/filecoin-project/venus-wallet/cli"
 	"github.com/filecoin-project/venus/pkg/constants"
 	nodeV1 "github.com/filecoin-project/venus/venus-shared/api/chain/v1"
-	"github.com/filecoin-project/venus/venus-shared/api/market"
+	market "github.com/filecoin-project/venus/venus-shared/api/market/v1"
 	"github.com/filecoin-project/venus/venus-shared/api/messager"
 	"github.com/filecoin-project/venus/venus-shared/types"
 	marketTypes "github.com/filecoin-project/venus/venus-shared/types/market"
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
+	walletTypes "github.com/filecoin-project/venus/venus-shared/types/wallet"
 	"github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log"
 	cbg "github.com/whyrusleeping/cbor-gen"
@@ -336,7 +337,7 @@ func (s *ServiceImpl) WalletList(ctx context.Context) ([]address.Address, error)
 func (s *ServiceImpl) StorageDealList(ctx context.Context, miner address.Address) ([]marketTypes.MinerDeal, error) {
 	if miner != address.Undef {
 
-		deals, err := s.Market.MarketListIncompleteDeals(ctx, miner)
+		deals, err := s.Market.MarketListIncompleteDeals(ctx, &marketTypes.StorageDealQueryParams{Miner: miner})
 		if err != nil {
 			return nil, err
 		}
@@ -351,7 +352,7 @@ func (s *ServiceImpl) StorageDealList(ctx context.Context, miner address.Address
 
 	for _, m := range miners {
 
-		deals, err := s.Market.MarketListIncompleteDeals(ctx, m)
+		deals, err := s.Market.MarketListIncompleteDeals(ctx, &marketTypes.StorageDealQueryParams{Miner: m})
 		if err != nil {
 			return nil, err
 		}
@@ -365,7 +366,7 @@ func (s *ServiceImpl) StorageDealUpdateState(ctx context.Context, req StorageDea
 }
 
 func (s *ServiceImpl) RetrievalDealList(ctx context.Context) ([]marketTypes.ProviderDealState, error) {
-	return s.Market.MarketListRetrievalDeals(ctx)
+	return s.Market.MarketListRetrievalDeals(ctx, &marketTypes.RetrievalDealQueryParams{})
 }
 
 func (s *ServiceImpl) WalletSignRecordQuery(ctx context.Context, req *WalletSignRecordQueryReq) ([]WalletSignRecordResp, error) {
@@ -375,7 +376,7 @@ func (s *ServiceImpl) WalletSignRecordQuery(ctx context.Context, req *WalletSign
 	}
 	ret := make([]WalletSignRecordResp, 0, len(records))
 	for _, r := range records {
-		detail, err := w_cli.GetDetailInJsonRawMessage(&r)
+		detail, err := GetDetailInJsonRawMessage(&r)
 		if err != nil {
 			return nil, err
 		}
@@ -404,4 +405,37 @@ func (s *ServiceImpl) listMiner(ctx context.Context) ([]address.Address, error) 
 		ret = append(ret, m.Miner)
 	}
 	return ret, nil
+}
+
+func GetDetailInJsonRawMessage(r *types.SignRecord) (json.RawMessage, error) {
+	t, ok := walletTypes.SupportedMsgTypes[r.Type]
+	if !ok {
+		return nil, fmt.Errorf("unsupported type %s", r.Type)
+	}
+
+	wrap := func(err error) error {
+		return fmt.Errorf("get detail: %w", err)
+	}
+
+	if r.RawMsg == nil {
+		return nil, wrap(fmt.Errorf("msg is nil"))
+	}
+
+	if r.Type == types.MTVerifyAddress || r.Type == types.MTUnknown {
+		// encode into hex string
+		output := struct {
+			Hex string
+		}{
+			Hex: hex.EncodeToString(r.RawMsg),
+		}
+
+		return json.Marshal(output)
+	}
+
+	signObj := reflect.New(t.Type).Interface()
+	if err := walletTypes.CborDecodeInto(r.RawMsg, signObj); err != nil {
+		return nil, fmt.Errorf("decode msg:%w", err)
+	}
+	return json.Marshal(signObj)
+
 }

@@ -252,3 +252,14 @@ type WalletSignRecordResp struct {
 	types.SignRecord
 	Detail json.RawMessage
 }
+
+type ThreadStopReq struct {
+	WorkerName string
+	Index      uint64
+}
+
+type ThreadStartReq struct {
+	WorkerName string
+	Index      uint64
+	State      *string
+}

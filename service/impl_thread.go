@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ipfs-force-community/venus-tool/dep"
 )
@@ -37,4 +38,57 @@ func (s *ServiceImpl) ThreadList(ctx context.Context) ([]*dep.ThreadInfo, error)
 
 	}
 	return ret, nil
+}
+
+func (s *ServiceImpl) ThreadStop(ctx context.Context, req *ThreadStopReq) error {
+	workerCli, closer, err := s.getWorkerClient(ctx, req.WorkerName)
+	if err != nil {
+		return err
+	}
+	defer closer()
+	ok, err := workerCli.WorkerPause(req.Index)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return fmt.Errorf("worker %s pause failed", req.WorkerName)
+	}
+	return nil
+}
+
+func (s *ServiceImpl) ThreadStart(ctx context.Context, req *ThreadStartReq) error {
+	workerName, index, state := req.WorkerName, req.Index, req.State
+	workerCli, closer, err := s.getWorkerClient(ctx, workerName)
+	if err != nil {
+		return err
+	}
+	defer closer()
+	ok, err := workerCli.WorkerResume(index, state)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return fmt.Errorf("worker %s start failed", workerName)
+	}
+	return nil
+}
+
+func (s *ServiceImpl) getWorkerClient(ctx context.Context, workerName string) (*dep.WorkerClient, func(), error) {
+	pingInfos, err := s.Damocles.WorkerPingInfoList(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var target *dep.WorkerPingInfo
+	for i := range pingInfos {
+		pingInfo := pingInfos[i]
+		if pingInfo.Info.Name != workerName {
+			continue
+		}
+		target = &pingInfo
+	}
+	if target == nil {
+		return nil, nil, fmt.Errorf("worker %s not found", workerName)
+	}
+	return dep.NewWorkerClient(ctx, target)
 }

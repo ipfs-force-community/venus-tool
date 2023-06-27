@@ -40,7 +40,8 @@ func NewDamocles(ctx context.Context, lc fx.Lifecycle, cfg *config.Config) (*Dam
 	}, nil
 }
 
-type WorkerThreadInfo core.WorkerThreadInfo
+type WorkerThreadInfo = core.WorkerThreadInfo
+type WorkerPingInfo = core.WorkerPingInfo
 
 type ThreadInfo struct {
 	*core.WorkerThreadInfo

@@ -32,7 +32,8 @@ type IService interface {
 	// return the addr setting from messager
 	AddrList(ctx context.Context) ([]*AddrsResp, error) // GET:/addr/list
 	// return addr registered in wallet
-	WalletList(ctx context.Context) ([]address.Address, error) // GET:/wallet/list
+	WalletList(ctx context.Context) ([]address.Address, error)                                                // GET:/wallet/list
+	WalletSignRecordQuery(ctx context.Context, req *WalletSignRecordQueryReq) ([]WalletSignRecordResp, error) // GET:/wallet/signrecord
 
 	MinerInfo(ctx context.Context, mAddr address.Address) (*MinerInfoResp, error)                                        // GET:/miner/info
 	MinerList(ctx context.Context) ([]address.Address, error)                                                            // GET:/miner/list
@@ -71,7 +72,7 @@ type IService interface {
 	MsigCancel(ctx context.Context, req *MultisigCancelReq) error                                     // POST:/msig/cancel
 	MsigSwapSigner(ctx context.Context, req *MultisigSwapSignerReq) (*types.ProposeReturn, error)     // POST:/msig/signer/swap
 
-	WalletSignRecordQuery(ctx context.Context, req *WalletSignRecordQueryReq) ([]WalletSignRecordResp, error) // GET:/wallet/signrecord
-
-	ThreadList(ctx context.Context) ([]*dep.ThreadInfo, error) // GET:/thread/list
+	ThreadList(ctx context.Context) ([]*dep.ThreadInfo, error)  // GET:/thread/list
+	ThreadStop(ctx context.Context, req *ThreadStopReq) error   // PUT:/thread/stop
+	ThreadStart(ctx context.Context, req *ThreadStartReq) error // PUT:/thread/start
 }

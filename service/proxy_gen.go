@@ -61,6 +61,8 @@ type IServiceStruct struct {
 		StorageDealList            func(ctx context.Context, miner address.Address) ([]marketTypes.MinerDeal, error)                   ` GET:"/deal/storage"`
 		StorageDealUpdateState     func(ctx context.Context, req StorageDealUpdateStateReq) error                                      ` PUT:"/deal/storage/state"`
 		ThreadList                 func(ctx context.Context) ([]*dep.ThreadInfo, error)                                                ` GET:"/thread/list"`
+		ThreadStart                func(ctx context.Context, req *ThreadStartReq) error                                                ` PUT:"/thread/start"`
+		ThreadStop                 func(ctx context.Context, req *ThreadStopReq) error                                                 ` PUT:"/thread/stop"`
 		WalletList                 func(ctx context.Context) ([]address.Address, error)                                                ` GET:"/wallet/list"`
 		WalletSignRecordQuery      func(ctx context.Context, req *WalletSignRecordQueryReq) ([]WalletSignRecordResp, error)            ` GET:"/wallet/signrecord"`
 	}
@@ -194,6 +196,12 @@ func (s *IServiceStruct) StorageDealUpdateState(p0 context.Context, p1 StorageDe
 }
 func (s *IServiceStruct) ThreadList(p0 context.Context) ([]*dep.ThreadInfo, error) {
 	return s.Internal.ThreadList(p0)
+}
+func (s *IServiceStruct) ThreadStart(p0 context.Context, p1 *ThreadStartReq) error {
+	return s.Internal.ThreadStart(p0, p1)
+}
+func (s *IServiceStruct) ThreadStop(p0 context.Context, p1 *ThreadStopReq) error {
+	return s.Internal.ThreadStop(p0, p1)
 }
 func (s *IServiceStruct) WalletList(p0 context.Context) ([]address.Address, error) {
 	return s.Internal.WalletList(p0)

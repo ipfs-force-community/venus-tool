@@ -337,7 +337,6 @@ func (s *ServiceImpl) WalletList(ctx context.Context) ([]address.Address, error)
 
 func (s *ServiceImpl) StorageDealList(ctx context.Context, miner address.Address) ([]marketTypes.MinerDeal, error) {
 	if miner != address.Undef {
-
 		deals, err := s.Market.MarketListIncompleteDeals(ctx, &marketTypes.StorageDealQueryParams{Miner: miner})
 		if err != nil {
 			return nil, err

@@ -146,12 +146,18 @@ func (s *ServiceImpl) MinerInfo(ctx context.Context, addr Address) (*MinerInfoRe
 		return nil, fmt.Errorf("get miner(%s) deadline failed: %s", mAddr, err)
 	}
 
+	marketBalance, err := s.Node.StateMarketBalance(ctx, mAddr, types.EmptyTSK)
+	if err != nil {
+		return nil, err
+	}
+
 	return &MinerInfoResp{
-		MinerInfo:    mi,
-		MinerPower:   *power,
-		AvailBalance: availBalance,
-		Deadline:     *deadline,
-		LockFund:     lockFund,
+		MinerInfo:     mi,
+		MinerPower:    *power,
+		AvailBalance:  availBalance,
+		Deadline:      *deadline,
+		LockFunds:     lockFund,
+		MarketBalance: marketBalance,
 	}, nil
 }
 

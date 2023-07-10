@@ -171,9 +171,10 @@ type MinerCreateReq struct {
 type MinerInfoResp struct {
 	types.MinerInfo
 	types.MinerPower
-	AvailBalance abi.TokenAmount
-	Deadline     dline.Info
-	LockFund     miner.LockedFunds
+	AvailBalance  abi.TokenAmount
+	Deadline      dline.Info
+	LockFunds     miner.LockedFunds
+	MarketBalance types.MarketBalance
 }
 
 type MinerSetOwnerReq struct {

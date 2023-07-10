@@ -21,9 +21,12 @@ import (
 	"github.com/filecoin-project/specs-actors/v2/actors/builtin/power"
 	"github.com/filecoin-project/venus/pkg/constants"
 	"github.com/filecoin-project/venus/venus-shared/actors"
+	"github.com/filecoin-project/venus/venus-shared/actors/adt"
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin/miner"
+	"github.com/filecoin-project/venus/venus-shared/blockstore"
 	"github.com/filecoin-project/venus/venus-shared/types"
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
+	cbor "github.com/ipfs/go-ipld-cbor"
 )
 
 func (s *ServiceImpl) MinerCreate(ctx context.Context, params *MinerCreateReq) (address.Address, error) {
@@ -106,6 +109,24 @@ func (s *ServiceImpl) MinerSetRetrievalAsk(ctx context.Context, p *MinerSetRetri
 
 func (s *ServiceImpl) MinerInfo(ctx context.Context, addr Address) (*MinerInfoResp, error) {
 	mAddr := addr.Address
+
+	// load miner state
+	mact, err := s.Node.StateGetActor(ctx, mAddr, types.EmptyTSK)
+	if err != nil {
+		return nil, err
+	}
+
+	store := adt.WrapStore(ctx, cbor.NewCborStore(blockstore.NewAPIBlockstore(s.Node)))
+	mst, err := miner.Load(store, mact)
+	if err != nil {
+		return nil, fmt.Errorf("load miner state:")
+	}
+
+	lockFund, err := mst.LockedFunds()
+	if err != nil {
+		return nil, err
+	}
+
 	mi, err := s.Node.StateMinerInfo(ctx, mAddr, types.EmptyTSK)
 	if err != nil {
 		return nil, fmt.Errorf("get miner(%s) info failed: %s", mAddr, err)
@@ -130,6 +151,7 @@ func (s *ServiceImpl) MinerInfo(ctx context.Context, addr Address) (*MinerInfoRe
 		MinerPower:   *power,
 		AvailBalance: availBalance,
 		Deadline:     *deadline,
+		LockFund:     lockFund,
 	}, nil
 }
 

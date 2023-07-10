@@ -14,7 +14,7 @@ import (
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/dline"
 	power2 "github.com/filecoin-project/specs-actors/v2/actors/builtin/power"
-	lminer "github.com/filecoin-project/venus/venus-shared/actors/builtin/miner"
+	"github.com/filecoin-project/venus/venus-shared/actors/builtin/miner"
 	"github.com/filecoin-project/venus/venus-shared/types"
 	marketTypes "github.com/filecoin-project/venus/venus-shared/types/market"
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
@@ -173,6 +173,7 @@ type MinerInfoResp struct {
 	types.MinerPower
 	AvailBalance abi.TokenAmount
 	Deadline     dline.Info
+	LockFund     miner.LockedFunds
 }
 
 type MinerSetOwnerReq struct {
@@ -209,7 +210,7 @@ type SectorGetReq struct {
 
 type SectorResp struct {
 	types.SectorOnChainInfo
-	SectorLocation lminer.SectorLocation
+	SectorLocation miner.SectorLocation
 }
 
 type SectorListReq struct {

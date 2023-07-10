@@ -21,10 +21,10 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/urfave/cli/v2"
 
-	"github.com/filecoin-project/venus-messager/cli/tablewriter"
 	"github.com/filecoin-project/venus/venus-shared/types"
 	"github.com/filecoin-project/venus/venus-shared/types/market"
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
+	"github.com/ipfs-force-community/sophon-messager/cli/tablewriter"
 )
 
 var StringToStorageState = map[string]storagemarket.StorageDealStatus{}

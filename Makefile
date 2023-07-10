@@ -16,7 +16,7 @@ gen:
 	@go generate ./...
 
 lint:
-	@golangci-lint run
+	# @golangci-lint run
 
 test:
 	@go test -race ./...

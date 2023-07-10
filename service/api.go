@@ -26,16 +26,17 @@ type IService interface {
 	MsgReplace(ctx context.Context, params *MsgReplaceReq) (cid.Cid, error)          // POST:/msg/replace
 	MsgDecodeParam2Json(ctx context.Context, req *MsgDecodeParamReq) ([]byte, error) // GET:/msg/decodeparam
 	MsgGetMethodName(ctx context.Context, req *MsgGetMethodNameReq) (string, error)  // GET:/msg/getmethodname
+	MsgMarkBad(ctx context.Context, req *MsgMarkBadReq) error                        // Post:/msg/markbad/:ID
 
-	AddrOperate(ctx context.Context, params *AddrsOperateReq) error         // PUT:/addr/operate
-	AddrInfo(ctx context.Context, addr address.Address) (*AddrsResp, error) // GET:/addr/info
+	AddrOperate(ctx context.Context, params *AddrsOperateReq) error // PUT:/addr/operate
+	AddrInfo(ctx context.Context, addr Address) (*AddrsResp, error) // GET:/addr/info/:Address
 	// return the addr setting from messager
 	AddrList(ctx context.Context) ([]*AddrsResp, error) // GET:/addr/list
 	// return addr registered in wallet
 	WalletList(ctx context.Context) ([]address.Address, error)                                                // GET:/wallet/list
 	WalletSignRecordQuery(ctx context.Context, req *WalletSignRecordQueryReq) ([]WalletSignRecordResp, error) // GET:/wallet/signrecord
 
-	MinerInfo(ctx context.Context, mAddr address.Address) (*MinerInfoResp, error)                                        // GET:/miner/info
+	MinerInfo(ctx context.Context, mAddr Address) (*MinerInfoResp, error)                                                // GET:/miner/info/:Address
 	MinerList(ctx context.Context) ([]address.Address, error)                                                            // GET:/miner/list
 	MinerCreate(ctx context.Context, params *MinerCreateReq) (address.Address, error)                                    // POST:/miner/create
 	MinerGetStorageAsk(ctx context.Context, mAddr address.Address) (*storagemarket.StorageAsk, error)                    // GET:/miner/storageask
@@ -55,12 +56,14 @@ type IService interface {
 	// MinerWithdrawFromMarket withdraw balance from market to miner's owner or worker
 	MinerWithdrawFromMarket(ctx context.Context, req *MinerWithdrawBalanceReq) (abi.TokenAmount, error) // PUT:/miner/withdrawmarket
 
-	StorageDealList(ctx context.Context, miner address.Address) ([]marketTypes.MinerDeal, error) // GET:/deal/storage
-	StorageDealUpdateState(ctx context.Context, req StorageDealUpdateStateReq) error             // PUT:/deal/storage/state
-	RetrievalDealList(ctx context.Context) ([]marketTypes.ProviderDealState, error)              // GET:/deal/retrieval
+	StorageDealList(ctx context.Context, miner Address) ([]marketTypes.MinerDeal, error) // GET:/deal/storage/:Address
+	StorageDealUpdateState(ctx context.Context, req StorageDealUpdateStateReq) error     // PUT:/deal/storage/state
+	RetrievalDealList(ctx context.Context) ([]marketTypes.ProviderDealState, error)      // GET:/deal/retrieval
 
-	SectorExtend(ctx context.Context, req SectorExtendReq) error            // PUT:/sector/extend
-	SectorGet(ctx context.Context, req SectorGetReq) ([]*SectorResp, error) // GET:/sector/get
+	SectorExtend(ctx context.Context, req SectorExtendReq) error                           // PUT:/sector/extend
+	SectorGet(ctx context.Context, req SectorGetReq) ([]*SectorResp, error)                // GET:/sector/get
+	SectorList(ctx context.Context, req SectorListReq) ([]*types.SectorOnChainInfo, error) // GET:/sector/list
+	SectorSum(ctx context.Context, miner Address) (uint64, error)                          // GET:/sector/sum
 
 	MsigCreate(ctx context.Context, req *MultisigCreateReq) (address.Address, error)                  // POST:/msig/create
 	MsigInfo(ctx context.Context, msig address.Address) (*types.MsigInfo, error)                      // GET:/msig/info

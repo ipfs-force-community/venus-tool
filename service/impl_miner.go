@@ -3,11 +3,13 @@ package service
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-bitfield"
+	rlepluslazy "github.com/filecoin-project/go-bitfield/rle"
 	"github.com/filecoin-project/go-fil-markets/retrievalmarket"
 	"github.com/filecoin-project/go-fil-markets/storagemarket"
 	"github.com/filecoin-project/go-state-types/abi"
@@ -102,7 +104,8 @@ func (s *ServiceImpl) MinerSetRetrievalAsk(ctx context.Context, p *MinerSetRetri
 	return s.Market.MarketSetRetrievalAsk(ctx, p.Miner, &p.Ask)
 }
 
-func (s *ServiceImpl) MinerInfo(ctx context.Context, mAddr address.Address) (*MinerInfoResp, error) {
+func (s *ServiceImpl) MinerInfo(ctx context.Context, addr Address) (*MinerInfoResp, error) {
+	mAddr := addr.Address
 	mi, err := s.Node.StateMinerInfo(ctx, mAddr, types.EmptyTSK)
 	if err != nil {
 		return nil, fmt.Errorf("get miner(%s) info failed: %s", mAddr, err)
@@ -602,6 +605,59 @@ func (s *ServiceImpl) SectorGet(ctx context.Context, req SectorGetReq) ([]*Secto
 	}
 
 	return ret, nil
+}
+
+func (s *ServiceImpl) SectorList(ctx context.Context, req SectorListReq) ([]*types.SectorOnChainInfo, error) {
+	miner := req.Miner
+	pageSize, pageIndex := req.PageSize, req.PageIndex
+	if pageSize == 0 {
+		pageSize = 20
+	}
+	start := pageSize * pageIndex
+
+	allocated, err := s.Node.StateMinerAllocated(ctx, miner, types.EmptyTSK)
+	if err != nil {
+		return nil, fmt.Errorf("get miner(%s) allocated sectors failed: %s", miner, err)
+	}
+
+	iterator, err := allocated.BitIterator()
+	if err != nil {
+		return nil, fmt.Errorf("get iterator to range allocated sectors of miner(%s) failed: %s", miner, err)
+	}
+
+	ret := make([]*types.SectorOnChainInfo, 0)
+	sectorNums := make([]uint64, 0, pageSize)
+
+	n, err := iterator.Nth(uint64(start))
+	if errors.Is(err, rlepluslazy.ErrEndOfIterator) {
+		return ret, nil
+	} else if err != nil {
+		return nil, fmt.Errorf("get %dth sector number allocated of miner(%s) failed: %s", start, miner, err)
+	}
+	sectorNums = append(sectorNums, n)
+
+	for i := 1; i < pageSize; i++ {
+		if iterator.HasNext() {
+			n, err := iterator.Next()
+			if err != nil {
+				return nil, fmt.Errorf("get %dth sector number allocated of miner(%s) failed: %s", start+i, miner, err)
+			}
+			sectorNums = append(sectorNums, n)
+		}
+	}
+	log.Infof("sector numbers of miner(%s): %v", miner, sectorNums)
+
+	want := bitfield.NewFromSet(sectorNums)
+	return s.Node.StateMinerSectors(ctx, miner, &want, types.EmptyTSK)
+}
+
+func (s *ServiceImpl) SectorSum(ctx context.Context, miner Address) (uint64, error) {
+	allocated, err := s.Node.StateMinerAllocated(ctx, miner.Address, types.EmptyTSK)
+	if err != nil {
+		return 0, fmt.Errorf("get miner(%s) allocated sectors failed: %s", miner, err)
+	}
+
+	return allocated.Count()
 }
 
 func (s *ServiceImpl) MinerList(ctx context.Context) ([]address.Address, error) {

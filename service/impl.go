@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
@@ -252,6 +253,10 @@ func (s *ServiceImpl) MsgGetMethodName(ctx context.Context, req *MsgGetMethodNam
 	return methodMeta.Name, nil
 }
 
+func (s *ServiceImpl) MsgMarkBad(ctx context.Context, req *MsgMarkBadReq) error {
+	return s.Messager.MarkBadMessage(ctx, req.ID)
+}
+
 func (s *ServiceImpl) AddrOperate(ctx context.Context, params *AddrsOperateReq) error {
 	has, err := s.Messager.HasAddress(ctx, params.Address)
 	if err != nil {
@@ -283,12 +288,28 @@ func (s *ServiceImpl) AddrOperate(ctx context.Context, params *AddrsOperateReq) 
 	}
 }
 
-func (s *ServiceImpl) AddrInfo(ctx context.Context, addr address.Address) (*AddrsResp, error) {
-	addrInfo, err := s.Messager.GetAddress(ctx, addr)
+func (s *ServiceImpl) AddrInfo(ctx context.Context, addr Address) (*AddrsResp, error) {
+	if addr.Address.Empty() {
+		return nil, fmt.Errorf("param error: address is empty")
+	}
+	var ret AddrsResp
+	actorInfo, err := s.Node.GetActor(ctx, addr.Address)
 	if err != nil {
 		return nil, err
 	}
-	return (*AddrsResp)(addrInfo), nil
+	ret.Actor = *actorInfo
+
+	addrInfo, err := s.Messager.GetAddress(ctx, addr.Address)
+	if err != nil && strings.Contains(err.Error(), "not found") {
+		ret.Address = msgTypes.Address{}
+	} else if err != nil {
+		return nil, err
+	} else {
+		ret.Address = *addrInfo
+	}
+
+	return &ret, nil
+
 }
 
 func (s *ServiceImpl) AddrList(ctx context.Context) ([]*AddrsResp, error) {
@@ -301,7 +322,7 @@ func (s *ServiceImpl) AddrList(ctx context.Context) ([]*AddrsResp, error) {
 	if err != nil {
 		return nil, err
 	}
-	ret := make([]*AddrsResp, 0, len(addrs)+len(addrInfos))
+	allInfos := make([]*msgTypes.Address, 0, len(addrs)+len(addrInfos))
 	for _, addr := range addrs {
 		// if addr is not in addrInfos, add it
 		var exist bool
@@ -320,12 +341,24 @@ func (s *ServiceImpl) AddrList(ctx context.Context) ([]*AddrsResp, error) {
 					Addr: addr,
 				}
 			}
-			ret = append(ret, (*AddrsResp)(addrInfo))
+			allInfos = append(allInfos, addrInfo)
 		}
 	}
 
 	for _, addrInfo := range addrInfos {
-		ret = append(ret, (*AddrsResp)(addrInfo))
+		allInfos = append(allInfos, addrInfo)
+	}
+
+	ret := make([]*AddrsResp, 0, len(allInfos))
+	for _, addrInfo := range allInfos {
+		actorInfo, err := s.Node.GetActor(ctx, addrInfo.Addr)
+		if err != nil {
+			log.Warnf("get address(%s) actor failed: %s", addrInfo.Addr, err)
+		}
+		ret = append(ret, &AddrsResp{
+			Address: *addrInfo,
+			Actor:   *actorInfo,
+		})
 	}
 
 	return ret, err
@@ -335,9 +368,13 @@ func (s *ServiceImpl) WalletList(ctx context.Context) ([]address.Address, error)
 	return s.Wallet.WalletList(ctx)
 }
 
-func (s *ServiceImpl) StorageDealList(ctx context.Context, miner address.Address) ([]marketTypes.MinerDeal, error) {
-	if miner != address.Undef {
-		deals, err := s.Market.MarketListIncompleteDeals(ctx, &marketTypes.StorageDealQueryParams{Miner: miner})
+func (s *ServiceImpl) StorageDealList(ctx context.Context, miner Address) ([]marketTypes.MinerDeal, error) {
+	if miner.Address != address.Undef {
+		deals, err := s.Market.MarketListIncompleteDeals(ctx, &marketTypes.StorageDealQueryParams{Miner: miner.Address,
+			Page: marketTypes.Page{
+				Offset: 0, Limit: 100,
+			},
+		})
 		if err != nil {
 			return nil, err
 		}

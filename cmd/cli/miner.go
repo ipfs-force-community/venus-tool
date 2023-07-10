@@ -467,7 +467,7 @@ var minerInfoCmd = &cli.Command{
 			return err
 		}
 
-		mi, err := api.MinerInfo(ctx, mAddr)
+		mi, err := api.MinerInfo(ctx, service.Address{Address: mAddr})
 		if err != nil {
 			return err
 		}

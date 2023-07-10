@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"reflect"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -34,6 +35,12 @@ func Register(route *gin.RouterGroup, src interface{}, dst interface{}) {
 		if !fn.IsValid() {
 			log.Infof("field %s has no method", name)
 			continue
+		}
+
+		// handle the path like /chain/head/:tipset into /chain/head and /chain/head/:tipset
+		// so that we can use the same handler for both
+		if strings.Contains(routeInfo.Path, "/:") {
+			route.Handle(routeInfo.Method, routeInfo.Path[:strings.Index(routeInfo.Path, "/:")], Wrap(fn.Interface()))
 		}
 
 		route.Handle(routeInfo.Method, routeInfo.Path, Wrap(fn.Interface()))
@@ -122,18 +129,26 @@ func Wrap(fn interface{}) gin.HandlerFunc {
 
 			if ctx.Request.ContentLength > 0 {
 				err = ctx.ShouldBindJSON(pInt)
+				if err != nil {
+					log.Warnf("try to bind with json failed: %s", err)
+				}
 			} else if ctx.Request.URL.RawQuery != "" {
 				err = ctx.ShouldBindQuery(pInt)
+				if err != nil {
+					log.Warnf("try to bind with query failed: %s", err)
+				}
 			}
 
 			if len(ctx.Params) > 0 {
 				terr := ctx.ShouldBindUri(pInt)
 				if terr != nil {
+					log.Warnf("try to bind with uri failed: %s", terr)
 					err = terr
 				}
 			}
 
 			if err != nil {
+				log.Warnf("fail: %s", err)
 				ctx.JSON(http.StatusBadRequest, NewErrResponse(err))
 				return
 			}
@@ -248,7 +263,9 @@ func Provide(cli Client, dst interface{}) {
 				outInt = reflect.New(fnType.Out(retIdx)).Interface()
 			}
 
-			err := cli.Do(ctx, info.Method, info.Path, inInt, outInt)
+			path := info.Path[:strings.Index(info.Path, ":")]
+
+			err := cli.Do(ctx, info.Method, path, inInt, outInt)
 			if errIdx != -1 {
 				out[errIdx] = reflect.ValueOf(&err).Elem()
 			}

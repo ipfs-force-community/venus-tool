@@ -95,7 +95,7 @@ var dealListCmd = &cli.Command{
 			return w.Flush()
 		}
 
-		deals, err := api.StorageDealList(ctx, mAddr)
+		deals, err := api.StorageDealList(ctx, service.Address{Address: mAddr})
 		if err != nil {
 			return err
 		}

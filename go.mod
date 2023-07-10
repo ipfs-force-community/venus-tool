@@ -12,10 +12,10 @@ require (
 	github.com/filecoin-project/lotus v1.23.1
 	github.com/filecoin-project/specs-actors/v2 v2.3.6
 	github.com/filecoin-project/venus v1.12.1-0.20230710062546-73aa29c06e7a
-	github.com/filecoin-project/venus-auth v1.11.1-0.20230605053244-c7cb861d94cd
 	github.com/filecoin-project/venus/venus-devtool v0.0.0-20230620054910-8361f47beacf
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-resty/resty/v2 v2.4.0
+	github.com/ipfs-force-community/sophon-auth v1.12.0
 	github.com/ipfs-force-community/sophon-messager v1.12.1-0.20230707095736-298517fc64df
 	github.com/ipfs-force-community/venus-common-utils v0.0.0-20220217030526-e5e4c6bc14f7
 	github.com/ipfs/go-cid v0.4.1
@@ -88,7 +88,7 @@ require (
 	github.com/prometheus/statsd_exporter v0.23.0 // indirect
 	github.com/shirou/gopsutil/v3 v3.22.5 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
-	github.com/spf13/afero v1.8.2 // indirect
+	github.com/spf13/afero v1.9.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
@@ -103,8 +103,8 @@ require (
 	go.opentelemetry.io/otel/sdk v1.16.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v0.39.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
-	google.golang.org/api v0.81.0 // indirect
+	golang.org/x/time v0.1.0 // indirect
+	google.golang.org/api v0.103.0 // indirect
 	gopkg.in/ini.v1 v1.66.6 // indirect
 	gorm.io/driver/mysql v1.1.1 // indirect
 	gorm.io/gorm v1.21.12 // indirect
@@ -173,7 +173,7 @@ require (
 	github.com/hannahhoward/go-pubsub v0.0.0-20200423002714-8d62886cc36e // indirect
 	github.com/hashicorp/golang-lru v0.6.0 // indirect
 	github.com/icza/backscanner v0.0.0-20210726202459-ac2ffc679f94 // indirect
-	github.com/ipfs-force-community/damocles/damocles-manager v0.0.0-20230710075000-22a3643b19dc
+	github.com/ipfs-force-community/damocles/damocles-manager v0.0.0-20230710060037-abd2fdf69c17
 	github.com/ipfs/bbloom v0.0.4 // indirect
 	github.com/ipfs/go-block-format v0.1.2 // indirect
 	github.com/ipfs/go-blockservice v0.5.0 // indirect
@@ -266,3 +266,5 @@ require (
 replace github.com/filecoin-project/go-jsonrpc => github.com/ipfs-force-community/go-jsonrpc v0.1.7-0.20230214070559-dbe74781184a
 
 replace github.com/filecoin-project/filecoin-ffi => ./extern/filecoin-ffi
+
+// replace github.com/filecoin-project/venus => /root/tanlang/venus

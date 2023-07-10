@@ -107,6 +107,10 @@ type MsgDecodeParamReq struct {
 	Params []byte
 }
 
+type MsgMarkBadReq struct {
+	ID string
+}
+
 type AddrOperateType string
 
 var (
@@ -116,8 +120,10 @@ var (
 	SetAddress       AddrOperateType = "set"
 )
 
-type AddrsResp msgTypes.Address
-
+type AddrsResp struct {
+	msgTypes.Address
+	types.Actor
+}
 type AddrsOperateReq struct {
 	msgTypes.AddressSpec
 	Operate      AddrOperateType
@@ -206,6 +212,12 @@ type SectorResp struct {
 	SectorLocation lminer.SectorLocation
 }
 
+type SectorListReq struct {
+	Miner     address.Address
+	PageIndex int
+	PageSize  int
+}
+
 type MultisigCreateReq struct {
 	From               address.Address
 	Signers            []address.Address
@@ -262,4 +274,9 @@ type ThreadStartReq struct {
 	WorkerName string
 	Index      uint64
 	State      *string
+}
+
+// The param which bind with Query or Uri in gin must be a struct
+type Address struct {
+	Address address.Address
 }

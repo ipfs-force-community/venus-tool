@@ -3,8 +3,12 @@ package config
 import (
 	"bytes"
 	"io/ioutil"
+	"net/http"
+	"net/url"
 
 	"github.com/BurntSushi/toml"
+	"github.com/multiformats/go-multiaddr"
+	manet "github.com/multiformats/go-multiaddr/net"
 )
 
 type Config struct {
@@ -16,11 +20,7 @@ type Config struct {
 	WalletAPI   APIInfo
 	AuthAPI     APIInfo
 	DamoclesAPI APIInfo
-}
-
-type APIInfo struct {
-	Addr  string
-	Token string
+	MinerAPI    APIInfo
 }
 
 type ServerConfig struct {
@@ -56,4 +56,36 @@ func DefaultConfig() *Config {
 			ListenAddr: "127.0.0.1:12580",
 		},
 	}
+}
+
+type APIInfo struct {
+	Addr  string
+	Token string
+}
+
+func (a APIInfo) DialArgs(version string) (string, error) {
+	ma, err := multiaddr.NewMultiaddr(a.Addr)
+	if err == nil {
+		_, addr, err := manet.DialArgs(ma)
+		if err != nil {
+			return "", err
+		}
+
+		return "ws://" + addr + "/rpc/" + version, nil
+	}
+
+	_, err = url.Parse(a.Addr)
+	if err != nil {
+		return "", err
+	}
+	return a.Addr + "/rpc/" + version, nil
+}
+
+func (a APIInfo) AuthHeader() http.Header {
+	if len(a.Token) != 0 {
+		headers := http.Header{}
+		headers.Add("Authorization", "Bearer "+string(a.Token))
+		return headers
+	}
+	return nil
 }

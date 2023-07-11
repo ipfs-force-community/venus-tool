@@ -27,6 +27,7 @@ import (
 	"github.com/ipfs-force-community/venus-tool/dep"
 	"github.com/ipfs-force-community/venus-tool/pkg/multisig"
 	"github.com/ipfs-force-community/venus-tool/utils"
+
 )
 
 var log = logging.Logger("service")
@@ -38,6 +39,7 @@ type ServiceImpl struct {
 	Wallet   dep.IWallet
 	Auth     dep.IAuth
 	Damocles *dep.Damocles
+	Miner    dep.Miner
 
 	Multisig multisig.IMultiSig
 }

@@ -16,6 +16,7 @@ type ServiceParams struct {
 	Node     nodeV1.FullNode
 	Auth     IAuth
 	Damocles *Damocles
+	Miner    Miner
 }
 
 type IWallet interface {

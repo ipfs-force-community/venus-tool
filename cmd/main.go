@@ -76,6 +76,12 @@ var flagAuthAPI = &cli.StringFlag{
 	Usage:   "specify venus-auth token and api address. ex: --auth-api=token:addr , if token was ignored, will use common token",
 }
 
+var flagMinerAPI = &cli.StringFlag{
+	Name:    "miner-api",
+	Aliases: []string{"miner"},
+	Usage:   "specify venus-miner token and api address. ex: --miner-api=token:addr , if token was ignored, will use common token",
+}
+
 var flagDamoclesAPI = &cli.StringFlag{
 	Name:    "damocles-api",
 	Aliases: []string{"damocles"},
@@ -127,6 +133,7 @@ var runCmd = &cli.Command{
 		flagNodeAPI,
 		flagMsgAPI,
 		flagMarketAPI,
+		flagMinerAPI,
 		flagWalletAPI,
 		flagDamoclesAPI,
 		flagComToken,
@@ -193,8 +200,7 @@ var runCmd = &cli.Command{
 		defer walletCloser()
 
 		server := &http.Server{
-			Addr: cfg.Server.ListenAddr,
-		}
+			Addr: cfg.Server.ListenAddr}
 		fx.Supply(server)
 
 		networkName, err := nodeClient.StateNetworkName(ctx)
@@ -213,6 +219,7 @@ var runCmd = &cli.Command{
 			builder.Override(new(dep.IWallet), walletClient),
 			builder.Override(new(dep.IAuth), dep.NewAuth),
 			builder.Override(new(*dep.Damocles), dep.NewDamocles),
+			builder.Override(new(dep.Miner), dep.NewMiner),
 
 			builder.Override(new(context.Context), ctx),
 			builder.Override(new(types.NetworkName), networkName),
@@ -275,5 +282,8 @@ func updateFlag(cfg *config.Config, ctx *cli.Context) {
 	}
 	if ctx.IsSet(flagDamoclesAPI.Name) {
 		updateApi(ctx.String(flagDamoclesAPI.Name), &cfg.DamoclesAPI)
+	}
+	if ctx.IsSet(flagMinerAPI.Name) {
+		updateApi(ctx.String(flagMinerAPI.Name), &cfg.MinerAPI)
 	}
 }

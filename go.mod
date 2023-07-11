@@ -17,6 +17,7 @@ require (
 	github.com/go-resty/resty/v2 v2.4.0
 	github.com/ipfs-force-community/sophon-auth v1.12.0
 	github.com/ipfs-force-community/sophon-messager v1.12.1-0.20230707095736-298517fc64df
+	github.com/ipfs-force-community/sophon-miner v1.12.0
 	github.com/ipfs-force-community/venus-common-utils v0.0.0-20220217030526-e5e4c6bc14f7
 	github.com/ipfs/go-cid v0.4.1
 	github.com/ipfs/go-ipld-cbor v0.0.6
@@ -74,7 +75,7 @@ require (
 	github.com/ipfs-force-community/metrics v1.0.1-0.20230626064437-eed34cb166f5 // indirect
 	github.com/ipfs-force-community/venus-cluster-assets v0.1.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/jinzhu/now v1.1.2 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
@@ -106,8 +107,8 @@ require (
 	golang.org/x/time v0.1.0 // indirect
 	google.golang.org/api v0.103.0 // indirect
 	gopkg.in/ini.v1 v1.66.6 // indirect
-	gorm.io/driver/mysql v1.1.1 // indirect
-	gorm.io/gorm v1.21.12 // indirect
+	gorm.io/driver/mysql v1.3.5 // indirect
+	gorm.io/gorm v1.23.8 // indirect
 )
 
 require (

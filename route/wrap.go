@@ -148,7 +148,7 @@ func Wrap(fn interface{}) gin.HandlerFunc {
 			}
 
 			if err != nil {
-				log.Warnf("fail: %s", err)
+				log.Warnf("parse args fail: %s", err)
 				ctx.JSON(http.StatusBadRequest, NewErrResponse(err))
 				return
 			}
@@ -160,6 +160,7 @@ func Wrap(fn interface{}) gin.HandlerFunc {
 
 		if errIdx != -1 {
 			if !out[errIdx].IsNil() {
+				log.Errorf("call %s failed: %s", fnType.Name(), out[errIdx].Interface().(error))
 				ctx.JSON(http.StatusInternalServerError, NewErrResponse(out[errIdx].Interface().(error)))
 				return
 			}

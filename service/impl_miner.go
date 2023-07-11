@@ -691,3 +691,8 @@ func (s *ServiceImpl) SectorSum(ctx context.Context, miner Address) (uint64, err
 func (s *ServiceImpl) MinerList(ctx context.Context) ([]address.Address, error) {
 	return s.listMiner(ctx)
 }
+
+func (s *ServiceImpl) MinerWinCount(ctx context.Context, req *MinerWinCountReq) (MinerWinCountResp, error) {
+	// todo: cache the result
+	return s.Miner.CountWinners(ctx, req.Miners, req.From, req.To)
+}

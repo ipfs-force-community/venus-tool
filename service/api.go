@@ -55,6 +55,7 @@ type IService interface {
 	MinerWithdrawToBeneficiary(ctx context.Context, req *MinerWithdrawBalanceReq) (abi.TokenAmount, error) // PUT:/miner/withdrawbeneficiary
 	// MinerWithdrawFromMarket withdraw balance from market to miner's owner or worker
 	MinerWithdrawFromMarket(ctx context.Context, req *MinerWithdrawBalanceReq) (abi.TokenAmount, error) // PUT:/miner/withdrawmarket
+	MinerWinCount(ctx context.Context, req *MinerWinCountReq) (MinerWinCountResp, error)                // GET:/miner/wincount
 
 	StorageDealList(ctx context.Context, miner Address) ([]marketTypes.MinerDeal, error) // GET:/deal/storage/:Address
 	StorageDealUpdateState(ctx context.Context, req StorageDealUpdateStateReq) error     // PUT:/deal/storage/state

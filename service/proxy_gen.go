@@ -39,6 +39,7 @@ type IServiceStruct struct {
 		MinerSetRetrievalAsk       func(ctx context.Context, p *MinerSetRetrievalAskReq) error                                         ` PUT:"/miner/retrievalask"`
 		MinerSetStorageAsk         func(ctx context.Context, p *MinerSetAskReq) error                                                  ` PUT:"/miner/storageask"`
 		MinerSetWorker             func(ctx context.Context, req *MinerSetWorkerReq) (WorkerChangeEpoch abi.ChainEpoch, err error)     ` PUT:"/miner/worker"`
+		MinerWinCount              func(ctx context.Context, req *MinerWinCountReq) (MinerWinCountResp, error)                         ` GET:"/miner/wincount"`
 		MinerWithdrawFromMarket    func(ctx context.Context, req *MinerWithdrawBalanceReq) (abi.TokenAmount, error)                    ` PUT:"/miner/withdrawmarket"`
 		MinerWithdrawToBeneficiary func(ctx context.Context, req *MinerWithdrawBalanceReq) (abi.TokenAmount, error)                    ` PUT:"/miner/withdrawbeneficiary"`
 		MsgDecodeParam2Json        func(ctx context.Context, req *MsgDecodeParamReq) ([]byte, error)                                   ` GET:"/msg/decodeparam"`
@@ -133,6 +134,9 @@ func (s *IServiceStruct) MinerSetStorageAsk(p0 context.Context, p1 *MinerSetAskR
 }
 func (s *IServiceStruct) MinerSetWorker(p0 context.Context, p1 *MinerSetWorkerReq) (abi.ChainEpoch, error) {
 	return s.Internal.MinerSetWorker(p0, p1)
+}
+func (s *IServiceStruct) MinerWinCount(p0 context.Context, p1 *MinerWinCountReq) (MinerWinCountResp, error) {
+	return s.Internal.MinerWinCount(p0, p1)
 }
 func (s *IServiceStruct) MinerWithdrawFromMarket(p0 context.Context, p1 *MinerWithdrawBalanceReq) (abi.TokenAmount, error) {
 	return s.Internal.MinerWithdrawFromMarket(p0, p1)

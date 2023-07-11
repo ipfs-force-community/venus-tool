@@ -18,6 +18,7 @@ import (
 	"github.com/filecoin-project/venus/venus-shared/types"
 	marketTypes "github.com/filecoin-project/venus/venus-shared/types/market"
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
+	minerTypes "github.com/ipfs-force-community/sophon-miner/types"
 	"github.com/ipfs-force-community/venus-tool/utils"
 	"github.com/ipfs/go-cid"
 	cbg "github.com/whyrusleeping/cbor-gen"
@@ -197,6 +198,14 @@ type MinerWithdrawBalanceReq struct {
 	To     address.Address
 	Amount abi.TokenAmount
 }
+
+type MinerWinCountReq struct {
+	Miners []address.Address
+	From   abi.ChainEpoch
+	To     abi.ChainEpoch
+}
+
+type MinerWinCountResp []minerTypes.CountWinners
 
 type SectorExtendReq struct {
 	Miner         address.Address

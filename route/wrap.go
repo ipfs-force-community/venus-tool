@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -30,7 +31,24 @@ func Register(route *gin.RouterGroup, src interface{}, dst interface{}) {
 	rvSrc := reflect.ValueOf(src)
 
 	routeInfos := Parse(dst)
-	for name, routeInfo := range routeInfos {
+
+	sort.Slice(routeInfos, func(a, b int) bool {
+		// sort by path, longer path first
+		pathA := routeInfos[a].Path
+		pathB := routeInfos[b].Path
+		lenA := len(pathA)
+		lenB := len(pathB)
+		if strings.Contains(pathA, "/:") {
+			lenA = strings.Index(pathA, "/:")
+		}
+		if strings.Contains(pathB, "/:") {
+			lenB = strings.Index(pathB, "/:")
+		}
+		return lenA > lenB
+	})
+
+	for _, routeInfo := range routeInfos {
+		name := routeInfo.Name
 		fn := rvSrc.MethodByName(name)
 		if !fn.IsValid() {
 			log.Infof("field %s has no method", name)
@@ -41,9 +59,11 @@ func Register(route *gin.RouterGroup, src interface{}, dst interface{}) {
 		// so that we can use the same handler for both
 		if strings.Contains(routeInfo.Path, "/:") {
 			route.Handle(routeInfo.Method, routeInfo.Path[:strings.Index(routeInfo.Path, "/:")], Wrap(fn.Interface()))
+			route.Handle(routeInfo.Method, routeInfo.Path, Wrap(fn.Interface()))
+		} else {
+			route.Handle(routeInfo.Method, routeInfo.Path, Wrap(fn.Interface()))
 		}
 
-		route.Handle(routeInfo.Method, routeInfo.Path, Wrap(fn.Interface()))
 	}
 }
 
@@ -55,7 +75,7 @@ type RouteInfo struct {
 }
 
 // Parse extracts route info from a struct fill with api functions field and route comments
-func Parse(dst interface{}) map[string]RouteInfo {
+func Parse(dst interface{}) []RouteInfo {
 	rtDst := reflect.TypeOf(dst)
 	rvDst := reflect.ValueOf(dst)
 	if rtDst.Kind() == reflect.Ptr {
@@ -66,7 +86,7 @@ func Parse(dst interface{}) map[string]RouteInfo {
 		panic("dst must be a struct or a pointer to a struct")
 	}
 
-	ret := make(map[string]RouteInfo)
+	ret := make([]RouteInfo, 0, rvDst.NumField())
 
 	for i := 0; i < rvDst.NumField(); i++ {
 		rtField := rvDst.Type().Field(i)
@@ -96,12 +116,12 @@ func Parse(dst interface{}) map[string]RouteInfo {
 			continue
 		}
 
-		ret[name] = RouteInfo{
+		ret = append(ret, RouteInfo{
 			Name:        name,
 			Method:      method,
 			Path:        path,
 			HandlerType: fn,
-		}
+		})
 	}
 
 	return ret

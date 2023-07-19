@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -167,17 +166,11 @@ var multisigProposeCmd = &cli.Command{
 			return fmt.Errorf("must specify only one of params-json and params-hex")
 		}
 		if cctx.IsSet("params-json") {
-			params.Data, err = json.Marshal(cctx.String("params-json"))
-			if err != nil {
-				return err
-			}
+			params.Data = cctx.String("params-json")
 			params.EncType = service.EncJson
 		}
 		if cctx.IsSet("params-hex") {
-			params.Data, err = hex.DecodeString(cctx.String("params-hex"))
-			if err != nil {
-				return err
-			}
+			params.Data = cctx.String("params-hex")
 			params.EncType = service.EncHex
 		}
 

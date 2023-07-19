@@ -26,18 +26,21 @@ import (
 
 type MsgResp struct {
 	msgTypes.Message
-	MethodName string
+	MethodName   string
+	ParamsInJson json.RawMessage
 }
 
 func (mr *MsgResp) MarshalJSON() ([]byte, error) {
 	type Msg msgTypes.Message
 	type temp struct {
 		Msg
-		MethodName string
+		MethodName   string
+		ParamsInJson json.RawMessage
 	}
 	return json.Marshal(temp{
-		Msg:        Msg(mr.Message),
-		MethodName: mr.MethodName,
+		Msg:          Msg(mr.Message),
+		MethodName:   mr.MethodName,
+		ParamsInJson: mr.ParamsInJson,
 	})
 }
 
@@ -65,7 +68,7 @@ type MsgSendReq struct {
 type EncodingType string
 
 type EncodedParams struct {
-	Data    []byte
+	Data    string
 	EncType EncodingType
 }
 
@@ -73,6 +76,8 @@ const (
 	EncNull EncodingType = ""
 	EncHex  EncodingType = "hex"
 	EncJson EncodingType = "json"
+	// base64 is the default encoder for json marshal
+	EncBase64 EncodingType = "base64"
 )
 
 func (ep *EncodedParams) DecodeJSON(actorCode cid.Cid, method abi.MethodNum) (out []byte, err error) {
@@ -82,7 +87,7 @@ func (ep *EncodedParams) DecodeJSON(actorCode cid.Cid, method abi.MethodNum) (ou
 	}
 
 	p := reflect.New(methodMeta.Params.Elem()).Interface().(cbg.CBORMarshaler)
-	if err := json.Unmarshal(ep.Data, p); err != nil {
+	if err := json.Unmarshal([]byte(ep.Data), p); err != nil {
 		return nil, fmt.Errorf("unmarshaling input into params type: %w", err)
 	}
 
@@ -108,7 +113,7 @@ type MsgDecodeParamReq struct {
 	Params []byte
 }
 
-type MsgMarkBadReq struct {
+type MsgID struct {
 	ID string
 }
 
@@ -291,3 +296,34 @@ type ThreadStartReq struct {
 type Address struct {
 	Address address.Address
 }
+
+type Cid struct {
+	Cid string
+}
+
+type DataType string
+
+const (
+	Unknown DataType = ""
+	Wallet  DataType = "wallet"
+	Miner   DataType = "miner"
+	Message DataType = "message"
+	Deal    DataType = "deal"
+)
+
+type SearchReq struct {
+	Key string
+}
+
+type SearchResp struct {
+	Type DataType
+	Data json.RawMessage
+}
+
+type MinedBlockListReq struct {
+	Miner  []address.Address
+	Limit  int
+	Offset int
+}
+
+type MinedBlockListResp []minerTypes.MinedBlock

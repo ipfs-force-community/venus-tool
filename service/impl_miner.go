@@ -119,7 +119,7 @@ func (s *ServiceImpl) MinerInfo(ctx context.Context, addr Address) (*MinerInfoRe
 	store := adt.WrapStore(ctx, cbor.NewCborStore(blockstore.NewAPIBlockstore(s.Node)))
 	mst, err := miner.Load(store, mact)
 	if err != nil {
-		return nil, fmt.Errorf("load miner state:")
+		return nil, fmt.Errorf("load miner state: %w", err)
 	}
 
 	lockFund, err := mst.LockedFunds()
@@ -129,21 +129,21 @@ func (s *ServiceImpl) MinerInfo(ctx context.Context, addr Address) (*MinerInfoRe
 
 	mi, err := s.Node.StateMinerInfo(ctx, mAddr, types.EmptyTSK)
 	if err != nil {
-		return nil, fmt.Errorf("get miner(%s) info failed: %s", mAddr, err)
+		return nil, fmt.Errorf("get miner(%s) info failed: %w", mAddr, err)
 	}
 	availBalance, err := s.Node.StateMinerAvailableBalance(ctx, mAddr, types.EmptyTSK)
 	if err != nil {
-		return nil, fmt.Errorf("get miner(%s) available balance failed: %s", mAddr, err)
+		return nil, fmt.Errorf("get miner(%s) available balance failed: %w", mAddr, err)
 	}
 
 	power, err := s.Node.StateMinerPower(ctx, mAddr, types.EmptyTSK)
 	if err != nil {
-		return nil, fmt.Errorf("get miner(%s) power failed: %s", mAddr, err)
+		return nil, fmt.Errorf("get miner(%s) power failed: %w", mAddr, err)
 	}
 
 	deadline, err := s.Node.StateMinerProvingDeadline(ctx, mAddr, types.EmptyTSK)
 	if err != nil {
-		return nil, fmt.Errorf("get miner(%s) deadline failed: %s", mAddr, err)
+		return nil, fmt.Errorf("get miner(%s) deadline failed: %w", mAddr, err)
 	}
 
 	marketBalance, err := s.Node.StateMarketBalance(ctx, mAddr, types.EmptyTSK)
@@ -636,21 +636,34 @@ func (s *ServiceImpl) SectorGet(ctx context.Context, req SectorGetReq) ([]*Secto
 }
 
 func (s *ServiceImpl) SectorList(ctx context.Context, req SectorListReq) ([]*types.SectorOnChainInfo, error) {
-	miner := req.Miner
+	mAddr := req.Miner
+
+	// load miner state
+	mact, err := s.Node.StateGetActor(ctx, mAddr, types.EmptyTSK)
+	if err != nil {
+		return nil, err
+	}
+
+	store := adt.WrapStore(ctx, cbor.NewCborStore(blockstore.NewAPIBlockstore(s.Node)))
+	mst, err := miner.Load(store, mact)
+	if err != nil {
+		return nil, fmt.Errorf("load miner state: %w", err)
+	}
+
 	pageSize, pageIndex := req.PageSize, req.PageIndex
 	if pageSize == 0 {
 		pageSize = 20
 	}
 	start := pageSize * pageIndex
 
-	allocated, err := s.Node.StateMinerAllocated(ctx, miner, types.EmptyTSK)
+	allocated, err := s.Node.StateMinerAllocated(ctx, mAddr, types.EmptyTSK)
 	if err != nil {
-		return nil, fmt.Errorf("get miner(%s) allocated sectors failed: %s", miner, err)
+		return nil, fmt.Errorf("get miner(%s) allocated sectors failed: %s", mAddr, err)
 	}
 
 	iterator, err := allocated.BitIterator()
 	if err != nil {
-		return nil, fmt.Errorf("get iterator to range allocated sectors of miner(%s) failed: %s", miner, err)
+		return nil, fmt.Errorf("get iterator to range allocated sectors of miner(%s) failed: %s", mAddr, err)
 	}
 
 	ret := make([]*types.SectorOnChainInfo, 0)
@@ -660,7 +673,7 @@ func (s *ServiceImpl) SectorList(ctx context.Context, req SectorListReq) ([]*typ
 	if errors.Is(err, rlepluslazy.ErrEndOfIterator) {
 		return ret, nil
 	} else if err != nil {
-		return nil, fmt.Errorf("get %dth sector number allocated of miner(%s) failed: %s", start, miner, err)
+		return nil, fmt.Errorf("get %dth sector number allocated of miner(%s) failed: %s", start, mAddr, err)
 	}
 	sectorNums = append(sectorNums, n)
 
@@ -668,15 +681,29 @@ func (s *ServiceImpl) SectorList(ctx context.Context, req SectorListReq) ([]*typ
 		if iterator.HasNext() {
 			n, err := iterator.Next()
 			if err != nil {
-				return nil, fmt.Errorf("get %dth sector number allocated of miner(%s) failed: %s", start+i, miner, err)
+				return nil, fmt.Errorf("get %dth sector number allocated of miner(%s) failed: %s", start+i, mAddr, err)
 			}
 			sectorNums = append(sectorNums, n)
 		}
 	}
-	log.Infof("sector numbers of miner(%s): %v", miner, sectorNums)
+	log.Infof("sector numbers of miner(%s): %v", mAddr, sectorNums)
 
-	want := bitfield.NewFromSet(sectorNums)
-	return s.Node.StateMinerSectors(ctx, miner, &want, types.EmptyTSK)
+	for _, num := range sectorNums {
+		sector, err := mst.GetSector(abi.SectorNumber(num))
+		if sector == nil {
+			if err != nil {
+				log.Warnf("get sector(%d) info failed: %s", num, err)
+			} else {
+				log.Warnf("sector(%s) not found")
+			}
+			ret = append(ret, &types.SectorOnChainInfo{
+				SectorNumber: abi.SectorNumber(num),
+			})
+			continue
+		}
+		ret = append(ret, sector)
+	}
+	return ret, nil
 }
 
 func (s *ServiceImpl) SectorSum(ctx context.Context, miner Address) (uint64, error) {

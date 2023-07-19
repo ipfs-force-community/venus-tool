@@ -23,10 +23,11 @@ type IService interface {
 
 	MsgSend(ctx context.Context, params *MsgSendReq) (string, error)                 // POST:/msg/send
 	MsgQuery(ctx context.Context, params *MsgQueryReq) ([]*MsgResp, error)           // GET:/msg/query
+	Msg(ctx context.Context, id MsgID) (*MsgResp, error)                             // GET:/msg/:ID
 	MsgReplace(ctx context.Context, params *MsgReplaceReq) (cid.Cid, error)          // POST:/msg/replace
-	MsgDecodeParam2Json(ctx context.Context, req *MsgDecodeParamReq) ([]byte, error) // GET:/msg/decodeparam
+	MsgDecodeParam2Json(ctx context.Context, req *MsgDecodeParamReq) ([]byte, error) // POST:/msg/decodeparam
 	MsgGetMethodName(ctx context.Context, req *MsgGetMethodNameReq) (string, error)  // GET:/msg/getmethodname
-	MsgMarkBad(ctx context.Context, req *MsgMarkBadReq) error                        // Post:/msg/markbad/:ID
+	MsgMarkBad(ctx context.Context, req *MsgID) error                                // POST:/msg/markbad/:ID
 
 	AddrOperate(ctx context.Context, params *AddrsOperateReq) error // PUT:/addr/operate
 	AddrInfo(ctx context.Context, addr Address) (*AddrsResp, error) // GET:/addr/info/:Address
@@ -58,6 +59,7 @@ type IService interface {
 	MinerWinCount(ctx context.Context, req *MinerWinCountReq) (MinerWinCountResp, error)                // GET:/miner/wincount
 
 	StorageDealList(ctx context.Context, miner Address) ([]marketTypes.MinerDeal, error) // GET:/deal/storage/:Address
+	StorageDeal(ctx context.Context, proposalCid Cid) (*marketTypes.MinerDeal, error)    // GET:/deal/storage/info/:Cid
 	StorageDealUpdateState(ctx context.Context, req StorageDealUpdateStateReq) error     // PUT:/deal/storage/state
 	RetrievalDealList(ctx context.Context) ([]marketTypes.ProviderDealState, error)      // GET:/deal/retrieval
 
@@ -79,4 +81,7 @@ type IService interface {
 	ThreadList(ctx context.Context) ([]*dep.ThreadInfo, error)  // GET:/thread/list
 	ThreadStop(ctx context.Context, req *ThreadStopReq) error   // PUT:/thread/stop
 	ThreadStart(ctx context.Context, req *ThreadStartReq) error // PUT:/thread/start
+
+	Search(ctx context.Context, req SearchReq) (*SearchResp, error)                        // GET:/search/:Key
+	MinedBlockList(ctx context.Context, req MinedBlockListReq) (MinedBlockListResp, error) // GET:/minedblock/list
 }

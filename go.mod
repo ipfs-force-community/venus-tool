@@ -15,9 +15,10 @@ require (
 	github.com/filecoin-project/venus/venus-devtool v0.0.0-20230620054910-8361f47beacf
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-resty/resty/v2 v2.4.0
+	github.com/ipfs-force-community/droplet/v2 v2.8.1
 	github.com/ipfs-force-community/sophon-auth v1.12.0
 	github.com/ipfs-force-community/sophon-messager v1.12.1-0.20230707095736-298517fc64df
-	github.com/ipfs-force-community/sophon-miner v1.12.0
+	github.com/ipfs-force-community/sophon-miner v1.12.0-rc2.0.20230717111652-ad92aac6bb9f
 	github.com/ipfs-force-community/venus-common-utils v0.0.0-20220217030526-e5e4c6bc14f7
 	github.com/ipfs/go-cid v0.4.1
 	github.com/ipfs/go-ipld-cbor v0.0.6
@@ -49,11 +50,14 @@ require (
 	contrib.go.opencensus.io/exporter/graphite v0.0.0-20200424223504-26b90655e0ce // indirect
 	contrib.go.opencensus.io/exporter/prometheus v0.4.2 // indirect
 	github.com/ahmetb/go-linq/v3 v3.2.0 // indirect
+	github.com/awnumar/memcall v0.0.0-20191004114545-73db50fd9f80 // indirect
+	github.com/awnumar/memguard v0.22.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/deepmap/oapi-codegen v1.3.13 // indirect
 	github.com/dgraph-io/badger/v3 v3.2103.5 // indirect
 	github.com/dtynn/dix v0.1.2 // indirect
 	github.com/filecoin-project/go-commp-utils v0.1.3 // indirect
+	github.com/filecoin-project/go-data-transfer v1.15.2 // indirect
 	github.com/filecoin-project/go-data-transfer/v2 v2.0.0-rc4 // indirect
 	github.com/filecoin-project/go-ds-versioning v0.1.2 // indirect
 	github.com/filecoin-project/go-statemachine v1.0.3 // indirect
@@ -74,12 +78,16 @@ require (
 	github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 // indirect
 	github.com/ipfs-force-community/metrics v1.0.1-0.20230626064437-eed34cb166f5 // indirect
 	github.com/ipfs-force-community/venus-cluster-assets v0.1.0 // indirect
+	github.com/ipfs/go-ds-badger2 v0.1.3 // indirect
+	github.com/ipfs/go-fs-lock v0.0.7 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/libp2p/go-libp2p-core v0.20.1 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/multiformats/go-multistream v0.4.1 // indirect
+	github.com/pborman/uuid v1.2.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
@@ -103,6 +111,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.16.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.16.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v0.39.0 // indirect
+	go4.org v0.0.0-20200411211856-f5505b9728dd // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/time v0.1.0 // indirect
 	google.golang.org/api v0.103.0 // indirect

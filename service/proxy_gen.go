@@ -24,6 +24,7 @@ type IServiceStruct struct {
 		ChainGetActor              func(ctx context.Context, addr address.Address) (*types.Actor, error)                               ` GET:"/chain/actor"`
 		ChainGetHead               func(ctx context.Context) (*types.TipSet, error)                                                    ` GET:"/chain/head"`
 		ChainGetNetworkName        func(ctx context.Context) (types.NetworkName, error)                                                ` GET:"/chain/networkname"`
+		MinedBlockList             func(ctx context.Context, req MinedBlockListReq) (MinedBlockListResp, error)                        ` GET:"/minedblock/list"`
 		MinerConfirmBeneficiary    func(ctx context.Context, req *MinerConfirmBeneficiaryReq) (confirmor address.Address, err error)   ` PUT:"/miner/confirmbeneficiary"`
 		MinerConfirmOwner          func(ctx context.Context, p *MinerSetOwnerReq) (oldOwner address.Address, err error)                ` PUT:"/miner/confirmowner"`
 		MinerConfirmWorker         func(ctx context.Context, req *MinerSetWorkerReq) error                                             ` PUT:"/miner/confirmworker"`
@@ -42,9 +43,10 @@ type IServiceStruct struct {
 		MinerWinCount              func(ctx context.Context, req *MinerWinCountReq) (MinerWinCountResp, error)                         ` GET:"/miner/wincount"`
 		MinerWithdrawFromMarket    func(ctx context.Context, req *MinerWithdrawBalanceReq) (abi.TokenAmount, error)                    ` PUT:"/miner/withdrawmarket"`
 		MinerWithdrawToBeneficiary func(ctx context.Context, req *MinerWithdrawBalanceReq) (abi.TokenAmount, error)                    ` PUT:"/miner/withdrawbeneficiary"`
-		MsgDecodeParam2Json        func(ctx context.Context, req *MsgDecodeParamReq) ([]byte, error)                                   ` GET:"/msg/decodeparam"`
+		Msg                        func(ctx context.Context, id MsgID) (*MsgResp, error)                                               ` GET:"/msg/:ID"`
+		MsgDecodeParam2Json        func(ctx context.Context, req *MsgDecodeParamReq) ([]byte, error)                                   ` POST:"/msg/decodeparam"`
 		MsgGetMethodName           func(ctx context.Context, req *MsgGetMethodNameReq) (string, error)                                 ` GET:"/msg/getmethodname"`
-		MsgMarkBad                 func(ctx context.Context, req *MsgMarkBadReq) error                                                 ``
+		MsgMarkBad                 func(ctx context.Context, req *MsgID) error                                                         ` POST:"/msg/markbad/:ID"`
 		MsgQuery                   func(ctx context.Context, params *MsgQueryReq) ([]*MsgResp, error)                                  ` GET:"/msg/query"`
 		MsgReplace                 func(ctx context.Context, params *MsgReplaceReq) (cid.Cid, error)                                   ` POST:"/msg/replace"`
 		MsgSend                    func(ctx context.Context, params *MsgSendReq) (string, error)                                       ` POST:"/msg/send"`
@@ -58,10 +60,12 @@ type IServiceStruct struct {
 		MsigRemoveSigner           func(ctx context.Context, req *MultisigChangeSignerReq) (*types.ProposeReturn, error)               ` POST:"/msig/signer/remove"`
 		MsigSwapSigner             func(ctx context.Context, req *MultisigSwapSignerReq) (*types.ProposeReturn, error)                 ` POST:"/msig/signer/swap"`
 		RetrievalDealList          func(ctx context.Context) ([]marketTypes.ProviderDealState, error)                                  ` GET:"/deal/retrieval"`
+		Search                     func(ctx context.Context, req SearchReq) (*SearchResp, error)                                       ` GET:"/search/:Key"`
 		SectorExtend               func(ctx context.Context, req SectorExtendReq) error                                                ` PUT:"/sector/extend"`
 		SectorGet                  func(ctx context.Context, req SectorGetReq) ([]*SectorResp, error)                                  ` GET:"/sector/get"`
 		SectorList                 func(ctx context.Context, req SectorListReq) ([]*types.SectorOnChainInfo, error)                    ` GET:"/sector/list"`
 		SectorSum                  func(ctx context.Context, miner Address) (uint64, error)                                            ` GET:"/sector/sum"`
+		StorageDeal                func(ctx context.Context, proposalCid Cid) (*marketTypes.MinerDeal, error)                          ` GET:"/deal/storage/info/:Cid"`
 		StorageDealList            func(ctx context.Context, miner Address) ([]marketTypes.MinerDeal, error)                           ` GET:"/deal/storage/:Address"`
 		StorageDealUpdateState     func(ctx context.Context, req StorageDealUpdateStateReq) error                                      ` PUT:"/deal/storage/state"`
 		ThreadList                 func(ctx context.Context) ([]*dep.ThreadInfo, error)                                                ` GET:"/thread/list"`
@@ -89,6 +93,9 @@ func (s *IServiceStruct) ChainGetHead(p0 context.Context) (*types.TipSet, error)
 }
 func (s *IServiceStruct) ChainGetNetworkName(p0 context.Context) (types.NetworkName, error) {
 	return s.Internal.ChainGetNetworkName(p0)
+}
+func (s *IServiceStruct) MinedBlockList(p0 context.Context, p1 MinedBlockListReq) (MinedBlockListResp, error) {
+	return s.Internal.MinedBlockList(p0, p1)
 }
 func (s *IServiceStruct) MinerConfirmBeneficiary(p0 context.Context, p1 *MinerConfirmBeneficiaryReq) (address.Address, error) {
 	return s.Internal.MinerConfirmBeneficiary(p0, p1)
@@ -144,13 +151,16 @@ func (s *IServiceStruct) MinerWithdrawFromMarket(p0 context.Context, p1 *MinerWi
 func (s *IServiceStruct) MinerWithdrawToBeneficiary(p0 context.Context, p1 *MinerWithdrawBalanceReq) (abi.TokenAmount, error) {
 	return s.Internal.MinerWithdrawToBeneficiary(p0, p1)
 }
+func (s *IServiceStruct) Msg(p0 context.Context, p1 MsgID) (*MsgResp, error) {
+	return s.Internal.Msg(p0, p1)
+}
 func (s *IServiceStruct) MsgDecodeParam2Json(p0 context.Context, p1 *MsgDecodeParamReq) ([]byte, error) {
 	return s.Internal.MsgDecodeParam2Json(p0, p1)
 }
 func (s *IServiceStruct) MsgGetMethodName(p0 context.Context, p1 *MsgGetMethodNameReq) (string, error) {
 	return s.Internal.MsgGetMethodName(p0, p1)
 }
-func (s *IServiceStruct) MsgMarkBad(p0 context.Context, p1 *MsgMarkBadReq) error {
+func (s *IServiceStruct) MsgMarkBad(p0 context.Context, p1 *MsgID) error {
 	return s.Internal.MsgMarkBad(p0, p1)
 }
 func (s *IServiceStruct) MsgQuery(p0 context.Context, p1 *MsgQueryReq) ([]*MsgResp, error) {
@@ -192,6 +202,9 @@ func (s *IServiceStruct) MsigSwapSigner(p0 context.Context, p1 *MultisigSwapSign
 func (s *IServiceStruct) RetrievalDealList(p0 context.Context) ([]marketTypes.ProviderDealState, error) {
 	return s.Internal.RetrievalDealList(p0)
 }
+func (s *IServiceStruct) Search(p0 context.Context, p1 SearchReq) (*SearchResp, error) {
+	return s.Internal.Search(p0, p1)
+}
 func (s *IServiceStruct) SectorExtend(p0 context.Context, p1 SectorExtendReq) error {
 	return s.Internal.SectorExtend(p0, p1)
 }
@@ -203,6 +216,9 @@ func (s *IServiceStruct) SectorList(p0 context.Context, p1 SectorListReq) ([]*ty
 }
 func (s *IServiceStruct) SectorSum(p0 context.Context, p1 Address) (uint64, error) {
 	return s.Internal.SectorSum(p0, p1)
+}
+func (s *IServiceStruct) StorageDeal(p0 context.Context, p1 Cid) (*marketTypes.MinerDeal, error) {
+	return s.Internal.StorageDeal(p0, p1)
 }
 func (s *IServiceStruct) StorageDealList(p0 context.Context, p1 Address) ([]marketTypes.MinerDeal, error) {
 	return s.Internal.StorageDealList(p0, p1)

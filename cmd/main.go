@@ -43,7 +43,7 @@ var flagRepo = &cli.StringFlag{
 var flagListen = &cli.StringFlag{
 	Name:  "listen",
 	Usage: "Specify the listen address",
-	Value: "127.0.0.1:12580",
+	Value: "127.0.0.1:8090",
 }
 
 var flagNodeAPI = &cli.StringFlag{

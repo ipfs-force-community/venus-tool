@@ -12,7 +12,6 @@
 /logs
 
 __debug_bin
-dockerfile
 
 build_deps*
 extern*

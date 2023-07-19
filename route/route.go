@@ -2,6 +2,7 @@ package route
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ipfs-force-community/venus-tool/service"
@@ -11,12 +12,16 @@ import (
 
 var log = logging.Logger("route")
 
-func registerRoute(s *service.ServiceImpl) http.Handler {
+func registerRoute(s *service.ServiceImpl, boardPath string) http.Handler {
 	router := gin.Default()
 	router.Use(corsMiddleWare())
 
+	boardPath = strings.TrimRight(boardPath, "/")
+	router.Static("/board", boardPath)
+
+	router.LoadHTMLGlob(strings.TrimRight(boardPath, "/") + "/*.html")
 	router.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, "dashboard is developing...")
+		c.HTML(http.StatusOK, "index.html", gin.H{})
 	})
 
 	router.GET("/version", func(c *gin.Context) {
@@ -37,7 +42,6 @@ func corsMiddleWare() gin.HandlerFunc {
 			"DNT,X-Mx-ReqToken,Keep-Alive,User-Agent,X-Requested-With,"+
 				"If-Modified-Since,Cache-Control,Content-Type,Authorization,X-Forwarded-For,Origin,"+
 				"X-Real-Ip,spanId,preHost,svcName")
-		c.Header("Content-Type", "application/json")
 		if c.Request.Method == "OPTIONS" {
 			c.JSON(http.StatusOK, "ok!")
 		}

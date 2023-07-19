@@ -94,6 +94,12 @@ var flagComToken = &cli.StringFlag{
 	Usage:   "specify venus common token",
 }
 
+var flagDashboard = &cli.StringFlag{
+	Name:  "board",
+	Usage: "specify path to static asset for dashboard",
+	Value: "./dashboard/build",
+}
+
 func main() {
 	app := &cli.App{
 		Name:                 "venus-tool",
@@ -137,6 +143,7 @@ var runCmd = &cli.Command{
 		flagWalletAPI,
 		flagDamoclesAPI,
 		flagComToken,
+		flagDashboard,
 	},
 	Action: func(cctx *cli.Context) error {
 		ctx := cctx.Context
@@ -249,6 +256,10 @@ var runCmd = &cli.Command{
 func updateFlag(cfg *config.Config, ctx *cli.Context) {
 
 	commonToken := ctx.String(flagComToken.Name)
+
+	boardPath := ctx.String(flagDashboard.Name)
+	cfg.Server.BoardPath = boardPath
+	// todo: parse relative path to absolute path
 
 	updateApi := func(apiStr string, apiCfg *config.APIInfo) {
 		addr, token := utils.ParseAPI(apiStr)

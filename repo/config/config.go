@@ -13,7 +13,7 @@ import (
 
 type Config struct {
 	Path        string `toml:"-"`
-	Server      *ServerConfig
+	Server      ServerConfig
 	NodeAPI     APIInfo
 	MessagerAPI APIInfo
 	MarketAPI   APIInfo
@@ -25,6 +25,7 @@ type Config struct {
 
 type ServerConfig struct {
 	ListenAddr string
+	BoardPath  string
 }
 
 func LoadConfig(path string) (*Config, error) {
@@ -52,8 +53,9 @@ func (c *Config) Save() error {
 
 func DefaultConfig() *Config {
 	return &Config{
-		Server: &ServerConfig{
-			ListenAddr: "127.0.0.1:12580",
+		Server: ServerConfig{
+			ListenAddr: "127.0.0.1:8090",
+			BoardPath:  "./dashboard/build",
 		},
 	}
 }

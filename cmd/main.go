@@ -36,7 +36,7 @@ var flagRepo = &cli.StringFlag{
 	Name:    "repo",
 	EnvVars: []string{"VENUS_TOOL_PATH"},
 	Aliases: []string{"r"},
-	Value:   "~/.venustool",
+	Value:   "~/.venus-tool",
 	Usage:   "Specify miner repo path, env VENUS_TOOL_PATH",
 }
 
@@ -95,9 +95,10 @@ var flagComToken = &cli.StringFlag{
 }
 
 var flagDashboard = &cli.StringFlag{
-	Name:  "board",
-	Usage: "specify path to static asset for dashboard",
-	Value: "./dashboard/build",
+	Name:    "board",
+	Usage:   "specify path to static asset for dashboard",
+	Value:   "./dashboard/build",
+	EnvVars: []string{"SSM_DASHBOARD_PATH"},
 }
 
 func main() {

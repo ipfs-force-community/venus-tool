@@ -8,8 +8,9 @@
   <br>
 </p>
 
-## Introduction
+## Why
 
+We need a more convenient and efficient way to manage our data on chain or other component, so we create this tool.
 venus-tool hopes to provide users of venus with a more convenient and complete management interface for managing the settings and data of users on chain services, deal services, and power services. At the same time, it reconciles the contradictions caused by the separation of chain services and users
 
 ## Usage
@@ -31,8 +32,16 @@ You can run the binary directly
 --node-api=/ip4/{NODE_IP}/tcp/3453 \
 --msg-api=/ip4/{MESSAGER_IP}/tcp/39812 \
 --market-api=/ip4/{MARKET_IP}/tcp/41235 \
+--miner-api=/dns/miner/tcp/12308 \
+--wallet-api={WALLET_TOKEN}:/ipv4/{WALLET_IP}/tcp/5678/http \
+--auth-api=http://{AUTH_IP}:8989 \
+--damocles-api=/ip4/{DAMOCLES_MANAGER_IP}/tcp/1789 \
 --common-token={CHAIN_SERVICE_TOKEN} \
---wallet-api={WALLET_API} \
+
+
+
+
+
 ```
 tips: You can get `WALLET_API` from venus-wallet with `venus-wallet auth api-info` 
 
@@ -50,9 +59,16 @@ run \
 --node-api=/ip4/{NODE_IP}/tcp/3453 \
 --msg-api=/ip4/{MESSAGER_IP}/tcp/39812 \
 --market-api=/ip4/{MARKET_IP}/tcp/41235 \
+--miner-api=/dns/miner/tcp/12308 \
+--wallet-api={WALLET_TOKEN}:/ipv4/{WALLET_IP}/tcp/5678/http \
+--auth-api=http://{AUTH_IP}:8989 \
+--damocles-api=/ip4/{DAMOCLES_MANAGER_IP}/tcp/1789 \
 --common-token={CHAIN_SERVICE_TOKEN} \
---wallet-api={WALLET_API} 
 ```
+
+#### Dashboard
+
+venus-tool provides a dashboard , you can access it by `http://localhost:8090 if you run it in docker.
 
 
 ### More

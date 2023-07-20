@@ -15,6 +15,10 @@ export const DefaultFetcher = function (url) {
     })
 }
 const fetcherGetWithParams = function ([url, params]) {
+    if (params instanceof Error) {
+        console.warn(params.message);
+        return Promise.reject(params)
+    }
     return axios.get(url, { params: params, paramsSerializer: p => qs.stringify(p, { arrayFormat: "repeat" }) }).then(res => {
         return res.data
     }).catch(rawErr => {
@@ -23,21 +27,34 @@ const fetcherGetWithParams = function ([url, params]) {
     })
 }
 
+const fetchOrError = function (maybeError) {
+    if (maybeError instanceof Error) {
+        console.warn(maybeError.message);
+        return () => Promise.reject(maybeError)
+    } else {
+        return DefaultFetcher
+    }
+}
+
+
 export const useWallets = function () {
     return useSWR(rel("/wallet/list"), { fallbackData: [] })
 }
 
 export const useMsgs = function (wallet) {
-    const params = {
+    const params = wallet ? {
         "From": `"${wallet}"`,
         "Offset": 0,
         "Limit": 200,
-    }
+    } : new Error("useMsgs: wallet is null")
     return useSWR([rel("/msg/query"), params], fetcherGetWithParams, { fallbackData: [] })
 }
 
 export const useMsgInfo = function (id) {
-    return useSWR(rel(`/msg/${id}`))
+    const params = id ? {
+        "ID": id,
+    } : new Error("useMsgInfo: id is null")
+    return useSWR([rel(`/msg/`), params], fetcherGetWithParams)
 }
 
 export const useThreads = function () {
@@ -49,11 +66,11 @@ export const useMiners = function () {
 }
 
 export const useWalletInfo = function (wallet) {
-    return useSWR(rel(`/addr/info/"${wallet}"`))
+    return useSWR(rel(`/addr/info/"${wallet}"`), fetchOrError(wallet ? null : new Error("useWalletInfo: wallet is null")))
 }
 
 export const useMinerInfo = function (miner) {
-    return useSWR(rel(`/miner/info/"${miner}"`))
+    return useSWR(rel(`/miner/info/"${miner}"`), fetchOrError(miner ? null : new Error("useMinerInfo: miner is null")))
 }
 
 export const useMinerInfos = function () {
@@ -100,23 +117,23 @@ export const useWalletInfos = function () {
 
 
 export const useSectorSum = function ({ miner }) {
-    const params = {
+    const params = miner ? {
         "Address": `"${miner}"`,
-    }
+    } : new Error("useSectorSum: miner is null")
     return useSWR([rel("/sector/sum"), params], fetcherGetWithParams)
 }
 
 export const useSectors = function ({ miner, pageIndex, pageSize }) {
-    const params = {
+    const params = miner ? {
         "Miner": `"${miner}"`,
         "PageIndex": pageIndex,
         "PageSize": pageSize,
-    }
+    } : new Error("useSectors: miner is null")
     return useSWR([rel("/sector/list"), params], fetcherGetWithParams)
 }
 
 export const useDeals = function ({ miner }) {
-    return useSWR(rel(`/deal/storage/"${miner}"`), { fallbackData: [] })
+    return useSWR(rel(`/deal/storage/"${miner}"`), fetchOrError(miner ? null : new Error("useDeals: miner is null")), { fallbackData: [] })
 }
 
 export const useDealInfo = function (pCid) {
@@ -152,19 +169,19 @@ export const useMsgsByUpdate = function ({ updateBefore }) {
 
 export const useBlockList = function (miners) {
 
-    const params = {
+    const params = miners ? {
         "Miner": miners.map(miner => `"${miner}"`),
         "Limit": 200,
-    }
+    } : new Error("useBlockList: miners is null")
     return useSWR([rel("/minedblock/list"), params], fetcherGetWithParams)
 }
 
 
 
 export const useSearch = function (keyword) {
-    const params = {
+    const params = keyword ? {
         "Key": keyword,
-    }
+    } : new Error("useSearch: keyword is null")
     return useSWR([rel("/search"), params], fetcherGetWithParams)
 }
 

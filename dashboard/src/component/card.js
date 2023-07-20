@@ -1,5 +1,6 @@
 import { Card as AntdCard } from "antd"
 import './card.css'
+import ErrorBoundary from "./error-boundary"
 
 export default function Card(props) {
     const { title, extra } = props
@@ -16,7 +17,9 @@ export default function Card(props) {
             size="large"
             extra={extra}
         >
-            {props.children}
+            <ErrorBoundary>
+                {props.children}
+            </ErrorBoundary>
         </AntdCard>
     )
 }

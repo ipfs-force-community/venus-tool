@@ -6,6 +6,7 @@ import Card from "./card";
 import { ApiBase } from "../global";
 import axios from "axios";
 import { useThreads } from "../fetcher";
+import { withErrorBoundary } from "./error-boundary";
 
 export default function SealingThreadList() {
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -243,6 +244,9 @@ const ret = function (Content) {
 }
 
 function preprocess(data) {
+    if (!data || !Array.isArray(data)) {
+        return []
+    }
     // transfer from pre to expect
     return data.map(thread => {
         return {

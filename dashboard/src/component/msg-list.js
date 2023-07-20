@@ -7,8 +7,7 @@ import { getDefaultFilters, InShort } from "./util";
 import Card from "./card";
 import { MarkBad, SendMsg, useMsgs, useWallets } from "../fetcher";
 import Input from "antd/es/input/Input";
-
-
+import { withErrorBoundary } from "./error-boundary";
 
 
 export default function MessageList({ pageSize = 10, wallets = [] }) {
@@ -18,18 +17,18 @@ export default function MessageList({ pageSize = 10, wallets = [] }) {
     const [sendMsgFrom] = Form.useForm();
 
     const { data: remoteWallets, isLoading: walletIsLoading } = useWallets()
+    if (wallets.length === 0 && remoteWallets.length != 0) {
+        wallets = remoteWallets
+    }
+    if (wallet === '' && wallets.length > 0) {
+        setWallet(wallets[0])
+    }
     const { data: msgs, isLoading: msgsIsLoading, mutate: updateMsg } = useMsgs(wallet)
 
     if (walletIsLoading || msgsIsLoading) {
         return (<Empty description='loading'></Empty>)
     }
-    if (wallets.length === 0 && remoteWallets.length != 0) {
-        wallets = remoteWallets
-    }
 
-    if (wallet === '' && wallets.length > 0) {
-        setWallet(wallets[0])
-    }
 
 
     const markeBadMsgs = (msgIDs) => {

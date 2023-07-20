@@ -5,6 +5,7 @@ import SealingThreadList from '@/component/sealing-thread-list';
 import DealList from '@/component/deal-list';
 import Asset from '../component/asset';
 import BlockList from '../component/block-list';
+import ErrorBoundary from '../component/error-boundary';
 
 function App() {
 

@@ -10,7 +10,7 @@ jobs:
     uses: filecoin-project/venus/.github/workflows/common_build_upload.yml@master
     with:
       bin_name: 'venus-tool'
-      has_ffi: false
+      has_ffi: true
     secrets:
       OSS_KEY_ID: ${{secrets.OSS_KEY_ID}}
       OSS_KEY_SECRET: ${{secrets.OSS_KEY_SECRET}}

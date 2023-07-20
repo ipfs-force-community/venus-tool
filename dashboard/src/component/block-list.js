@@ -9,11 +9,6 @@ export default function BlockList() {
     const { data: miners } = useMiners()
     const { data: blocks } = useBlockList(miners)
 
-    if (!blocks) {
-        return (
-            <Card title={"Blocks"} loading={true} />
-        )
-    }
 
     const ret = function (content) {
         return (
@@ -26,7 +21,7 @@ export default function BlockList() {
 
 
     // preprocess data
-    let data = blocks
+    let data = blocks ? blocks : []
 
     // init table
     const columns = [

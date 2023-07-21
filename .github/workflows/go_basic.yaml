@@ -1,14 +1,16 @@
-name: lint and build
+name: test
 
 on:
   push:
-    branches: ['prep/**', 'release/**', 'test/**', master]
-    tags: ['**']
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '**'
 
-    
 
 jobs:
-  build:
+  check:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -83,38 +85,3 @@ jobs:
           mkdir ./release/dashboard
           mv ./venus-tool ./release
           mv ./dashboard/build ./release/dashboard
-
-      - name: Zip Release
-        uses: TheDoctor0/zip-release@0.7.1
-        with:
-          filename: ${{steps.vars.outputs.artifact_name}}
-          path: ./release
-          type: tar
-
-      - name: Rename bin file
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          cp ./${{steps.vars.outputs.artifact_name}} ./${{steps.vars.outputs.repo_name}}_${{steps.vars.outputs.tag}}.tar.gz
-
-      - name: shasum
-        if: startsWith(github.ref, 'refs/tags/')
-        run: shasum -a 256 ./${{steps.vars.outputs.repo_name}}_${{steps.vars.outputs.tag}}.tar.gz > ./${{steps.vars.outputs.repo_name}}_${{steps.vars.outputs.tag}}.sha256
-        shell: bash
-
-      - name: Release
-        id: release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
-        continue-on-error: true
-        with:
-          files: |
-            ./${{steps.vars.outputs.repo_name}}_${{steps.vars.outputs.tag}}.tar.gz
-            ./${{steps.vars.outputs.repo_name}}_${{steps.vars.outputs.tag}}.sha256
-
-      - name: upload artifacts
-        uses: actions/upload-artifact@v3
-        if: ${{ steps.vars.outputs.pub_method == 'pushRelease' }}
-        with:
-          name: ${{steps.vars.outputs.artifact_name}}
-          path: ./${{steps.vars.outputs.artifact_name}}
-          if-no-files-found: error

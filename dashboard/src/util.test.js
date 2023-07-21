@@ -10,6 +10,9 @@ test('test Fil ', () => {
     expect(res).toBe('1.00 pFIL');
     res = Fil(1000000000000000000);
     expect(res).toBe('1.00 FIL');
+
+    res = Fil(-1000000000000000000);
+    expect(res).toBe('-1.00 FIL');
 });
 
 

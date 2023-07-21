@@ -18,7 +18,8 @@ function SWRConfigProvider(props) {
     return (
         <SWRConfig value={{
             // refreshInterval: 10000,
-            fetcher: DefaultFetcher
+            fetcher: DefaultFetcher,
+            keepPreviousData: true,
         }}>
             {props.children}
         </SWRConfig>

@@ -110,18 +110,18 @@ export const dealState = [
     "TransferQueued",
 ]
 
-export function Fil(fil) {
+export function Fil(fil: number): string {
     fil = Number(fil)
     const k = 1000
     let i = 0
-    while (fil >= k && i < filPrefix.length - 1) {
+    while ((fil >= k || fil <= -k) && i < filPrefix.length - 1) {
         fil /= k
         i++
     }
     return `${Number(fil).toFixed(2)} ${filPrefix[i]}FIL`
 }
 
-export function Power(power) {
+export function Power(power: number): string {
     power = Number(power)
     const k = 1024
     let i = 0
@@ -133,21 +133,14 @@ export function Power(power) {
 }
 
 
-export function msgStateString(num) {
+export function msgStateString(num: number): string {
     const state = ["UnKnown", "UnFillMsg", "FillMsg", "OnChainMsg", "Failed", "NonceConflictMsg"]
     return state[num]
 }
 
-export function MinedState(num) {
+export function MinedState(num: number): string {
     const state = ["Mining", "Success", "TimeOut", "ChainForked", "Error", "unknown"]
     return state[num]
-}
-
-export const ParseFil = (fil) => {
-    if (fil === undefined || fil === null) {
-        return 0
-    }
-    return Number(fil) / 1000000000000000000
 }
 
 

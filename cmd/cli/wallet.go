@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/filecoin-project/go-address"
-	wallet "github.com/filecoin-project/venus-wallet/storage/wallet"
 	"github.com/filecoin-project/venus/venus-shared/types"
+	wallet "github.com/filecoin-project/venus/venus-shared/types/wallet"
 	"github.com/ipfs-force-community/venus-tool/service"
 	"github.com/urfave/cli/v2"
 )

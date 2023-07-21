@@ -21,15 +21,13 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/urfave/cli/v2"
 
-	"github.com/filecoin-project/venus-messager/cli/tablewriter"
 	"github.com/filecoin-project/venus/venus-shared/types"
 	"github.com/filecoin-project/venus/venus-shared/types/market"
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
+	"github.com/ipfs-force-community/sophon-messager/cli/tablewriter"
 )
 
 var StringToStorageState = map[string]storagemarket.StorageDealStatus{}
-
-var DefaultServerAddr = "http://localhost:12580"
 
 func init() {
 	for state, stateStr := range storagemarket.DealStates {
@@ -40,16 +38,13 @@ func init() {
 var FlagServer = &cli.StringFlag{
 	Name:  "server-addr",
 	Usage: "Specify the server address to connect when using cli",
-	Value: "127.0.0.1:12580",
+	Value: "http://127.0.0.1:8090",
 }
 
 func getAPI(ctx *cli.Context) (service.IService, error) {
 	ret := &service.IServiceStruct{}
 
-	serverAddr := DefaultServerAddr
-	if ctx.IsSet(FlagServer.Name) {
-		serverAddr = "http://" + ctx.String(FlagServer.Name)
-	}
+	serverAddr := ctx.String(FlagServer.Name)
 
 	cli, err := client.New(serverAddr)
 	if err != nil {

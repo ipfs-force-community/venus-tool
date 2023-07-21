@@ -122,14 +122,14 @@ var msgSendCmd = &cli.Command{
 		req.GasOverEstimation = cctx.Float64("gas-over-estimation")
 
 		if cctx.IsSet("params-json") {
-			req.Params.Data = []byte(cctx.String("params-json"))
+			req.Params.Data =cctx.String("params-json")
 			req.Params.EncType = service.EncJson
 		}
 		if cctx.IsSet("params-hex") {
 			if len(req.Params.Data) != 0 {
 				return fmt.Errorf("can only specify one of 'params-json' and 'params-hex'")
 			}
-			req.Params.Data = []byte(cctx.String("params-hex"))
+			req.Params.Data = cctx.String("params-hex")
 			req.Params.EncType = service.EncHex
 		}
 
@@ -195,7 +195,7 @@ var msgListCmd = &cli.Command{
 			Name:    "page-index",
 			Usage:   "pagination index, start from 1",
 			Aliases: []string{"i", "index"},
-			Value:   1,
+			Value:   0,
 		},
 		&cli.IntFlag{
 			Name:  "page-size",
@@ -277,8 +277,10 @@ if [--failed] or [--blocked] is set, [--state] will be ignored
 			params.State = []msgTypes.MessageState{msgTypes.MessageState(cctx.Int("state"))}
 
 			if cctx.IsSet("page-index") || cctx.IsSet("page-size") {
-				params.PageIndex = cctx.Int("page-index")
-				params.PageSize = cctx.Int("page-size")
+				pageIndex := cctx.Int("page-index")
+				pageSize := cctx.Int("page-size")
+				params.Offset = uint(pageIndex) * uint(pageSize)
+				params.Limit = uint(pageSize)
 			}
 
 			return params, nil

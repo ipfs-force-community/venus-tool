@@ -1,0 +1,87 @@
+name: test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '**'
+
+
+jobs:
+  check:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.19
+          cache: true
+
+      - name: vars
+        id: vars
+        run: |
+          export commit=$(git rev-parse HEAD)
+          export short=$(git rev-parse --short HEAD)
+          export github_tag=${{github.ref_name}}
+          export tag=$github_tag
+          export branch=$github_tag
+          export git_message=$(git rev-list --format=%s --max-count=1 HEAD | tail +2)
+          export repo_name=${GITHUB_REPOSITORY##*/}
+          export artifact_name=${repo_name}_$(git rev-parse --short HEAD).tar.gz
+          export job_url=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+
+          echo "::set-output name=commit::$commit"
+          echo "::set-output name=short::$short"
+          echo "::set-output name=github_tag::$github_tag"
+          echo "::set-output name=git_message::$git_message"
+          echo "::set-output name=repo_name::$repo_name"
+          echo "::set-output name=branch::$branch"
+          echo "::set-output name=tag::$tag"
+          echo "::set-output name=artifact_name::$artifact_name"
+          echo "::set-output name=job_url::$job_url"
+
+      - name: show environment
+        run: |
+          echo bin_name = ${{inputs.bin_name}}
+          echo has_ffi = ${{inputs.has_ffi}}
+          echo event = ${{github.event_name}}
+          echo github_repository: $GITHUB_REPOSITORY
+          echo vars.commit = ${{steps.vars.outputs.commit}}
+          echo vars.short_commit = ${{steps.vars.outputs.short}}
+          echo vars.github_tag = ${{steps.vars.outputs.github_tag}}
+          echo vars.git_message = "${{steps.vars.outputs.git_message}}"
+          echo vars.repo_name =  ${{steps.vars.outputs.repo_name}}
+          echo vars.branch = ${{steps.vars.outputs.branch}}
+          echo vars.tag = ${{steps.vars.outputs.tag}}
+          echo vars.artifact_name = ${{steps.vars.outputs.artifact_name}}
+          echo github.ref = ${{github.ref}}
+          echo github.ref_name = ${{github.ref_name}}
+          echo vars.job_url = ${{steps.vars.outputs.job_url}}
+
+
+
+      - name: install deps
+        run: sudo apt-get -o Acquire::Retries=3 update && sudo apt-get -o Acquire::Retries=3 install make ftp git bzr curl wget  hwloc libhwloc-dev mesa-opencl-icd ocl-icd-opencl-dev -y
+
+      - name: Lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.50.0
+          make lint
+
+      - name: Detect changes
+        run: |
+          go mod tidy
+          git status --porcelain
+          test -z "$(git status --porcelain)"
+
+      - name: Build
+        run: |
+          go clean --modcache && make
+          mkdir ./release
+          mkdir ./release/dashboard
+          mv ./venus-tool ./release
+          mv ./dashboard/build ./release/dashboard

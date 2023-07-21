@@ -87,7 +87,7 @@ func (s *ServiceImpl) MsigPropose(ctx context.Context, req *MultisigProposeReq) 
 		case EncHex:
 			return req.DecodeHex()
 		case EncNull:
-			return req.Data, nil
+			return []byte(req.Data), nil
 		default:
 			return nil, fmt.Errorf("unknown encoding type: %s", req.EncType)
 		}

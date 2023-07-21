@@ -3,11 +3,13 @@ package service
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-bitfield"
+	rlepluslazy "github.com/filecoin-project/go-bitfield/rle"
 	"github.com/filecoin-project/go-fil-markets/retrievalmarket"
 	"github.com/filecoin-project/go-fil-markets/storagemarket"
 	"github.com/filecoin-project/go-state-types/abi"
@@ -19,9 +21,12 @@ import (
 	"github.com/filecoin-project/specs-actors/v2/actors/builtin/power"
 	"github.com/filecoin-project/venus/pkg/constants"
 	"github.com/filecoin-project/venus/venus-shared/actors"
+	"github.com/filecoin-project/venus/venus-shared/actors/adt"
 	"github.com/filecoin-project/venus/venus-shared/actors/builtin/miner"
+	"github.com/filecoin-project/venus/venus-shared/blockstore"
 	"github.com/filecoin-project/venus/venus-shared/types"
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
+	cbor "github.com/ipfs/go-ipld-cbor"
 )
 
 func (s *ServiceImpl) MinerCreate(ctx context.Context, params *MinerCreateReq) (address.Address, error) {
@@ -102,31 +107,57 @@ func (s *ServiceImpl) MinerSetRetrievalAsk(ctx context.Context, p *MinerSetRetri
 	return s.Market.MarketSetRetrievalAsk(ctx, p.Miner, &p.Ask)
 }
 
-func (s *ServiceImpl) MinerInfo(ctx context.Context, mAddr address.Address) (*MinerInfoResp, error) {
+func (s *ServiceImpl) MinerInfo(ctx context.Context, addr Address) (*MinerInfoResp, error) {
+	mAddr := addr.Address
+
+	// load miner state
+	mact, err := s.Node.StateGetActor(ctx, mAddr, types.EmptyTSK)
+	if err != nil {
+		return nil, err
+	}
+
+	store := adt.WrapStore(ctx, cbor.NewCborStore(blockstore.NewAPIBlockstore(s.Node)))
+	mst, err := miner.Load(store, mact)
+	if err != nil {
+		return nil, fmt.Errorf("load miner state: %w", err)
+	}
+
+	lockFund, err := mst.LockedFunds()
+	if err != nil {
+		return nil, err
+	}
+
 	mi, err := s.Node.StateMinerInfo(ctx, mAddr, types.EmptyTSK)
 	if err != nil {
-		return nil, fmt.Errorf("get miner(%s) info failed: %s", mAddr, err)
+		return nil, fmt.Errorf("get miner(%s) info failed: %w", mAddr, err)
 	}
 	availBalance, err := s.Node.StateMinerAvailableBalance(ctx, mAddr, types.EmptyTSK)
 	if err != nil {
-		return nil, fmt.Errorf("get miner(%s) available balance failed: %s", mAddr, err)
+		return nil, fmt.Errorf("get miner(%s) available balance failed: %w", mAddr, err)
 	}
 
 	power, err := s.Node.StateMinerPower(ctx, mAddr, types.EmptyTSK)
 	if err != nil {
-		return nil, fmt.Errorf("get miner(%s) power failed: %s", mAddr, err)
+		return nil, fmt.Errorf("get miner(%s) power failed: %w", mAddr, err)
 	}
 
 	deadline, err := s.Node.StateMinerProvingDeadline(ctx, mAddr, types.EmptyTSK)
 	if err != nil {
-		return nil, fmt.Errorf("get miner(%s) deadline failed: %s", mAddr, err)
+		return nil, fmt.Errorf("get miner(%s) deadline failed: %w", mAddr, err)
+	}
+
+	marketBalance, err := s.Node.StateMarketBalance(ctx, mAddr, types.EmptyTSK)
+	if err != nil {
+		return nil, err
 	}
 
 	return &MinerInfoResp{
-		MinerInfo:    mi,
-		MinerPower:   *power,
-		AvailBalance: availBalance,
-		Deadline:     *deadline,
+		MinerInfo:     mi,
+		MinerPower:    *power,
+		AvailBalance:  availBalance,
+		Deadline:      *deadline,
+		LockFunds:     lockFund,
+		MarketBalance: marketBalance,
 	}, nil
 }
 
@@ -602,4 +633,93 @@ func (s *ServiceImpl) SectorGet(ctx context.Context, req SectorGetReq) ([]*Secto
 	}
 
 	return ret, nil
+}
+
+func (s *ServiceImpl) SectorList(ctx context.Context, req SectorListReq) ([]*types.SectorOnChainInfo, error) {
+	mAddr := req.Miner
+
+	// load miner state
+	mact, err := s.Node.StateGetActor(ctx, mAddr, types.EmptyTSK)
+	if err != nil {
+		return nil, err
+	}
+
+	store := adt.WrapStore(ctx, cbor.NewCborStore(blockstore.NewAPIBlockstore(s.Node)))
+	mst, err := miner.Load(store, mact)
+	if err != nil {
+		return nil, fmt.Errorf("load miner state: %w", err)
+	}
+
+	pageSize, pageIndex := req.PageSize, req.PageIndex
+	if pageSize == 0 {
+		pageSize = 20
+	}
+	start := pageSize * pageIndex
+
+	allocated, err := s.Node.StateMinerAllocated(ctx, mAddr, types.EmptyTSK)
+	if err != nil {
+		return nil, fmt.Errorf("get miner(%s) allocated sectors failed: %s", mAddr, err)
+	}
+
+	iterator, err := allocated.BitIterator()
+	if err != nil {
+		return nil, fmt.Errorf("get iterator to range allocated sectors of miner(%s) failed: %s", mAddr, err)
+	}
+
+	ret := make([]*types.SectorOnChainInfo, 0)
+	sectorNums := make([]uint64, 0, pageSize)
+
+	n, err := iterator.Nth(uint64(start))
+	if errors.Is(err, rlepluslazy.ErrEndOfIterator) {
+		return ret, nil
+	} else if err != nil {
+		return nil, fmt.Errorf("get %dth sector number allocated of miner(%s) failed: %s", start, mAddr, err)
+	}
+	sectorNums = append(sectorNums, n)
+
+	for i := 1; i < pageSize; i++ {
+		if iterator.HasNext() {
+			n, err := iterator.Next()
+			if err != nil {
+				return nil, fmt.Errorf("get %dth sector number allocated of miner(%s) failed: %s", start+i, mAddr, err)
+			}
+			sectorNums = append(sectorNums, n)
+		}
+	}
+	log.Infof("sector numbers of miner(%s): %v", mAddr, sectorNums)
+
+	for _, num := range sectorNums {
+		sector, err := mst.GetSector(abi.SectorNumber(num))
+		if sector == nil {
+			if err != nil {
+				log.Warnf("get sector(%d) info failed: %s", num, err)
+			} else {
+				log.Warnf("sector(%s) not found")
+			}
+			ret = append(ret, &types.SectorOnChainInfo{
+				SectorNumber: abi.SectorNumber(num),
+			})
+			continue
+		}
+		ret = append(ret, sector)
+	}
+	return ret, nil
+}
+
+func (s *ServiceImpl) SectorSum(ctx context.Context, miner Address) (uint64, error) {
+	allocated, err := s.Node.StateMinerAllocated(ctx, miner.Address, types.EmptyTSK)
+	if err != nil {
+		return 0, fmt.Errorf("get miner(%s) allocated sectors failed: %s", miner, err)
+	}
+
+	return allocated.Count()
+}
+
+func (s *ServiceImpl) MinerList(ctx context.Context) ([]address.Address, error) {
+	return s.listMiner(ctx)
+}
+
+func (s *ServiceImpl) MinerWinCount(ctx context.Context, req *MinerWinCountReq) (MinerWinCountResp, error) {
+	// todo: cache the result
+	return s.Miner.CountWinners(ctx, req.Miners, req.From, req.To)
 }

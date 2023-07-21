@@ -3,18 +3,19 @@ package utils
 import "strings"
 
 func ParseAPI(s string) (addr, token string) {
+	// expect token:addr or addr
 	if s == "" {
 		return
 	}
-	split := strings.Split(s, ":")
-	if len(split) == 1 {
-		addr = split[0]
-		return
+
+	if strings.HasPrefix(s, "http") || strings.HasPrefix(s, "ip4") || strings.HasPrefix(s, "ip6") || strings.HasPrefix(s, "unix") {
+		return s, ""
 	}
-	if len(split) == 2 {
-		token = split[0]
-		addr = split[1]
-		return
+
+	before, after, exist := strings.Cut(s, ":")
+	if !exist {
+		return s, ""
+	} else {
+		return after, before
 	}
-	return
 }

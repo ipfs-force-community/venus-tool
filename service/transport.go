@@ -14,10 +14,11 @@ import (
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/dline"
 	power2 "github.com/filecoin-project/specs-actors/v2/actors/builtin/power"
-	lminer "github.com/filecoin-project/venus/venus-shared/actors/builtin/miner"
+	"github.com/filecoin-project/venus/venus-shared/actors/builtin/miner"
 	"github.com/filecoin-project/venus/venus-shared/types"
 	marketTypes "github.com/filecoin-project/venus/venus-shared/types/market"
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
+	minerTypes "github.com/ipfs-force-community/sophon-miner/types"
 	"github.com/ipfs-force-community/venus-tool/utils"
 	"github.com/ipfs/go-cid"
 	cbg "github.com/whyrusleeping/cbor-gen"
@@ -25,18 +26,21 @@ import (
 
 type MsgResp struct {
 	msgTypes.Message
-	MethodName string
+	MethodName   string
+	ParamsInJson json.RawMessage
 }
 
 func (mr *MsgResp) MarshalJSON() ([]byte, error) {
 	type Msg msgTypes.Message
 	type temp struct {
 		Msg
-		MethodName string
+		MethodName   string
+		ParamsInJson json.RawMessage
 	}
 	return json.Marshal(temp{
-		Msg:        Msg(mr.Message),
-		MethodName: mr.MethodName,
+		Msg:          Msg(mr.Message),
+		MethodName:   mr.MethodName,
+		ParamsInJson: mr.ParamsInJson,
 	})
 }
 
@@ -64,7 +68,7 @@ type MsgSendReq struct {
 type EncodingType string
 
 type EncodedParams struct {
-	Data    []byte
+	Data    string
 	EncType EncodingType
 }
 
@@ -72,6 +76,8 @@ const (
 	EncNull EncodingType = ""
 	EncHex  EncodingType = "hex"
 	EncJson EncodingType = "json"
+	// base64 is the default encoder for json marshal
+	EncBase64 EncodingType = "base64"
 )
 
 func (ep *EncodedParams) DecodeJSON(actorCode cid.Cid, method abi.MethodNum) (out []byte, err error) {
@@ -81,7 +87,7 @@ func (ep *EncodedParams) DecodeJSON(actorCode cid.Cid, method abi.MethodNum) (ou
 	}
 
 	p := reflect.New(methodMeta.Params.Elem()).Interface().(cbg.CBORMarshaler)
-	if err := json.Unmarshal(ep.Data, p); err != nil {
+	if err := json.Unmarshal([]byte(ep.Data), p); err != nil {
 		return nil, fmt.Errorf("unmarshaling input into params type: %w", err)
 	}
 
@@ -107,6 +113,10 @@ type MsgDecodeParamReq struct {
 	Params []byte
 }
 
+type MsgID struct {
+	ID string
+}
+
 type AddrOperateType string
 
 var (
@@ -116,8 +126,10 @@ var (
 	SetAddress       AddrOperateType = "set"
 )
 
-type AddrsResp msgTypes.Address
-
+type AddrsResp struct {
+	msgTypes.Address
+	types.Actor
+}
 type AddrsOperateReq struct {
 	msgTypes.AddressSpec
 	Operate      AddrOperateType
@@ -165,8 +177,10 @@ type MinerCreateReq struct {
 type MinerInfoResp struct {
 	types.MinerInfo
 	types.MinerPower
-	AvailBalance abi.TokenAmount
-	Deadline     dline.Info
+	AvailBalance  abi.TokenAmount
+	Deadline      dline.Info
+	LockFunds     miner.LockedFunds
+	MarketBalance types.MarketBalance
 }
 
 type MinerSetOwnerReq struct {
@@ -190,6 +204,14 @@ type MinerWithdrawBalanceReq struct {
 	Amount abi.TokenAmount
 }
 
+type MinerWinCountReq struct {
+	Miners []address.Address
+	From   abi.ChainEpoch
+	To     abi.ChainEpoch
+}
+
+type MinerWinCountResp []minerTypes.CountWinners
+
 type SectorExtendReq struct {
 	Miner         address.Address
 	SectorNumbers []abi.SectorNumber
@@ -203,7 +225,13 @@ type SectorGetReq struct {
 
 type SectorResp struct {
 	types.SectorOnChainInfo
-	SectorLocation lminer.SectorLocation
+	SectorLocation miner.SectorLocation
+}
+
+type SectorListReq struct {
+	Miner     address.Address
+	PageIndex int
+	PageSize  int
 }
 
 type MultisigCreateReq struct {
@@ -252,3 +280,50 @@ type WalletSignRecordResp struct {
 	types.SignRecord
 	Detail json.RawMessage
 }
+
+type ThreadStopReq struct {
+	WorkerName string
+	Index      uint64
+}
+
+type ThreadStartReq struct {
+	WorkerName string
+	Index      uint64
+	State      *string
+}
+
+// The param which bind with Query or Uri in gin must be a struct
+type Address struct {
+	Address address.Address
+}
+
+type Cid struct {
+	Cid string
+}
+
+type DataType string
+
+const (
+	Unknown DataType = ""
+	Wallet  DataType = "wallet"
+	Miner   DataType = "miner"
+	Message DataType = "message"
+	Deal    DataType = "deal"
+)
+
+type SearchReq struct {
+	Key string
+}
+
+type SearchResp struct {
+	Type DataType
+	Data json.RawMessage
+}
+
+type MinedBlockListReq struct {
+	Miner  []address.Address
+	Limit  int
+	Offset int
+}
+
+type MinedBlockListResp []minerTypes.MinedBlock

@@ -3,25 +3,35 @@ package service
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
+	"github.com/filecoin-project/venus/venus-shared/actors/builtin"
 
-	w_cli "github.com/filecoin-project/venus-wallet/cli"
 	"github.com/filecoin-project/venus/pkg/constants"
+	"github.com/filecoin-project/venus/pkg/state"
 	nodeV1 "github.com/filecoin-project/venus/venus-shared/api/chain/v1"
-	"github.com/filecoin-project/venus/venus-shared/api/market"
+	market "github.com/filecoin-project/venus/venus-shared/api/market/v1"
 	"github.com/filecoin-project/venus/venus-shared/api/messager"
+	"github.com/filecoin-project/venus/venus-shared/blockstore"
 	"github.com/filecoin-project/venus/venus-shared/types"
 	marketTypes "github.com/filecoin-project/venus/venus-shared/types/market"
 	msgTypes "github.com/filecoin-project/venus/venus-shared/types/messager"
+	walletTypes "github.com/filecoin-project/venus/venus-shared/types/wallet"
+	mkRepo "github.com/ipfs-force-community/droplet/v2/models/repo"
+	minerTypes "github.com/ipfs-force-community/sophon-miner/types"
 	"github.com/ipfs/go-cid"
+	cbor "github.com/ipfs/go-ipld-cbor"
 	logging "github.com/ipfs/go-log"
 	cbg "github.com/whyrusleeping/cbor-gen"
 
+	"github.com/ipfs-force-community/venus-tool/dep"
 	"github.com/ipfs-force-community/venus-tool/pkg/multisig"
 	"github.com/ipfs-force-community/venus-tool/utils"
 )
@@ -32,12 +42,12 @@ type ServiceImpl struct {
 	Messager messager.IMessager
 	Market   market.IMarket
 	Node     nodeV1.FullNode
-	Wallet   IWallet
+	Wallet   dep.IWallet
+	Auth     dep.IAuth
+	Damocles *dep.Damocles
+	Miner    dep.Miner
 
 	Multisig multisig.IMultiSig
-
-	Wallets []address.Address
-	Miners  []address.Address
 }
 
 var _ IService = &ServiceImpl{}
@@ -75,10 +85,15 @@ func (s *ServiceImpl) ChainGetNetworkName(ctx context.Context) (types.NetworkNam
 }
 
 func (s *ServiceImpl) GetDefaultWallet(ctx context.Context) (address.Address, error) {
-	if len(s.Wallets) == 0 {
+	wallets, err := s.Wallet.WalletList(ctx)
+	if err != nil {
+		return address.Undef, err
+	}
+
+	if len(wallets) == 0 {
 		return address.Undef, fmt.Errorf("no wallet configured")
 	}
-	return s.Wallets[0], nil
+	return wallets[0], nil
 }
 
 func (s *ServiceImpl) MsgSend(ctx context.Context, req *MsgSendReq) (string, error) {
@@ -92,16 +107,22 @@ func (s *ServiceImpl) MsgSend(ctx context.Context, req *MsgSendReq) (string, err
 			return req.DecodeJSON(act.Code, method)
 		case EncHex:
 			return req.DecodeHex()
-		case EncNull:
-			return req.Data, nil
+		case EncBase64:
+			de, err := base64.StdEncoding.DecodeString(req.Data)
+			if err != nil {
+				return nil, err
+			}
+			return de, nil
 		default:
 			return nil, fmt.Errorf("unknown encoding type: %s", req.EncType)
 		}
 	}
 
+	log.Infof("msg send: from(%s), to(%s), value(%s), method(%d), params(%s)", req.From, req.To, req.Value, req.Method, req.Params)
+
 	decParams, err := dec(req.Params, req.To, req.Method)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("decode params failed: %s", err)
 	}
 
 	msg := &types.Message{
@@ -143,7 +164,11 @@ func (s *ServiceImpl) MsgQuery(ctx context.Context, params *MsgQueryReq) ([]*Msg
 		msgs = append(msgs, msg)
 	} else if params.IsBlocked {
 		if len(params.From) == 0 {
-			params.From = s.Wallets
+			wallets, err := s.Wallet.WalletList(ctx)
+			if err != nil {
+				return nil, err
+			}
+			params.From = wallets
 		}
 		for _, from := range params.From {
 			msgsT, err := s.Messager.ListBlockedMessage(ctx, from, params.BlockedTime)
@@ -166,7 +191,8 @@ func (s *ServiceImpl) MsgQuery(ctx context.Context, params *MsgQueryReq) ([]*Msg
 	}
 
 	var ret []*MsgResp
-	for _, msg := range msgs {
+	for idx := range msgs {
+		msg := msgs[idx]
 		resp := &MsgResp{
 			Message: *msg,
 		}
@@ -181,10 +207,65 @@ func (s *ServiceImpl) MsgQuery(ctx context.Context, params *MsgQueryReq) ([]*Msg
 		}
 		resp.MethodName = methodMeta.Name
 
+		// decode params
+		if len(msg.Params) != 0 {
+			paramsRV := methodMeta.Params
+			if paramsRV.Kind() == reflect.Ptr {
+				paramsRV = paramsRV.Elem()
+			}
+			params := reflect.New(paramsRV).Interface().(cbg.CBORUnmarshaler)
+			if err := params.UnmarshalCBOR(bytes.NewReader(msg.Params)); err != nil {
+				log.Warnf("unmarshal params(%s) failed: %s", msg.Params, err)
+			}
+			p, err := json.MarshalIndent(params, "", "  ")
+			if err != nil {
+				log.Warnf("marshal params(%s) failed: %s", msg.Params, err)
+			}
+			resp.ParamsInJson = p
+		}
+
 		ret = append(ret, resp)
 	}
 
 	return ret, nil
+}
+
+func (s *ServiceImpl) Msg(ctx context.Context, id MsgID) (*MsgResp, error) {
+	msg, err := s.Messager.GetMessageByUid(ctx, id.ID)
+	if err != nil {
+		return nil, fmt.Errorf("fail to get message by uid(%s): %s", id.ID, err)
+	}
+	ret := &MsgResp{
+		Message: *msg,
+	}
+	act, err := s.Node.GetActor(ctx, msg.To)
+	if err != nil {
+		log.Warnf("get actor failed: %s", err)
+	}
+	methodMeta, err := utils.GetMethodMeta(act.Code, msg.Method)
+	if err != nil {
+		log.Warnf("get method meta failed: %s", err)
+	}
+	ret.MethodName = methodMeta.Name
+
+	// decode params
+	if len(msg.Params) != 0 {
+		paramsRV := methodMeta.Params
+		if paramsRV.Kind() == reflect.Ptr {
+			paramsRV = paramsRV.Elem()
+		}
+		params := reflect.New(paramsRV).Interface().(cbg.CBORUnmarshaler)
+		if err := params.UnmarshalCBOR(bytes.NewReader(msg.Params)); err != nil {
+			log.Warnf("unmarshal params(%s) failed: %s", msg.Params, err)
+		}
+		p, err := json.MarshalIndent(params, "", "  ")
+		if err != nil {
+			log.Warnf("marshal params(%s) failed: %s", msg.Params, err)
+		}
+		ret.ParamsInJson = p
+	}
+
+	return ret, err
 }
 
 func (s *ServiceImpl) MsgReplace(ctx context.Context, params *MsgReplaceReq) (cid.Cid, error) {
@@ -242,6 +323,10 @@ func (s *ServiceImpl) MsgGetMethodName(ctx context.Context, req *MsgGetMethodNam
 	return methodMeta.Name, nil
 }
 
+func (s *ServiceImpl) MsgMarkBad(ctx context.Context, req *MsgID) error {
+	return s.Messager.MarkBadMessage(ctx, req.ID)
+}
+
 func (s *ServiceImpl) AddrOperate(ctx context.Context, params *AddrsOperateReq) error {
 	has, err := s.Messager.HasAddress(ctx, params.Address)
 	if err != nil {
@@ -273,22 +358,91 @@ func (s *ServiceImpl) AddrOperate(ctx context.Context, params *AddrsOperateReq) 
 	}
 }
 
-func (s *ServiceImpl) AddrList(ctx context.Context) ([]*AddrsResp, error) {
-	addrs, err := s.Messager.ListAddress(ctx)
+func (s *ServiceImpl) AddrInfo(ctx context.Context, addr Address) (*AddrsResp, error) {
+	if addr.Address.Empty() {
+		return nil, fmt.Errorf("param error: address is empty")
+	}
+	var ret AddrsResp
+	actorInfo, err := s.Node.GetActor(ctx, addr.Address)
 	if err != nil {
 		return nil, err
 	}
-	ret := make([]*AddrsResp, 0, len(addrs))
-	for _, addr := range addrs {
-		ret = append(ret, (*AddrsResp)(addr))
+	ret.Actor = *actorInfo
+
+	addrInfo, err := s.Messager.GetAddress(ctx, addr.Address)
+	if err != nil && strings.Contains(err.Error(), "not found") {
+		ret.Address = msgTypes.Address{}
+	} else if err != nil {
+		return nil, err
+	} else {
+		ret.Address = *addrInfo
 	}
+
+	return &ret, nil
+
+}
+
+func (s *ServiceImpl) AddrList(ctx context.Context) ([]*AddrsResp, error) {
+	addrInfos, err := s.Messager.ListAddress(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	addrs, err := s.Wallet.WalletList(ctx)
+	if err != nil {
+		return nil, err
+	}
+	allInfos := make([]*msgTypes.Address, 0, len(addrs)+len(addrInfos))
+	for _, addr := range addrs {
+		// if addr is not in addrInfos, add it
+		var exist bool
+		for _, addrInfo := range addrInfos {
+			if addrInfo.Addr == addr {
+				exist = true
+				break
+			}
+		}
+		if !exist {
+			addrInfo, err := s.Messager.GetAddress(ctx, addr)
+			if err != nil {
+				log.Warnf("get address(%s) info failed: %s", addr, err)
+				addrInfo = &msgTypes.Address{
+					ID:   types.NewUUID(),
+					Addr: addr,
+				}
+			}
+			allInfos = append(allInfos, addrInfo)
+		}
+	}
+
+	allInfos = append(allInfos, addrInfos...)
+
+	ret := make([]*AddrsResp, 0, len(allInfos))
+	for _, addrInfo := range allInfos {
+		actorInfo, err := s.Node.GetActor(ctx, addrInfo.Addr)
+		if err != nil {
+			log.Warnf("get address(%s) actor failed: %s", addrInfo.Addr, err)
+		}
+		ret = append(ret, &AddrsResp{
+			Address: *addrInfo,
+			Actor:   *actorInfo,
+		})
+	}
+
 	return ret, err
 }
 
-func (s *ServiceImpl) StorageDealList(ctx context.Context, miner address.Address) ([]marketTypes.MinerDeal, error) {
-	if miner != address.Undef {
+func (s *ServiceImpl) WalletList(ctx context.Context) ([]address.Address, error) {
+	return s.Wallet.WalletList(ctx)
+}
 
-		deals, err := s.Market.MarketListIncompleteDeals(ctx, miner)
+func (s *ServiceImpl) StorageDealList(ctx context.Context, miner Address) ([]marketTypes.MinerDeal, error) {
+	if miner.Address != address.Undef {
+		deals, err := s.Market.MarketListIncompleteDeals(ctx, &marketTypes.StorageDealQueryParams{Miner: miner.Address,
+			Page: marketTypes.Page{
+				Offset: 0, Limit: 100,
+			},
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -296,8 +450,14 @@ func (s *ServiceImpl) StorageDealList(ctx context.Context, miner address.Address
 	}
 
 	ret := make([]marketTypes.MinerDeal, 0)
-	for _, m := range s.Miners {
-		deals, err := s.Market.MarketListIncompleteDeals(ctx, m)
+	miners, err := s.listMiner(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, m := range miners {
+
+		deals, err := s.Market.MarketListIncompleteDeals(ctx, &marketTypes.StorageDealQueryParams{Miner: m})
 		if err != nil {
 			return nil, err
 		}
@@ -306,12 +466,20 @@ func (s *ServiceImpl) StorageDealList(ctx context.Context, miner address.Address
 	return ret, nil
 }
 
+func (s *ServiceImpl) StorageDeal(ctx context.Context, proposalCid Cid) (*marketTypes.MinerDeal, error) {
+	id, err := cid.Parse(proposalCid.Cid)
+	if err != nil {
+		return nil, fmt.Errorf("parse cid failed: %w", err)
+	}
+	return s.Market.MarketGetDeal(ctx, id)
+}
+
 func (s *ServiceImpl) StorageDealUpdateState(ctx context.Context, req StorageDealUpdateStateReq) error {
 	return s.Market.UpdateStorageDealStatus(ctx, req.ProposalCid, req.State, req.PieceStatus)
 }
 
 func (s *ServiceImpl) RetrievalDealList(ctx context.Context) ([]marketTypes.ProviderDealState, error) {
-	return s.Market.MarketListRetrievalDeals(ctx)
+	return s.Market.MarketListRetrievalDeals(ctx, &marketTypes.RetrievalDealQueryParams{})
 }
 
 func (s *ServiceImpl) WalletSignRecordQuery(ctx context.Context, req *WalletSignRecordQueryReq) ([]WalletSignRecordResp, error) {
@@ -321,7 +489,7 @@ func (s *ServiceImpl) WalletSignRecordQuery(ctx context.Context, req *WalletSign
 	}
 	ret := make([]WalletSignRecordResp, 0, len(records))
 	for _, r := range records {
-		detail, err := w_cli.GetDetailInJsonRawMessage(&r)
+		detail, err := GetDetailInJsonRawMessage(&r)
 		if err != nil {
 			return nil, err
 		}
@@ -332,4 +500,178 @@ func (s *ServiceImpl) WalletSignRecordQuery(ctx context.Context, req *WalletSign
 	}
 
 	return ret, nil
+}
+
+func (s *ServiceImpl) Search(ctx context.Context, req SearchReq) (*SearchResp, error) {
+	key := req.Key
+	if key == "" {
+		return nil, fmt.Errorf("param error: key is empty")
+	}
+
+	dataType := Unknown
+
+	// judge key type
+	if addr, err := address.NewFromString(key); err == nil {
+		// key is address
+		// address can be a wallet address or miner address
+		head, err := s.Node.ChainHead(ctx)
+		if err != nil {
+			return nil, err
+		}
+		view := state.NewViewer(cbor.NewCborStore(blockstore.NewAPIBlockstore(s.Node))).StateView(head.ParentState())
+
+		actor, err := view.LoadActor(ctx, addr)
+		if err != nil {
+			return nil, err
+		}
+
+		if builtin.IsStorageMinerActor(actor.Code) {
+			// miner address
+			dataType = Miner
+		} else if builtin.IsAccountActor(actor.Code) {
+			// wallet address
+			dataType = Wallet
+		} else {
+			return nil, fmt.Errorf("address(%s) is not a miner or wallet address", addr)
+		}
+	} else {
+		if mycid, err := cid.Decode(key); err == nil {
+			// key is cid
+			// cid can be proposal cid or messager id
+			// try market
+			_, err := s.Market.MarketGetDeal(ctx, mycid)
+			if err == nil {
+				// market deal
+				dataType = Deal
+			} else if !strings.Contains(err.Error(), mkRepo.ErrNotFound.Error()) {
+				return nil, fmt.Errorf("check deal by cid(%s) failed: %s", key, err)
+			}
+		}
+
+		// try messager
+		has, err := s.Messager.HasMessageByUid(ctx, key)
+		if err != nil {
+			return nil, fmt.Errorf("search message by uid(%s) failed: %s", key, err)
+		}
+		if has {
+			dataType = Message
+		}
+	}
+
+	if dataType == Unknown {
+		return nil, fmt.Errorf("unknown key type")
+	}
+
+	ret := &SearchResp{
+		Type: dataType,
+	}
+
+	switch dataType {
+	case Miner:
+		addr, _ := address.NewFromString(key) //lint:ignore SA1019 ignore err
+		minerInfo, err := s.MinerInfo(ctx, Address{Address: addr})
+		if err != nil {
+			return nil, err
+		}
+		b, err := json.Marshal(minerInfo)
+		if err != nil {
+			return nil, err
+		}
+		ret.Data = json.RawMessage(b)
+	case Wallet:
+		addr, _ := address.NewFromString(key) //lint:ignore SA1019 ignore err
+		walletInfo, err := s.AddrInfo(ctx, Address{Address: addr})
+		if err != nil {
+			return nil, err
+		}
+		b, err := json.Marshal(walletInfo)
+		if err != nil {
+			return nil, err
+		}
+		ret.Data = json.RawMessage(b)
+	case Deal:
+		deal, err := s.Market.MarketGetDeal(ctx, cid.MustParse(key))
+		if err != nil {
+			return nil, err
+		}
+		b, err := json.Marshal(deal)
+		if err != nil {
+			return nil, err
+		}
+		ret.Data = json.RawMessage(b)
+	case Message:
+		msg, err := s.Messager.GetMessageByUid(ctx, key)
+		if err != nil {
+			return nil, fmt.Errorf("get message by uid %s error: %s", key, err)
+		}
+		b, err := json.Marshal(msg)
+		if err != nil {
+			return nil, err
+		}
+		ret.Data = json.RawMessage(b)
+	}
+
+	return ret, nil
+}
+
+func (s *ServiceImpl) MinedBlockList(ctx context.Context, req MinedBlockListReq) (MinedBlockListResp, error) {
+	ret, err := s.Miner.ListBlocks(ctx, &minerTypes.BlocksQueryParams{
+		Miners: req.Miner,
+		Limit:  req.Limit,
+		Offset: req.Offset,
+	})
+	if err != nil && !strings.Contains(err.Error(), "not support") {
+		return MinedBlockListResp{}, err
+	}
+	return ret, nil
+}
+
+func (s *ServiceImpl) listMiner(ctx context.Context) ([]address.Address, error) {
+	userName, err := s.Auth.GetUserName(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	miners, err := s.Auth.ListMiners(ctx, userName)
+	if err != nil {
+		return nil, err
+	}
+
+	ret := make([]address.Address, 0, len(miners))
+	for _, m := range miners {
+		ret = append(ret, m.Miner)
+	}
+	return ret, nil
+}
+
+func GetDetailInJsonRawMessage(r *types.SignRecord) (json.RawMessage, error) {
+	t, ok := walletTypes.SupportedMsgTypes[r.Type]
+	if !ok {
+		return nil, fmt.Errorf("unsupported type %s", r.Type)
+	}
+
+	wrap := func(err error) error {
+		return fmt.Errorf("get detail: %w", err)
+	}
+
+	if r.RawMsg == nil {
+		return nil, wrap(fmt.Errorf("msg is nil"))
+	}
+
+	if r.Type == types.MTVerifyAddress || r.Type == types.MTUnknown {
+		// encode into hex string
+		output := struct {
+			Hex string
+		}{
+			Hex: hex.EncodeToString(r.RawMsg),
+		}
+
+		return json.Marshal(output)
+	}
+
+	signObj := reflect.New(t.Type).Interface()
+	if err := walletTypes.CborDecodeInto(r.RawMsg, signObj); err != nil {
+		return nil, fmt.Errorf("decode msg:%w", err)
+	}
+	return json.Marshal(signObj)
 }

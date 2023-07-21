@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 	"reflect"
+	"sort"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -29,14 +31,39 @@ func Register(route *gin.RouterGroup, src interface{}, dst interface{}) {
 	rvSrc := reflect.ValueOf(src)
 
 	routeInfos := Parse(dst)
-	for name, routeInfo := range routeInfos {
+
+	sort.Slice(routeInfos, func(a, b int) bool {
+		// sort by path, longer path first
+		pathA := routeInfos[a].Path
+		pathB := routeInfos[b].Path
+		lenA := len(pathA)
+		lenB := len(pathB)
+		if strings.Contains(pathA, "/:") {
+			lenA = strings.Index(pathA, "/:")
+		}
+		if strings.Contains(pathB, "/:") {
+			lenB = strings.Index(pathB, "/:")
+		}
+		return lenA > lenB
+	})
+
+	for _, routeInfo := range routeInfos {
+		name := routeInfo.Name
 		fn := rvSrc.MethodByName(name)
 		if !fn.IsValid() {
 			log.Infof("field %s has no method", name)
 			continue
 		}
 
-		route.Handle(routeInfo.Method, routeInfo.Path, Wrap(fn.Interface()))
+		// handle the path like /chain/head/:tipset into /chain/head and /chain/head/:tipset
+		// so that we can use the same handler for both
+		if strings.Contains(routeInfo.Path, "/:") {
+			route.Handle(routeInfo.Method, routeInfo.Path[:strings.Index(routeInfo.Path, "/:")], Wrap(fn.Interface()))
+			route.Handle(routeInfo.Method, routeInfo.Path, Wrap(fn.Interface()))
+		} else {
+			route.Handle(routeInfo.Method, routeInfo.Path, Wrap(fn.Interface()))
+		}
+
 	}
 }
 
@@ -47,7 +74,8 @@ type RouteInfo struct {
 	HandlerType reflect.Type
 }
 
-func Parse(dst interface{}) map[string]RouteInfo {
+// Parse extracts route info from a struct fill with api functions field and route comments
+func Parse(dst interface{}) []RouteInfo {
 	rtDst := reflect.TypeOf(dst)
 	rvDst := reflect.ValueOf(dst)
 	if rtDst.Kind() == reflect.Ptr {
@@ -58,7 +86,7 @@ func Parse(dst interface{}) map[string]RouteInfo {
 		panic("dst must be a struct or a pointer to a struct")
 	}
 
-	ret := make(map[string]RouteInfo)
+	ret := make([]RouteInfo, 0, rvDst.NumField())
 
 	for i := 0; i < rvDst.NumField(); i++ {
 		rtField := rvDst.Type().Field(i)
@@ -88,17 +116,18 @@ func Parse(dst interface{}) map[string]RouteInfo {
 			continue
 		}
 
-		ret[name] = RouteInfo{
+		ret = append(ret, RouteInfo{
 			Name:        name,
 			Method:      method,
 			Path:        path,
 			HandlerType: fn,
-		}
+		})
 	}
 
 	return ret
 }
 
+// Wrap wraps a function to a gin.HandlerFunc
 func Wrap(fn interface{}) gin.HandlerFunc {
 	fnType := reflect.TypeOf(fn)
 	fnValue := reflect.ValueOf(fn)
@@ -120,18 +149,26 @@ func Wrap(fn interface{}) gin.HandlerFunc {
 
 			if ctx.Request.ContentLength > 0 {
 				err = ctx.ShouldBindJSON(pInt)
+				if err != nil {
+					log.Warnf("try to bind with json failed: %s", err)
+				}
 			} else if ctx.Request.URL.RawQuery != "" {
 				err = ctx.ShouldBindQuery(pInt)
+				if err != nil {
+					log.Warnf("try to bind with query failed: %s", err)
+				}
 			}
 
 			if len(ctx.Params) > 0 {
 				terr := ctx.ShouldBindUri(pInt)
 				if terr != nil {
+					log.Warnf("try to bind with uri failed: %s", terr)
 					err = terr
 				}
 			}
 
 			if err != nil {
+				log.Warnf("parse args fail: %s", err)
 				ctx.JSON(http.StatusBadRequest, NewErrResponse(err))
 				return
 			}
@@ -143,6 +180,7 @@ func Wrap(fn interface{}) gin.HandlerFunc {
 
 		if errIdx != -1 {
 			if !out[errIdx].IsNil() {
+				log.Errorf("call %s failed: %s", fnType.Name(), out[errIdx].Interface().(error))
 				ctx.JSON(http.StatusInternalServerError, NewErrResponse(out[errIdx].Interface().(error)))
 				return
 			}
@@ -246,7 +284,9 @@ func Provide(cli Client, dst interface{}) {
 				outInt = reflect.New(fnType.Out(retIdx)).Interface()
 			}
 
-			err := cli.Do(ctx, info.Method, info.Path, inInt, outInt)
+			path := info.Path[:strings.Index(info.Path, ":")]
+
+			err := cli.Do(ctx, info.Method, path, inInt, outInt)
 			if errIdx != -1 {
 				out[errIdx] = reflect.ValueOf(&err).Elem()
 			}

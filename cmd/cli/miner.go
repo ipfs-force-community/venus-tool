@@ -25,6 +25,7 @@ var MinerCmd = &cli.Command{
 	Usage: "manage miner",
 	Subcommands: []*cli.Command{
 		minerInfoCmd,
+		minerListCmd,
 		minerCreate,
 		minerAskCmd,
 		minerDeadlineCmd,
@@ -466,12 +467,30 @@ var minerInfoCmd = &cli.Command{
 			return err
 		}
 
-		mi, err := api.MinerInfo(ctx, mAddr)
+		mi, err := api.MinerInfo(ctx, service.Address{Address: mAddr})
 		if err != nil {
 			return err
 		}
 
 		return printJSON(mi)
+	},
+}
+
+var minerListCmd = &cli.Command{
+	Name:  "list",
+	Usage: "list miners",
+	Action: func(cctx *cli.Context) error {
+		ctx := cctx.Context
+		api, err := getAPI(cctx)
+		if err != nil {
+			return err
+		}
+		miners, err := api.MinerList(ctx)
+		if err != nil {
+			return err
+		}
+
+		return printJSON(miners)
 	},
 }
 

@@ -2,9 +2,9 @@ package config
 
 import (
 	"bytes"
-	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 
 	"github.com/BurntSushi/toml"
 	"github.com/multiformats/go-multiaddr"
@@ -31,7 +31,7 @@ type ServerConfig struct {
 func LoadConfig(path string) (*Config, error) {
 	cfg := &Config{}
 	cfg.Path = path
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (c *Config) Save() error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(c.Path, b.Bytes(), 0644)
+	return os.WriteFile(c.Path, b.Bytes(), 0644)
 }
 
 func DefaultConfig() *Config {

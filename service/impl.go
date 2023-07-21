@@ -232,6 +232,9 @@ func (s *ServiceImpl) MsgQuery(ctx context.Context, params *MsgQueryReq) ([]*Msg
 
 func (s *ServiceImpl) Msg(ctx context.Context, id MsgID) (*MsgResp, error) {
 	msg, err := s.Messager.GetMessageByUid(ctx, id.ID)
+	if err != nil {
+		return nil, fmt.Errorf("fail to get message by uid(%s): %s", id.ID, err)
+	}
 	ret := &MsgResp{
 		Message: *msg,
 	}
@@ -412,9 +415,7 @@ func (s *ServiceImpl) AddrList(ctx context.Context) ([]*AddrsResp, error) {
 		}
 	}
 
-	for _, addrInfo := range addrInfos {
-		allInfos = append(allInfos, addrInfo)
-	}
+	allInfos = append(allInfos, addrInfos...)
 
 	ret := make([]*AddrsResp, 0, len(allInfos))
 	for _, addrInfo := range allInfos {

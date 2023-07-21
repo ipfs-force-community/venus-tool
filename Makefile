@@ -17,7 +17,7 @@ venus-tool: deps
 gen:
 	@go generate ./...
 
-lint:
+lint: deps
 	# @golangci-lint run
 
 test:

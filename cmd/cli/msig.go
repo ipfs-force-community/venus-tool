@@ -128,6 +128,10 @@ var multisigProposeCmd = &cli.Command{
 			Name:  "params-json",
 			Usage: "specify invocation parameters in json",
 		},
+		&cli.StringFlag{
+			Name:  "params-hex",
+			Usage: "specify invocation parameters in hex",
+		},
 	},
 	Action: func(cctx *cli.Context) error {
 		api, err := getAPI(cctx)

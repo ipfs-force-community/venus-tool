@@ -2,7 +2,7 @@ import { Col, Empty, Row, Select, Table, Popover, Modal, Form, InputNumber, Radi
 import { CheckCircleOutlined, QuestionCircleOutlined, ClockCircleOutlined, CloseCircleOutlined, ExclamationCircleOutlined, DeleteOutlined, PlusSquareOutlined } from '@ant-design/icons';
 
 import { useState } from "react"
-import { Fil, msgStateString } from "../util"
+import { Fil, msgStateString, ParseFilString } from "../util"
 import { getDefaultFilters, InShort } from "./util";
 import Card from "./card";
 import { MarkBad, SendMsg, useMsgs, useWallets } from "../fetcher";
@@ -85,7 +85,7 @@ export default function MessageList({ pageSize = 10, wallets = [] }) {
                         <Input />
                     </Form.Item>
                     <Form.Item label="Value" name="Value" initialValue={0}>
-                        <InputNumber />
+                        <Input />
                     </Form.Item>
                     <Form.Item label="Method" name="Method" initialValue={0}>
                         <InputNumber />
@@ -120,13 +120,14 @@ export default function MessageList({ pageSize = 10, wallets = [] }) {
                 title: 'Send Message',
                 content: content,
                 width: 800,
+                maskClosable: true,
                 onOk: (close) => {
                     let v = sendMsgFrom.getFieldsValue()
 
                     let data = {
                         From: v.From,
                         To: v.To,
-                        Value: v.Value.toString(),
+                        Value: ParseFilString(v.Value).toString(),
                         Method: v.Method,
                         SendSpec: {
                             GasOverEstimation: v.GasOverEstimation,

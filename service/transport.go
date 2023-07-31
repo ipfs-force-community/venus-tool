@@ -60,7 +60,7 @@ type MsgSendReq struct {
 	To     address.Address
 	Value  abi.TokenAmount
 	Method abi.MethodNum
-	Params EncodedParams
+	Params *EncodedParams
 
 	msgTypes.SendSpec
 }

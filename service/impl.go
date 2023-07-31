@@ -120,9 +120,13 @@ func (s *ServiceImpl) MsgSend(ctx context.Context, req *MsgSendReq) (string, err
 
 	log.Infof("msg send: from(%s), to(%s), value(%s), method(%d), params(%s)", req.From, req.To, req.Value, req.Method, req.Params)
 
-	decParams, err := dec(req.Params, req.To, req.Method)
-	if err != nil {
-		return "", fmt.Errorf("decode params failed: %s", err)
+	var decParams []byte
+	if req.Params != nil {
+		var err error
+		decParams, err = dec(*req.Params, req.To, req.Method)
+		if err != nil {
+			return "", fmt.Errorf("decode params failed: %s", err)
+		}
 	}
 
 	msg := &types.Message{

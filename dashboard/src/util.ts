@@ -144,7 +144,7 @@ export function MinedState(num: number): string {
 }
 
 
-function ParseFilString(s: string): number | null {
+export function ParseFilString(s: string): number | null {
     let [num, unit] = separateValueAndUnit(s)
     switch (unit) {
         case 'Fil':

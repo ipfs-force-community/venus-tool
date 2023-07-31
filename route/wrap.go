@@ -284,8 +284,12 @@ func Provide(cli Client, dst interface{}) {
 				outInt = reflect.New(fnType.Out(retIdx)).Interface()
 			}
 
-			path := info.Path[:strings.Index(info.Path, ":")]
-
+			path := info.Path
+			spliIndex := strings.Index(info.Path, ":")
+			if spliIndex != -1 {
+				path = info.Path[:spliIndex]
+			}
+			
 			err := cli.Do(ctx, info.Method, path, inInt, outInt)
 			if errIdx != -1 {
 				out[errIdx] = reflect.ValueOf(&err).Elem()

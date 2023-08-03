@@ -1,4 +1,4 @@
-import { Col, Empty, Row, Select, Table, Popover, Modal, Form, InputNumber, Radio, message } from "antd"
+import { Col, Empty, Row, Select, Table, Popover, Modal, Form, InputNumber, Radio, message, Button } from "antd"
 import { CheckCircleOutlined, QuestionCircleOutlined, ClockCircleOutlined, CloseCircleOutlined, ExclamationCircleOutlined, DeleteOutlined, PlusSquareOutlined } from '@ant-design/icons';
 
 import { useState } from "react"
@@ -7,7 +7,6 @@ import { getDefaultFilters, InShort } from "./util";
 import Card from "./card";
 import { MarkBad, SendMsg, useMsgs, useWallets } from "../fetcher";
 import Input from "antd/es/input/Input";
-import { withErrorBoundary } from "./error-boundary";
 
 
 export default function MessageList({ pageSize = 10, wallets = [] }) {
@@ -17,7 +16,7 @@ export default function MessageList({ pageSize = 10, wallets = [] }) {
     const [sendMsgFrom] = Form.useForm();
 
     const { data: remoteWallets, isLoading: walletIsLoading } = useWallets()
-    if (wallets.length === 0 && remoteWallets.length != 0) {
+    if (wallets.length === 0 && remoteWallets.length !== 0) {
         wallets = remoteWallets
     }
     if (wallet === '' && wallets.length > 0) {
@@ -123,6 +122,7 @@ export default function MessageList({ pageSize = 10, wallets = [] }) {
                 maskClosable: true,
                 onOk: (close) => {
                     let v = sendMsgFrom.getFieldsValue()
+                    console.log(v);
 
                     let data = {
                         From: v.From,
@@ -141,6 +141,8 @@ export default function MessageList({ pageSize = 10, wallets = [] }) {
                             EncType: v.ParamsType,
                         }
                     }
+
+                    console.log(data);
 
                     SendMsg(data).then((res) => {
                         console.log("send msg res:", res)
@@ -165,7 +167,7 @@ export default function MessageList({ pageSize = 10, wallets = [] }) {
             )
         }
         return (
-            <Card title='Messages' extra={<a onClick={onAdd} ><AddButton /></a>} >
+            <Card title='Messages' extra={<Button type="link" onClick={onAdd} ><AddButton /> </Button>} >
                 <Content />
             </Card>
         )
@@ -189,7 +191,7 @@ export default function MessageList({ pageSize = 10, wallets = [] }) {
                         </span>
                     </Col>
                     <Col offset={1} style={{ textAlign: 'left' }}>
-                        <a onClick={() => markeBadMsgs(selectedRowKeys)}><DeleteOutlined /> mark bad</a>
+                        <Button type="link" onClick={() => markeBadMsgs(selectedRowKeys)}><DeleteOutlined /> mark bad </Button>
                     </Col>
                 </Row>
             )

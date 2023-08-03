@@ -1,8 +1,8 @@
 import logo from '@/asset/venus-hero-logo.png'
-import { Col, Row, Select, Input, Affix, Descriptions } from 'antd';
+import { Col, Row, Select, Input, Affix } from 'antd';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search as search, useSearch } from '@/fetcher';
+import { Search as search } from '@/fetcher';
 
 const Search = Input.Search
 const tittleStyle = {

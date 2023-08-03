@@ -1,13 +1,12 @@
 import Card from "@/component/card"
 import { Descriptions, Space } from "antd"
-import { gg, useParams } from "react-router-dom"
+import { useParams } from "react-router-dom"
 import SectorList from "../component/sector-list"
-import { useMinerInfo, rel } from "../fetcher"
-import useSWR from "swr"
+import { useMinerInfo } from "../fetcher"
 import { Fil, Power } from "../util"
 
 
-export default function ({ id }) {
+export default function MinerDetail({ id }) {
     const params = useParams()
     // const navigate = useNavigate()
 

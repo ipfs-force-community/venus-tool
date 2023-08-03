@@ -1,6 +1,6 @@
 
 import Card from "@/component/card"
-import { Descriptions, Space, Paragraph } from "antd"
+import { Descriptions, Space } from "antd"
 import { useParams } from "react-router-dom"
 import MessageList from "@/component/msg-list"
 import { useWalletInfo } from "../fetcher"
@@ -10,7 +10,7 @@ import axios from "axios"
 import { ApiBase } from "../global"
 
 
-export default function ({ id }) {
+export default function WalletDetail({ id }) {
     const params = useParams()
 
     const title = "Wallet Info"

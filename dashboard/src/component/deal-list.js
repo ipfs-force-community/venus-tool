@@ -1,4 +1,4 @@
-import { Col, Row, Table, Popover, Space, Descriptions } from "antd"
+import { Col, Row, Table, Popover, Space, Descriptions, Button } from "antd"
 import { InfoCircleOutlined, FormOutlined } from '@ant-design/icons';
 import { useState } from "react"
 import { getDefaultFilters, InShort } from "./util";
@@ -95,7 +95,7 @@ export default function DealList(props) {
                     </Col>
                     <Col offset={1} style={{ textAlign: 'left' }}>
                         <Space >
-                            <a ><FormOutlined style={{ color: 'darkgreen' }} /> set state</a>
+                            <Button type="link" ><FormOutlined style={{ color: 'darkgreen' }} /> set state </Button>
                         </Space>
                     </Col>
                 </Row>

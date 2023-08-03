@@ -7,17 +7,20 @@ endif
 
 GOFLAGS+=-ldflags="$(ldflags)"
 
+GO_SRC_FILES=$(shell find . -name '*.go' -type f | grep -v vendor | grep -v /extern/ )
+BORAD_SRC_FILES=$(shell find dashboard/src -type f)
+
+
 all: dashboard/build venus-tool
 
-venus-tool: deps
-	rm -rf venus-tool
+venus-tool: $(deps) $(GO_SRC_FILES)
 	go build $(GOFLAGS) -o venus-tool ./cmd
 
 
 gen:
 	@go generate ./...
 
-lint: deps
+lint: $(deps)
 	@golangci-lint run
 
 test:
@@ -27,12 +30,13 @@ dev-init:
 	ln -s ../../.githooks/pre-commit .git/hooks/pre-commit
 	ln -s ../../.githooks/pre-push .git/hooks/pre-push
 
-dashboard/build: dashboard/src
+
+dashboard/build: $(BORAD_SRC_FILES)
 	cd dashboard && yarn install && yarn build
 
 .PHONY: docker
 TAG:=test
-docker: $(BUILD_DEPS) all
+docker:
 	docker build --build-arg https_proxy=$(BUILD_DOCKER_PROXY) --build-arg BUILD_TARGET=venus-tool -t venus-tool  .
 	docker tag venus-tool:latest filvenus/venus-tool:$(TAG)
 
@@ -53,4 +57,4 @@ build_deps/.filecoin-install: build_deps $(FFI_PATH)
 	@touch $@
 
 
-deps: build_deps/.update-modules build_deps/.filecoin-install
+deps= build_deps/.update-modules build_deps/.filecoin-install

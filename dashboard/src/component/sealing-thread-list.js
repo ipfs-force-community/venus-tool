@@ -1,4 +1,4 @@
-import { Col, Empty, Row, Select, Table, Popover, Space, Button, Descriptions, Modal } from "antd"
+import { Col, Row, Table, Popover, Space, Descriptions, Modal, Button } from "antd"
 import { PauseCircleOutlined, PlayCircleOutlined, ExclamationCircleOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useState } from "react"
 import { Copyable, getDefaultFilters } from "./util";
@@ -6,11 +6,10 @@ import Card from "./card";
 import { ApiBase } from "../global";
 import axios from "axios";
 import { useThreads } from "../fetcher";
-import { withErrorBoundary } from "./error-boundary";
 
 export default function SealingThreadList() {
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-    const { data: threads, isLoading: threadsIsLoading, mutate: updateThreads } = useThreads()
+    const { data: threads, mutate: updateThreads } = useThreads()
 
     const stopThreads = (threads) => {
         if (!threads) {
@@ -148,8 +147,8 @@ export default function SealingThreadList() {
                     </Col>
                     <Col offset={1} style={{ textAlign: 'left' }}>
                         <Space >
-                            <a onClick={onStart} ><PlayCircleOutlined style={{ color: 'darkgreen' }} /> start </a>
-                            <a onClick={onStop}><PauseCircleOutlined style={{ color: 'darkred' }} /> pause </a>
+                            <Button type="link" onClick={onStart} ><PlayCircleOutlined style={{ color: 'darkgreen' }} /> start  </Button>
+                            <Button type="link" onClick={onStop}><PauseCircleOutlined style={{ color: 'darkred' }} /> pause  </Button>
                         </Space>
                     </Col>
                 </Row>
@@ -366,9 +365,9 @@ const renderOperate = (record, stopThreads, startThreads, abortThreads) => {
             <>
                 <SpaceWrap>
                     <Popover overlayStyle={{ maxWidth: '80%' }} content={errInfo}>
-                        <a><PlayCircleOutlined style={{ color: 'darkgreen' }} onClick={() => { startThread(record.WorkerName, record.Index) }} /></a>
+                        <Button type="link"><PlayCircleOutlined style={{ color: 'darkgreen' }} onClick={() => { startThread(record.WorkerName, record.Index) }} /> </Button>
                     </Popover>
-                    <a><DeleteOutlined style={{ color: 'darkred' }} onClick={() => { abortThread(record.WorkerName, record.Index) }} /></a>
+                    <Button type="link"><DeleteOutlined style={{ color: 'darkred' }} onClick={() => { abortThread(record.WorkerName, record.Index) }} /> </Button>
                 </SpaceWrap>
             </>
 
@@ -376,7 +375,7 @@ const renderOperate = (record, stopThreads, startThreads, abortThreads) => {
     } else {
         return (
             <SpaceWrap>
-                <a><PauseCircleOutlined style={{ color: 'darkOrange' }} onClick={() => { stopThread(record.WorkerName, record.Index) }} /></a>
+                <Button type="link"><PauseCircleOutlined style={{ color: 'darkOrange' }} onClick={() => { stopThread(record.WorkerName, record.Index) }} /> </Button>
             </SpaceWrap>
         )
     }

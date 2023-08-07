@@ -12,15 +12,55 @@ import (
 )
 
 type Config struct {
-	Path        string `toml:"-"`
-	Server      ServerConfig
-	NodeAPI     APIInfo
-	MessagerAPI APIInfo
-	MarketAPI   APIInfo
+	Path   string `toml:"-"`
+	Server ServerConfig
+
+	ChainService *APIInfo
+
+	NodeAPI     *APIInfo
+	MessagerAPI *APIInfo
+	MarketAPI   *APIInfo
+	AuthAPI     *APIInfo
+	MinerAPI    *APIInfo
+
 	WalletAPI   APIInfo
-	AuthAPI     APIInfo
 	DamoclesAPI APIInfo
-	MinerAPI    APIInfo
+}
+
+func mergeAPIInfo(prior, alternative *APIInfo) *APIInfo {
+	if prior == nil {
+		return alternative
+	}
+	if alternative == nil {
+		return prior
+	}
+	if prior.Addr == "" {
+		prior.Addr = alternative.Addr
+	}
+	if prior.Token == "" {
+		prior.Token = alternative.Token
+	}
+	return prior
+}
+
+func (c Config) GetNodeAPI() APIInfo {
+	return *mergeAPIInfo(c.NodeAPI, c.ChainService)
+}
+
+func (c Config) GetMessagerAPI() APIInfo {
+	return *mergeAPIInfo(c.MessagerAPI, c.ChainService)
+}
+
+func (c Config) GetMarketAPI() APIInfo {
+	return *mergeAPIInfo(c.MarketAPI, c.ChainService)
+}
+
+func (c Config) GetAuthAPI() APIInfo {
+	return *mergeAPIInfo(c.AuthAPI, c.ChainService)
+}
+
+func (c Config) GetMinerAPI() APIInfo {
+	return *mergeAPIInfo(c.MinerAPI, c.ChainService)
 }
 
 type ServerConfig struct {

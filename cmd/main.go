@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -169,6 +170,13 @@ var runCmd = &cli.Command{
 			}
 		}
 
+		b, err := json.MarshalIndent(cfg, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Printf("config: \n %s \n ", string(b))
+		log.Infof("config: \n %s \n ", string(b))
+
 		// todo replace it with stub
 		if cfg.GetMessagerAPI().Addr == "" {
 			return errors.New("messager api url is empty")
@@ -262,7 +270,7 @@ func updateFlag(cfg *config.Config, ctx *cli.Context) {
 	cfg.Server.BoardPath = boardPath
 	// todo: parse relative path to absolute path
 
-	updateApi := func(apiStr string, apiCfg *config.APIInfo) {
+	updateApi := func(apiStr string, apiCfg *config.APIInfo) *config.APIInfo {
 		if apiCfg == nil {
 			apiCfg = &config.APIInfo{}
 		}
@@ -275,30 +283,32 @@ func updateFlag(cfg *config.Config, ctx *cli.Context) {
 		} else if commonToken != "" {
 			apiCfg.Token = commonToken
 		}
+
+		return apiCfg
 	}
 
 	if ctx.IsSet(flagListen.Name) {
 		cfg.Server.ListenAddr = ctx.String(flagListen.Name)
 	}
 	if ctx.IsSet(flagNodeAPI.Name) {
-		updateApi(ctx.String(flagNodeAPI.Name), cfg.NodeAPI)
+		cfg.NodeAPI = updateApi(ctx.String(flagNodeAPI.Name), cfg.NodeAPI)
 	}
 	if ctx.IsSet(flagMsgAPI.Name) {
-		updateApi(ctx.String(flagMsgAPI.Name), cfg.MessagerAPI)
+		cfg.MessagerAPI = updateApi(ctx.String(flagMsgAPI.Name), cfg.MessagerAPI)
 	}
 	if ctx.IsSet(flagMarketAPI.Name) {
-		updateApi(ctx.String(flagMarketAPI.Name), cfg.MarketAPI)
+		cfg.MarketAPI = updateApi(ctx.String(flagMarketAPI.Name), cfg.MarketAPI)
+	}
+	if ctx.IsSet(flagAuthAPI.Name) {
+		cfg.AuthAPI = updateApi(ctx.String(flagAuthAPI.Name), cfg.AuthAPI)
+	}
+	if ctx.IsSet(flagMinerAPI.Name) {
+		cfg.MinerAPI = updateApi(ctx.String(flagMinerAPI.Name), cfg.MinerAPI)
 	}
 	if ctx.IsSet(flagWalletAPI.Name) {
 		updateApi(ctx.String(flagWalletAPI.Name), &cfg.WalletAPI)
 	}
-	if ctx.IsSet(flagAuthAPI.Name) {
-		updateApi(ctx.String(flagAuthAPI.Name), cfg.AuthAPI)
-	}
 	if ctx.IsSet(flagDamoclesAPI.Name) {
 		updateApi(ctx.String(flagDamoclesAPI.Name), &cfg.DamoclesAPI)
-	}
-	if ctx.IsSet(flagMinerAPI.Name) {
-		updateApi(ctx.String(flagMinerAPI.Name), cfg.MinerAPI)
 	}
 }

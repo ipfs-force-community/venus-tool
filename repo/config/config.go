@@ -44,23 +44,43 @@ func mergeAPIInfo(prior, alternative *APIInfo) *APIInfo {
 }
 
 func (c Config) GetNodeAPI() APIInfo {
-	return *mergeAPIInfo(c.NodeAPI, c.ChainService)
+	p := mergeAPIInfo(c.NodeAPI, c.ChainService)
+	if p == nil {
+		return APIInfo{}
+	}
+	return *p
 }
 
 func (c Config) GetMessagerAPI() APIInfo {
-	return *mergeAPIInfo(c.MessagerAPI, c.ChainService)
+	p := mergeAPIInfo(c.MessagerAPI, c.ChainService)
+	if p == nil {
+		return APIInfo{}
+	}
+	return *p
 }
 
 func (c Config) GetMarketAPI() APIInfo {
-	return *mergeAPIInfo(c.MarketAPI, c.ChainService)
+	p := mergeAPIInfo(c.MarketAPI, c.ChainService)
+	if p == nil {
+		return APIInfo{}
+	}
+	return *p
 }
 
 func (c Config) GetAuthAPI() APIInfo {
-	return *mergeAPIInfo(c.AuthAPI, c.ChainService)
+	p := mergeAPIInfo(c.AuthAPI, c.ChainService)
+	if p == nil {
+		return APIInfo{}
+	}
+	return *p
 }
 
 func (c Config) GetMinerAPI() APIInfo {
-	return *mergeAPIInfo(c.MinerAPI, c.ChainService)
+	p := mergeAPIInfo(c.MinerAPI, c.ChainService)
+	if p == nil {
+		return APIInfo{}
+	}
+	return *p
 }
 
 type ServerConfig struct {

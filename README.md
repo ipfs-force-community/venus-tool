@@ -43,8 +43,8 @@ You can run the binary directly
 --node-api=/ip4/{NODE_IP}/tcp/3453 \
 --msg-api=/ip4/{MESSAGER_IP}/tcp/39812 \
 --market-api=/ip4/{MARKET_IP}/tcp/41235 \
---miner-api=/dns/miner/tcp/12308 \
---wallet-api={WALLET_TOKEN}:/ipv4/{WALLET_IP}/tcp/5678/http \
+--miner-api=/ip4/{MINER_IP}/tcp/12308 \
+--wallet-api={WALLET_TOKEN}:/ip4/{WALLET_IP}/tcp/5678/http \
 --auth-api=http://{AUTH_IP}:8989 \
 --damocles-api=/ip4/{DAMOCLES_MANAGER_IP}/tcp/1789 \
 --common-token={CHAIN_SERVICE_TOKEN} \
@@ -67,7 +67,7 @@ run \
 --node-api=/ip4/{NODE_IP}/tcp/3453 \
 --msg-api=/ip4/{MESSAGER_IP}/tcp/39812 \
 --market-api=/ip4/{MARKET_IP}/tcp/41235 \
---miner-api=/dns/miner/tcp/12308 \
+--miner-api=/ip4/{MINER_IP}/tcp/12308 \
 --wallet-api={WALLET_TOKEN}:/ip4/{WALLET_IP}/tcp/5678/http \
 --auth-api=http://{AUTH_IP}:8989 \
 --damocles-api=/ip4/{DAMOCLES_MANAGER_IP}/tcp/1789 \

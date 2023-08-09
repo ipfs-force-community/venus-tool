@@ -1,5 +1,3 @@
-
-
 const filPrefix = ["a", "f", "p", "n", "μ", "m", ""]
 const powerPrefix = ["", "K", "M", "G", "T", "P", "E"]
 

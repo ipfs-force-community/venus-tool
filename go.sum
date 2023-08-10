@@ -885,12 +885,12 @@ github.com/ipfs-force-community/go-jsonrpc v0.1.7-0.20230214070559-dbe74781184a/
 github.com/ipfs-force-community/metrics v1.0.1-0.20211022060227-11142a08b729/go.mod h1:mn40SioMuKtjmRumHFy/fJ26Pn028XuDjUJE9dorjyw=
 github.com/ipfs-force-community/metrics v1.0.1-0.20230626064437-eed34cb166f5 h1:fn4G/yeHNX4rVdHH/KELwxjcnbx5327hQBw4eXs5TEI=
 github.com/ipfs-force-community/metrics v1.0.1-0.20230626064437-eed34cb166f5/go.mod h1:yi9gw+y+UjzWjaYZG2xgnH0T6PcmwHRKhDkbylp9qxc=
-github.com/ipfs-force-community/sophon-auth v1.12.0 h1:nqjsA6bIv9Rd9+7lHxGDvNJ7gvt/M2yGSxymA6AoxXI=
-github.com/ipfs-force-community/sophon-auth v1.12.0/go.mod h1:cGYCfjA/BDB/Km9P7Za6t1hmwpFlPKf8ho/CHmLG81Y=
+github.com/ipfs-force-community/sophon-auth v1.12.1-0.20230801033929-4ecc519befff h1:RxXJdvvvKvdKqKBwOScQjPgmgOV9RjyEDJWnkl3kPVM=
+github.com/ipfs-force-community/sophon-auth v1.12.1-0.20230801033929-4ecc519befff/go.mod h1:+S04oHCcJS6hylIv1kb74mA/m7qe41m6Py1hTFLM6rE=
 github.com/ipfs-force-community/sophon-messager v1.12.1-0.20230707095736-298517fc64df h1:mlMjq8bKt6VRr3rrS5qWlWngzRB0GjRkQoA1LaoYrs4=
 github.com/ipfs-force-community/sophon-messager v1.12.1-0.20230707095736-298517fc64df/go.mod h1:Vo9VnDwYJmVFaWrHtFPCiZNxFWqWQFgucQcmA3hA+VU=
-github.com/ipfs-force-community/sophon-miner v1.12.0-rc2.0.20230717111652-ad92aac6bb9f h1:4D82HctbOn3MOejFn/3QzMG1XNh9UKe4HIsrMNDctZA=
-github.com/ipfs-force-community/sophon-miner v1.12.0-rc2.0.20230717111652-ad92aac6bb9f/go.mod h1:BuBUfQjf4SFsYvILrt93m0VzUwukDZRJDq8//p6S9SE=
+github.com/ipfs-force-community/sophon-miner v1.12.1-0.20230801052317-e5fd969af458 h1:z4epgSSnePGC8C9Vziq9OdNek485Nn65MO7+1DJeO08=
+github.com/ipfs-force-community/sophon-miner v1.12.1-0.20230801052317-e5fd969af458/go.mod h1:4VUzN+b0sT7Zq2sThDSj58SIdm01lNysr2EIjHnrFU4=
 github.com/ipfs-force-community/venus-cluster-assets v0.1.0 h1:K/0+OV9Jm7HjSa7O9MAtgfLDIudQYZUTymhJsp8rGXg=
 github.com/ipfs-force-community/venus-cluster-assets v0.1.0/go.mod h1:ZHXQBvLbsmZrG9Zccpqn6Oba2Q/+cRm3RsHj/SRYSwg=
 github.com/ipfs-force-community/venus-common-utils v0.0.0-20220217030526-e5e4c6bc14f7 h1:v/1/INcqm3kHLauWQYB63MwWJRWGz+3WEuUPp0jzIl8=

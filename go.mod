@@ -16,9 +16,9 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-resty/resty/v2 v2.4.0
 	github.com/ipfs-force-community/droplet/v2 v2.8.1
-	github.com/ipfs-force-community/sophon-auth v1.12.0
+	github.com/ipfs-force-community/sophon-auth v1.12.1-0.20230801033929-4ecc519befff
 	github.com/ipfs-force-community/sophon-messager v1.12.1-0.20230707095736-298517fc64df
-	github.com/ipfs-force-community/sophon-miner v1.12.0-rc2.0.20230717111652-ad92aac6bb9f
+	github.com/ipfs-force-community/sophon-miner v1.12.1-0.20230801052317-e5fd969af458
 	github.com/ipfs-force-community/venus-common-utils v0.0.0-20220217030526-e5e4c6bc14f7
 	github.com/ipfs/go-cid v0.4.1
 	github.com/ipfs/go-ipld-cbor v0.0.6

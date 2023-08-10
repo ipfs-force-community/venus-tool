@@ -6,6 +6,7 @@ import (
 
 	"github.com/ipfs-force-community/sophon-auth/jwtclient"
 	"github.com/ipfs-force-community/venus-tool/repo/config"
+	"github.com/ipfs-force-community/venus-tool/utils"
 )
 
 type IAuth interface {
@@ -23,12 +24,18 @@ func (a *auth) GetUserName(ctx context.Context) (string, error) {
 }
 
 func NewAuth(ctx context.Context, cfg *config.Config) (IAuth, error) {
-	jwt, err := jwtclient.NewAuthClient(cfg.AuthAPI.Addr, cfg.AuthAPI.Token)
+	// todo parse url from multiaddr
+	authToken := cfg.GetAuthAPI().Token
+	authAddr, err := utils.ParseAddr(cfg.GetAuthAPI().Addr)
+	if err != nil {
+		return nil, err
+	}
+	jwt, err := jwtclient.NewAuthClient(authAddr, authToken)
 	if err != nil {
 		return nil, err
 	}
 
-	playLoad, err := jwt.Verify(ctx, cfg.AuthAPI.Token)
+	playLoad, err := jwt.Verify(ctx, authToken)
 	if err != nil {
 		return nil, err
 	}

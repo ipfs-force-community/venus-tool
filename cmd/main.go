@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -169,33 +170,40 @@ var runCmd = &cli.Command{
 			}
 		}
 
+		b, err := json.MarshalIndent(cfg, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Printf("config: \n %s \n ", string(b))
+		log.Infof("config: \n %s \n ", string(b))
+
 		// todo replace it with stub
-		if cfg.MessagerAPI.Addr == "" {
+		if cfg.GetMessagerAPI().Addr == "" {
 			return errors.New("messager api url is empty")
 		}
-		if cfg.MarketAPI.Addr == "" {
+		if cfg.GetMarketAPI().Addr == "" {
 			return errors.New("market api url is empty")
 		}
-		if cfg.NodeAPI.Addr == "" {
+		if cfg.GetNodeAPI().Addr == "" {
 			return errors.New("node api url is empty")
 		}
 		if cfg.WalletAPI.Addr == "" {
 			return errors.New("wallet api url is empty")
 		}
 
-		msgClient, msgCloser, err := msgApi.DialIMessagerRPC(ctx, cfg.MessagerAPI.Addr, cfg.MessagerAPI.Token, nil)
+		msgClient, msgCloser, err := msgApi.DialIMessagerRPC(ctx, cfg.GetMessagerAPI().Addr, cfg.GetMessagerAPI().Token, nil)
 		if err != nil {
 			return err
 		}
 		defer msgCloser()
 
-		marketClient, marketCloser, err := marketApi.DialIMarketRPC(ctx, cfg.MarketAPI.Addr, cfg.MarketAPI.Token, nil)
+		marketClient, marketCloser, err := marketApi.DialIMarketRPC(ctx, cfg.GetMarketAPI().Addr, cfg.GetMarketAPI().Token, nil)
 		if err != nil {
 			return err
 		}
 		defer marketCloser()
 
-		nodeClient, nodeCloser, err := nodeApi.DialFullNodeRPC(ctx, cfg.NodeAPI.Addr, cfg.NodeAPI.Token, nil)
+		nodeClient, nodeCloser, err := nodeApi.DialFullNodeRPC(ctx, cfg.GetNodeAPI().Addr, cfg.GetNodeAPI().Token, nil)
 		if err != nil {
 			return err
 		}
@@ -262,7 +270,10 @@ func updateFlag(cfg *config.Config, ctx *cli.Context) {
 	cfg.Server.BoardPath = boardPath
 	// todo: parse relative path to absolute path
 
-	updateApi := func(apiStr string, apiCfg *config.APIInfo) {
+	updateApi := func(apiStr string, apiCfg *config.APIInfo) *config.APIInfo {
+		if apiCfg == nil {
+			apiCfg = &config.APIInfo{}
+		}
 		addr, token := utils.ParseAPI(apiStr)
 		if addr != "" {
 			apiCfg.Addr = addr
@@ -272,30 +283,32 @@ func updateFlag(cfg *config.Config, ctx *cli.Context) {
 		} else if commonToken != "" {
 			apiCfg.Token = commonToken
 		}
+
+		return apiCfg
 	}
 
 	if ctx.IsSet(flagListen.Name) {
 		cfg.Server.ListenAddr = ctx.String(flagListen.Name)
 	}
 	if ctx.IsSet(flagNodeAPI.Name) {
-		updateApi(ctx.String(flagNodeAPI.Name), &cfg.NodeAPI)
+		cfg.NodeAPI = updateApi(ctx.String(flagNodeAPI.Name), cfg.NodeAPI)
 	}
 	if ctx.IsSet(flagMsgAPI.Name) {
-		updateApi(ctx.String(flagMsgAPI.Name), &cfg.MessagerAPI)
+		cfg.MessagerAPI = updateApi(ctx.String(flagMsgAPI.Name), cfg.MessagerAPI)
 	}
 	if ctx.IsSet(flagMarketAPI.Name) {
-		updateApi(ctx.String(flagMarketAPI.Name), &cfg.MarketAPI)
+		cfg.MarketAPI = updateApi(ctx.String(flagMarketAPI.Name), cfg.MarketAPI)
+	}
+	if ctx.IsSet(flagAuthAPI.Name) {
+		cfg.AuthAPI = updateApi(ctx.String(flagAuthAPI.Name), cfg.AuthAPI)
+	}
+	if ctx.IsSet(flagMinerAPI.Name) {
+		cfg.MinerAPI = updateApi(ctx.String(flagMinerAPI.Name), cfg.MinerAPI)
 	}
 	if ctx.IsSet(flagWalletAPI.Name) {
 		updateApi(ctx.String(flagWalletAPI.Name), &cfg.WalletAPI)
 	}
-	if ctx.IsSet(flagAuthAPI.Name) {
-		updateApi(ctx.String(flagAuthAPI.Name), &cfg.AuthAPI)
-	}
 	if ctx.IsSet(flagDamoclesAPI.Name) {
 		updateApi(ctx.String(flagDamoclesAPI.Name), &cfg.DamoclesAPI)
-	}
-	if ctx.IsSet(flagMinerAPI.Name) {
-		updateApi(ctx.String(flagMinerAPI.Name), &cfg.MinerAPI)
 	}
 }

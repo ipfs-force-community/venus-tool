@@ -13,12 +13,12 @@ import (
 type Miner api.MinerAPI
 
 func NewMiner(ctx context.Context, lc fx.Lifecycle, cfg *config.Config) (Miner, error) {
-	entryPoint, err := cfg.MinerAPI.DialArgs("v0")
+	entryPoint, err := cfg.GetMinerAPI().DialArgs("v0")
 	if err != nil {
 		return nil, err
 	}
 
-	header := cfg.MinerAPI.AuthHeader()
+	header := cfg.GetMinerAPI().AuthHeader()
 	if header == nil {
 		return nil, fmt.Errorf("gen auth header fail")
 	}

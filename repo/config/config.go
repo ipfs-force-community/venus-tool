@@ -12,15 +12,75 @@ import (
 )
 
 type Config struct {
-	Path        string `toml:"-"`
-	Server      ServerConfig
-	NodeAPI     APIInfo
-	MessagerAPI APIInfo
-	MarketAPI   APIInfo
+	Path   string `toml:"-"`
+	Server ServerConfig
+
+	ChainService *APIInfo
+
+	NodeAPI     *APIInfo
+	MessagerAPI *APIInfo
+	MarketAPI   *APIInfo
+	AuthAPI     *APIInfo
+	MinerAPI    *APIInfo
+
 	WalletAPI   APIInfo
-	AuthAPI     APIInfo
 	DamoclesAPI APIInfo
-	MinerAPI    APIInfo
+}
+
+func mergeAPIInfo(prior, alternative *APIInfo) *APIInfo {
+	if prior == nil {
+		return alternative
+	}
+	if alternative == nil {
+		return prior
+	}
+	if prior.Addr == "" {
+		prior.Addr = alternative.Addr
+	}
+	if prior.Token == "" {
+		prior.Token = alternative.Token
+	}
+	return prior
+}
+
+func (c Config) GetNodeAPI() APIInfo {
+	p := mergeAPIInfo(c.NodeAPI, c.ChainService)
+	if p == nil {
+		return APIInfo{}
+	}
+	return *p
+}
+
+func (c Config) GetMessagerAPI() APIInfo {
+	p := mergeAPIInfo(c.MessagerAPI, c.ChainService)
+	if p == nil {
+		return APIInfo{}
+	}
+	return *p
+}
+
+func (c Config) GetMarketAPI() APIInfo {
+	p := mergeAPIInfo(c.MarketAPI, c.ChainService)
+	if p == nil {
+		return APIInfo{}
+	}
+	return *p
+}
+
+func (c Config) GetAuthAPI() APIInfo {
+	p := mergeAPIInfo(c.AuthAPI, c.ChainService)
+	if p == nil {
+		return APIInfo{}
+	}
+	return *p
+}
+
+func (c Config) GetMinerAPI() APIInfo {
+	p := mergeAPIInfo(c.MinerAPI, c.ChainService)
+	if p == nil {
+		return APIInfo{}
+	}
+	return *p
 }
 
 type ServerConfig struct {

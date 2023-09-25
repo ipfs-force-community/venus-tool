@@ -878,7 +878,7 @@ github.com/ipfs-force-community/damocles/damocles-manager v0.0.0-20230710060037-
 github.com/ipfs-force-community/damocles/damocles-manager v0.0.0-20230710060037-abd2fdf69c17/go.mod h1:TdEagqclgMtoxBMB4scGT0flNMs9QyE6qZ35l6IY1hQ=
 github.com/ipfs-force-community/damocles/manager-plugin v0.0.0-20230613072356-8713ced20557 h1:/qqCFCmqbpqW8tFpv7xr1J5pIGL90Mo+SQcJ0Df1SY8=
 github.com/ipfs-force-community/damocles/manager-plugin v0.0.0-20230613072356-8713ced20557/go.mod h1:me1u2cl7qdxBCZiVL0laDop8uBHDdUwlUNnQ7KkHF64=
-github.com/ipfs-force-community/droplet/v2 v2.8.1 h1:oifgMO2ngpJEakSj1AFG/PtUmNISutLqkb+1XcHHo/8=
+github.com/ipfs-force-community/droplet/v2 v2.8.1 h1:u0zM8EBRylSxHLkoigz23aWjYi+edQipQS/yLzDcLOI=
 github.com/ipfs-force-community/droplet/v2 v2.8.1/go.mod h1:YSqn7MKph5WhnJ8kZHvWmweGQ+62KGoKEp38GYe6HBk=
 github.com/ipfs-force-community/go-jsonrpc v0.1.7-0.20230214070559-dbe74781184a h1:qiOQ2/neQ5fbfBE5cPr5ncR1YsukuO5PmlIwmv4CcaU=
 github.com/ipfs-force-community/go-jsonrpc v0.1.7-0.20230214070559-dbe74781184a/go.mod h1:jBSvPTl8V1N7gSTuCR4bis8wnQnIjHbRPpROol6iQKM=

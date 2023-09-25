@@ -13,6 +13,8 @@ BORAD_SRC_FILES=$(shell find dashboard/src -type f)
 
 all: dashboard/build venus-tool
 
+deps= build_deps/.update-modules build_deps/.filecoin-install
+
 venus-tool: $(deps) $(GO_SRC_FILES)
 	go build $(GOFLAGS) -o venus-tool ./cmd
 
@@ -55,6 +57,3 @@ FFI_PATH:=extern/filecoin-ffi/
 build_deps/.filecoin-install: build_deps $(FFI_PATH)
 	make -C $(FFI_PATH)
 	@touch $@
-
-
-deps= build_deps/.update-modules build_deps/.filecoin-install

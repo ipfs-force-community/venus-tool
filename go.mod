@@ -7,16 +7,16 @@ require (
 	github.com/docker/go-units v0.5.0
 	github.com/filecoin-project/go-address v1.1.0
 	github.com/filecoin-project/go-bitfield v0.2.4
-	github.com/filecoin-project/go-fil-markets v1.27.0-rc1
+	github.com/filecoin-project/go-fil-markets v1.28.2
 	github.com/filecoin-project/go-state-types v0.11.1
 	github.com/filecoin-project/lotus v1.23.1
 	github.com/filecoin-project/specs-actors/v2 v2.3.6
-	github.com/filecoin-project/venus v1.12.1-0.20230710062546-73aa29c06e7a
+	github.com/filecoin-project/venus v1.13.0
 	github.com/filecoin-project/venus/venus-devtool v0.0.0-20230620054910-8361f47beacf
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-resty/resty/v2 v2.4.0
-	github.com/ipfs-force-community/droplet/v2 v2.8.1
-	github.com/ipfs-force-community/sophon-auth v1.12.0
+	github.com/ipfs-force-community/droplet/v2 v2.8.2
+	github.com/ipfs-force-community/sophon-auth v1.13.0
 	github.com/ipfs-force-community/sophon-messager v1.12.1-0.20230707095736-298517fc64df
 	github.com/ipfs-force-community/sophon-miner v1.12.0-rc2.0.20230717111652-ad92aac6bb9f
 	github.com/ipfs-force-community/venus-common-utils v0.0.0-20220217030526-e5e4c6bc14f7
@@ -24,7 +24,7 @@ require (
 	github.com/ipfs/go-ipld-cbor v0.0.6
 	github.com/ipfs/go-log v1.0.5
 	github.com/ipfs/go-log/v2 v2.5.1
-	github.com/libp2p/go-libp2p v0.27.5
+	github.com/libp2p/go-libp2p v0.27.8
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/multiformats/go-multiaddr v0.9.0
 	github.com/stretchr/testify v1.8.3
@@ -58,7 +58,7 @@ require (
 	github.com/dtynn/dix v0.1.2 // indirect
 	github.com/filecoin-project/go-commp-utils v0.1.3 // indirect
 	github.com/filecoin-project/go-data-transfer v1.15.2 // indirect
-	github.com/filecoin-project/go-data-transfer/v2 v2.0.0-rc4 // indirect
+	github.com/filecoin-project/go-data-transfer/v2 v2.0.0-rc6 // indirect
 	github.com/filecoin-project/go-ds-versioning v0.1.2 // indirect
 	github.com/filecoin-project/go-statemachine v1.0.3 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
@@ -276,5 +276,3 @@ require (
 replace github.com/filecoin-project/go-jsonrpc => github.com/ipfs-force-community/go-jsonrpc v0.1.7-0.20230214070559-dbe74781184a
 
 replace github.com/filecoin-project/filecoin-ffi => ./extern/filecoin-ffi
-
-// replace github.com/filecoin-project/venus => /root/tanlang/venus

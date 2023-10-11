@@ -7,7 +7,7 @@ endif
 
 GOFLAGS+=-ldflags="$(ldflags)"
 
-GO_SRC_FILES=$(shell find . -name '*.go' -type f | grep -v vendor | grep -v /extern/ )
+GO_SRC_FILES=$(shell find . -name '*.go' -o -name "*.mod" -o -name "*.sum" -type f | grep -v vendor | grep -v /extern/ )
 BORAD_SRC_FILES=$(shell find dashboard/src -type f)
 
 

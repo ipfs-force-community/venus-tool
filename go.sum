@@ -673,8 +673,8 @@ github.com/ipfs-force-community/damocles/manager-plugin v0.0.0-20230830062024-60
 github.com/ipfs-force-community/damocles/manager-plugin v0.0.0-20230830062024-608c68ada10e/go.mod h1:me1u2cl7qdxBCZiVL0laDop8uBHDdUwlUNnQ7KkHF64=
 github.com/ipfs-force-community/droplet/v2 v2.10.0-rc1 h1:NQcfYQaBHXV2cbmmYm+uasEiIviIemaHZQ6VW9ZCkXQ=
 github.com/ipfs-force-community/droplet/v2 v2.10.0-rc1/go.mod h1:p5j95K2v4C/B50OVn9Y4ynjJ0m83X1U8fJPIMoh4Tw8=
-github.com/ipfs-force-community/go-jsonrpc v0.1.7-0.20230214070559-dbe74781184a h1:qiOQ2/neQ5fbfBE5cPr5ncR1YsukuO5PmlIwmv4CcaU=
-github.com/ipfs-force-community/go-jsonrpc v0.1.7-0.20230214070559-dbe74781184a/go.mod h1:jBSvPTl8V1N7gSTuCR4bis8wnQnIjHbRPpROol6iQKM=
+github.com/ipfs-force-community/go-jsonrpc v0.1.9-0.20231019092801-cb5ae7d36fbe h1:6gVbbNP4Cbv0HMudjRIdfmNvV+WDP6I95JMbCHj/YU0=
+github.com/ipfs-force-community/go-jsonrpc v0.1.9-0.20231019092801-cb5ae7d36fbe/go.mod h1:jBSvPTl8V1N7gSTuCR4bis8wnQnIjHbRPpROol6iQKM=
 github.com/ipfs-force-community/metrics v1.0.1-0.20231011024528-8c881d456601 h1:zxKQ30KAD6KfvSFAx9tuqQXLDsEHyF+eVaUBXXYC2bU=
 github.com/ipfs-force-community/metrics v1.0.1-0.20231011024528-8c881d456601/go.mod h1:wM6EmkEcnJgWOFcVytgvK0u15awEmt8He0f2kAdsFDA=
 github.com/ipfs-force-community/sophon-auth v1.14.0-rc1 h1:r+TSz2r6H7K0ZtsiyS4Hmmf1bM62e5vQiHA8SYPIBz4=

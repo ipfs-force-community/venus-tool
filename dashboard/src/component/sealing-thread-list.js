@@ -180,8 +180,8 @@ export default function SealingThreadList() {
                 onFilter: (value, record) => record.Plan === value,
             },
             {
-                title: 'Sector ID',
-                dataIndex: 'SectorID',
+                title: 'Job ID',
+                dataIndex: 'JobID',
             },
             {
                 title: 'State',
@@ -252,10 +252,10 @@ function preprocess(data) {
             Index: thread.index,
             Location: thread.location,
             Plan: thread.plan,
-            SectorID: thread.sector_id ? (thread.sector_id.Miner + '-' + thread.sector_id.Number) : '',
+            JobID: thread.job_id,
             Paused: thread.paused,
             PausedElapsed: thread.paused_elapsed,
-            State: thread.state,
+            State: thread.job_state,
             LastErr: thread.last_error,
             WorkerName: thread.WorkerInfo.Name,
             Dest: thread.WorkerInfo.Dest,

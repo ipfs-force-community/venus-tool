@@ -24,11 +24,6 @@ export default function MessageList({ pageSize = 10, wallets = [] }) {
     }
     const { data: msgs, isLoading: msgsIsLoading, mutate: updateMsg } = useMsgs(wallet)
 
-    if (walletIsLoading || msgsIsLoading) {
-        return (<Empty description='loading'></Empty>)
-    }
-
-
 
     const markeBadMsgs = (msgIDs) => {
         if (!msgIDs || msgIDs.length === 0) {

@@ -15,10 +15,10 @@ import (
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/big"
 	"github.com/filecoin-project/go-state-types/builtin"
+	"github.com/filecoin-project/go-state-types/builtin/v11/power"
 	"github.com/filecoin-project/go-state-types/dline"
 	lminer "github.com/filecoin-project/lotus/chain/actors/builtin/miner"
 	lpower "github.com/filecoin-project/lotus/chain/actors/builtin/power"
-	"github.com/filecoin-project/specs-actors/v2/actors/builtin/power"
 	"github.com/filecoin-project/venus/pkg/constants"
 	"github.com/filecoin-project/venus/venus-shared/actors"
 	"github.com/filecoin-project/venus/venus-shared/actors/adt"
@@ -30,12 +30,12 @@ import (
 )
 
 func (s *ServiceImpl) MinerCreate(ctx context.Context, params *MinerCreateReq) (address.Address, error) {
-	sealProof, err := lminer.SealProofTypeFromSectorSize(params.SectorSize, constants.TestNetworkVersion)
+	wdProof, err := lminer.WindowPoStProofTypeFromSectorSize(params.SectorSize, constants.TestNetworkVersion)
 	if err != nil {
 		return address.Undef, err
 	}
 
-	params.SealProofType = sealProof
+	params.WindowPoStProofType = wdProof
 
 	if params.Owner == address.Undef {
 		actor, err := s.Node.StateLookupID(ctx, params.From, types.EmptyTSK)

@@ -18,7 +18,7 @@ type IDamocles interface {
 }
 
 type Damocles struct {
-	core.SealerCliClient
+	core.SealerCliAPIClient
 }
 
 func NewDamocles(ctx context.Context, lc fx.Lifecycle, cfg *config.Config) (*Damocles, error) {
@@ -37,10 +37,10 @@ func NewDamocles(ctx context.Context, lc fx.Lifecycle, cfg *config.Config) (*Dam
 		return nil, err
 	}
 
-	damocles := dep.MaybeSealerCliClient(ctx, lc, dep.ListenAddress(addr))
+	damocles := dep.MaybeAPIClient(ctx, lc, dep.ListenAddress(addr))
 
 	return &Damocles{
-		SealerCliClient: damocles,
+		SealerCliAPIClient: damocles.SealerCliAPIClient,
 	}, nil
 }
 

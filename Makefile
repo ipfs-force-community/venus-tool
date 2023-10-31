@@ -23,7 +23,7 @@ gen:
 	@go generate ./...
 
 lint: $(deps)
-	@golangci-lint run
+	@golangci-lint run --timeout 10m
 
 test:
 	@go test -race ./...

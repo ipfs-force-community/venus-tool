@@ -720,6 +720,9 @@ func (s *ServiceImpl) MinerList(ctx context.Context) ([]address.Address, error) 
 }
 
 func (s *ServiceImpl) MinerWinCount(ctx context.Context, req *MinerWinCountReq) (MinerWinCountResp, error) {
+	if s.Miner == nil {
+		return MinerWinCountResp{}, ErrEmptyMiner
+	}
 	// todo: cache the result
 	return s.Miner.CountWinners(ctx, req.Miners, req.From, req.To)
 }

@@ -22,6 +22,10 @@ type Damocles struct {
 }
 
 func NewDamocles(ctx context.Context, lc fx.Lifecycle, cfg *config.Config) (*Damocles, error) {
+	if cfg.DamoclesAPI.Addr == "" {
+		log.Warnf("damocles: %s", ErrEmptyAddr)
+		return nil, nil
+	}
 
 	// transform the api addr from a multiaddr to a tcp addr
 	ma, err := ma.NewMultiaddr(cfg.DamoclesAPI.Addr)

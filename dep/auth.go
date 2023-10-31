@@ -23,6 +23,11 @@ func (a *auth) GetUserName(ctx context.Context) (string, error) {
 }
 
 func NewAuth(ctx context.Context, cfg *config.Config) (IAuth, error) {
+	if cfg.AuthAPI.Addr == "" {
+		// make auth optional
+		log.Warnf("auth: %s", ErrEmptyAddr)
+		return nil, nil
+	}
 	jwt, err := jwtclient.NewAuthClient(cfg.AuthAPI.Addr, cfg.AuthAPI.Token)
 	if err != nil {
 		return nil, err

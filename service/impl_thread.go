@@ -8,6 +8,9 @@ import (
 )
 
 func (s *ServiceImpl) ThreadList(ctx context.Context) ([]*dep.ThreadInfo, error) {
+	if s.Damocles == nil {
+		return nil, ErrEmptyDamocles
+	}
 	var ret []*dep.ThreadInfo
 	pingInfos, err := s.Damocles.WorkerPingInfoList(ctx)
 	if err != nil {
@@ -74,6 +77,9 @@ func (s *ServiceImpl) ThreadStart(ctx context.Context, req *ThreadStartReq) erro
 }
 
 func (s *ServiceImpl) getWorkerClient(ctx context.Context, workerName string) (*dep.WorkerClient, func(), error) {
+	if s.Damocles == nil {
+		return nil, nil, ErrEmptyDamocles
+	}
 	pingInfos, err := s.Damocles.WorkerPingInfoList(ctx)
 	if err != nil {
 		return nil, nil, err

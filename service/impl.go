@@ -38,16 +38,23 @@ import (
 
 var log = logging.Logger("service")
 
+var (
+	ErrEmptyMiner    = fmt.Errorf("empty miner: please check the api config of miner")
+	ErrEmptyAuth     = fmt.Errorf("empty auth: please check the api config of auth")
+	ErrEmptyDamocles = fmt.Errorf("empty damocles: please check the api config of damocles")
+)
+
 type ServiceImpl struct {
 	Messager messager.IMessager
-	Market   market.IMarket
 	Node     nodeV1.FullNode
-	Wallet   dep.IWallet
-	Auth     dep.IAuth
-	Damocles *dep.Damocles
-	Miner    dep.Miner
-
 	Multisig multisig.IMultiSig
+	Market   market.IMarket
+	Wallet   dep.IWallet
+
+	// may be nil, detect before use
+	Auth     dep.IAuth
+	Miner    dep.Miner
+	Damocles *dep.Damocles
 }
 
 var _ IService = &ServiceImpl{}
@@ -619,6 +626,10 @@ func (s *ServiceImpl) Search(ctx context.Context, req SearchReq) (*SearchResp, e
 }
 
 func (s *ServiceImpl) MinedBlockList(ctx context.Context, req MinedBlockListReq) (MinedBlockListResp, error) {
+	if s.Miner == nil {
+		return MinedBlockListResp{}, ErrEmptyMiner
+	}
+
 	ret, err := s.Miner.ListBlocks(ctx, &minerTypes.BlocksQueryParams{
 		Miners: req.Miner,
 		Limit:  req.Limit,
@@ -631,6 +642,10 @@ func (s *ServiceImpl) MinedBlockList(ctx context.Context, req MinedBlockListReq)
 }
 
 func (s *ServiceImpl) listMiner(ctx context.Context) ([]address.Address, error) {
+	if s.Auth == nil {
+		return nil, ErrEmptyAuth
+	}
+
 	userName, err := s.Auth.GetUserName(ctx)
 	if err != nil {
 		return nil, err

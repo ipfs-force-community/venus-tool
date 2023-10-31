@@ -13,6 +13,11 @@ import (
 type Miner api.MinerAPI
 
 func NewMiner(ctx context.Context, lc fx.Lifecycle, cfg *config.Config) (Miner, error) {
+	if cfg.MinerAPI.Addr == "" {
+		log.Warnf("miner: %s", ErrEmptyAddr)
+		return nil, nil
+	}
+
 	entryPoint, err := cfg.MinerAPI.DialArgs("v0")
 	if err != nil {
 		return nil, err

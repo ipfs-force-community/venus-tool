@@ -79,7 +79,7 @@ func (s *ServiceImpl) MsigPropose(ctx context.Context, req *MultisigProposeReq) 
 
 		switch req.EncType {
 		case EncJson:
-			act, err := s.Node.GetActor(ctx, to)
+			act, err := s.Node.StateGetActor(ctx, to, types.EmptyTSK)
 			if err != nil {
 				return nil, err
 			}

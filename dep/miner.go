@@ -41,5 +41,4 @@ func NewMiner(ctx context.Context, lc fx.Lifecycle, cfg *config.Config) (Miner, 
 	})
 
 	return api, nil
-
 }

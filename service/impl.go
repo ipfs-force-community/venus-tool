@@ -107,7 +107,7 @@ func (s *ServiceImpl) MsgSend(ctx context.Context, req *MsgSendReq) (string, err
 	dec := func(req EncodedParams, to address.Address, method abi.MethodNum) ([]byte, error) {
 		switch req.EncType {
 		case EncJson:
-			act, err := s.Node.GetActor(ctx, to)
+			act, err := s.Node.StateGetActor(ctx, to, types.EmptyTSK)
 			if err != nil {
 				return nil, err
 			}
@@ -208,7 +208,7 @@ func (s *ServiceImpl) MsgQuery(ctx context.Context, params *MsgQueryReq) ([]*Msg
 			Message: *msg,
 		}
 
-		act, err := s.Node.GetActor(ctx, msg.To)
+		act, err := s.Node.StateGetActor(ctx, msg.To, types.EmptyTSK)
 		if err != nil {
 			log.Warnf("get actor failed: %s", err)
 		}
@@ -249,7 +249,7 @@ func (s *ServiceImpl) Msg(ctx context.Context, id MsgID) (*MsgResp, error) {
 	ret := &MsgResp{
 		Message: *msg,
 	}
-	act, err := s.Node.GetActor(ctx, msg.To)
+	act, err := s.Node.StateGetActor(ctx, msg.To, types.EmptyTSK)
 	if err != nil {
 		log.Warnf("get actor failed: %s", err)
 	}
@@ -300,7 +300,7 @@ func (s *ServiceImpl) MsgDecodeParam2Json(ctx context.Context, req *MsgDecodePar
 
 	var err error
 
-	act, err := s.Node.GetActor(ctx, req.To)
+	act, err := s.Node.StateGetActor(ctx, req.To, types.EmptyTSK)
 	if err != nil {
 		return nil, err
 	}
@@ -321,7 +321,7 @@ func (s *ServiceImpl) MsgDecodeParam2Json(ctx context.Context, req *MsgDecodePar
 }
 
 func (s *ServiceImpl) MsgGetMethodName(ctx context.Context, req *MsgGetMethodNameReq) (string, error) {
-	act, err := s.Node.GetActor(ctx, req.To)
+	act, err := s.Node.StateGetActor(ctx, req.To, types.EmptyTSK)
 	if err != nil {
 		return "", err
 	}
@@ -374,7 +374,7 @@ func (s *ServiceImpl) AddrInfo(ctx context.Context, addr Address) (*AddrsResp, e
 		return nil, fmt.Errorf("param error: address is empty")
 	}
 	var ret AddrsResp
-	actorInfo, err := s.Node.GetActor(ctx, addr.Address)
+	actorInfo, err := s.Node.StateGetActor(ctx, addr.Address, types.EmptyTSK)
 	if err != nil {
 		return nil, err
 	}
@@ -430,7 +430,7 @@ func (s *ServiceImpl) AddrList(ctx context.Context) ([]*AddrsResp, error) {
 
 	ret := make([]*AddrsResp, 0, len(allInfos))
 	for _, addrInfo := range allInfos {
-		actorInfo, err := s.Node.GetActor(ctx, addrInfo.Addr)
+		actorInfo, err := s.Node.StateGetActor(ctx, addrInfo.Addr, types.EmptyTSK)
 		if err != nil {
 			log.Warnf("get address(%s) actor failed: %s", addrInfo.Addr, err)
 		}

@@ -3,12 +3,10 @@ package config
 import (
 	"bytes"
 	"net/http"
-	"net/url"
 	"os"
 
 	"github.com/BurntSushi/toml"
-	"github.com/multiformats/go-multiaddr"
-	manet "github.com/multiformats/go-multiaddr/net"
+	"github.com/filecoin-project/venus/venus-shared/api"
 )
 
 type Config struct {
@@ -66,21 +64,7 @@ type APIInfo struct {
 }
 
 func (a APIInfo) DialArgs(version string) (string, error) {
-	ma, err := multiaddr.NewMultiaddr(a.Addr)
-	if err == nil {
-		_, addr, err := manet.DialArgs(ma)
-		if err != nil {
-			return "", err
-		}
-
-		return "ws://" + addr + "/rpc/" + version, nil
-	}
-
-	_, err = url.Parse(a.Addr)
-	if err != nil {
-		return "", err
-	}
-	return a.Addr + "/rpc/" + version, nil
+	return api.DialArgs(a.Addr, version)
 }
 
 func (a APIInfo) AuthHeader() http.Header {

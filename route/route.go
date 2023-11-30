@@ -37,7 +37,7 @@ func registerRoute(s *service.ServiceImpl, boardPath string) http.Handler {
 func corsMiddleWare() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
-		c.Header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+		c.Header("Access-Control-Allow-Methods", "GET,PUT, POST, DELETE, OPTIONS")
 		c.Header("Access-Control-Allow-Headers",
 			"DNT,X-Mx-ReqToken,Keep-Alive,User-Agent,X-Requested-With,"+
 				"If-Modified-Since,Cache-Control,Content-Type,Authorization,X-Forwarded-For,Origin,"+

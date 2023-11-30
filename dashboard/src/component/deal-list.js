@@ -3,13 +3,13 @@ import { InfoCircleOutlined, FormOutlined } from '@ant-design/icons';
 import { useState } from "react"
 import { getDefaultFilters, InShort } from "./util";
 import Card from "./card";
-import { useDeals, useMiners } from "../fetcher";
+import { useAllDeals, useDeals, useMiners } from "../fetcher";
 import { dealState } from "../util";
 
 export default function DealList(props) {
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const { data: miners } = useMiners()
-    const { data: deals } = useDeals({ miner: miners[0] })
+    const { data: deals } = useAllDeals(miners)
 
     const ret = function (content) {
         return (

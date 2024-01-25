@@ -262,8 +262,8 @@ func Provide(cli Client, dst interface{}) {
 
 	routeInfo := Parse(dst)
 
-	for name := range routeInfo {
-		info := routeInfo[name]
+	for idx := range routeInfo {
+		info := routeInfo[idx]
 		fnType := info.HandlerType
 		ctxIdx, parmIdx, retIdx, errIdx := ProcessFunc(fnType)
 
@@ -285,11 +285,11 @@ func Provide(cli Client, dst interface{}) {
 			}
 
 			path := info.Path
-			spliIndex := strings.Index(info.Path, ":")
+			spliIndex := strings.Index(info.Path, "/:")
 			if spliIndex != -1 {
 				path = info.Path[:spliIndex]
 			}
-			
+
 			err := cli.Do(ctx, info.Method, path, inInt, outInt)
 			if errIdx != -1 {
 				out[errIdx] = reflect.ValueOf(&err).Elem()
